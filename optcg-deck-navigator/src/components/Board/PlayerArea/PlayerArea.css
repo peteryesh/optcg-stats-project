@@ -1,0 +1,67 @@
+.player-area {
+  display: grid;
+  width: 1200px;
+  grid-template-columns: 160px repeat(5, 1fr);
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "life  chars  chars   chars   chars  chars"
+    "life  effect effect  leader  stage  deck "
+    "donDeck don  don     hand    hand   trash";
+}
+
+.life-zone { 
+    grid-area: life;
+    background-color: yellow;
+}
+
+.character-zone { 
+    grid-area: chars;
+    width: 100%;
+    background-color: blue;
+}
+
+.effect-zone { 
+    grid-area: effect;
+    background-color: beige;
+}
+
+.leader-zone { 
+    grid-area: leader;
+    background-color: red;
+}
+
+.leader-card-display {
+    height: 160px;
+    position: relative;
+    width: fit-content;
+}
+
+.stage-zone {
+    grid-area: stage;
+    background-color: cyan;
+}
+
+.deck-zone { 
+    grid-area: deck;
+    background-color: purple;
+}
+
+.don-deck-zone {
+    grid-area: donDeck;
+    background-color: green;
+}
+
+.don-zone { 
+    grid-area: don;
+    background-color: lime;
+}
+
+.hand-zone { 
+    grid-area: hand;
+    background-color: lightgray;
+}
+
+.trash-zone { 
+    grid-area: trash;
+    background-color: black;
+}

@@ -1,0 +1,32 @@
+.character-zone-grid {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-areas: "char1 char2 char3 char4 char5";
+}
+
+.character-1 {
+    grid-area: char1;
+}
+.character-2 {
+    grid-area: char2;
+}
+.character-3 {
+    grid-area: char3;
+}
+.character-4 {
+    grid-area: char4;
+}
+.character-5 {
+    grid-area: char5;
+}
+
+.character-container {
+    background-color: lightblue;
+    width: 100%;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
