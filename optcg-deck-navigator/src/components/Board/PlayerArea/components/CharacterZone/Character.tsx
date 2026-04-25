@@ -5,9 +5,9 @@ interface CharacterProps {
     position: number;
 }
 
-export function Character({ position }: CharacterProps) {
+export function Character() {
     return (
-        <div className={`character-container character-${position}`}>
+        <div className={`character-container`}>
             <div className="play-card-display">
                 <div className="play-card-cost">7</div>
                 <div className="play-card-cost-change">

@@ -1,7 +1,7 @@
 .player-area {
   display: grid;
   width: 1200px;
-  grid-template-columns: 160px repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   grid-template-rows: auto auto auto;
   grid-template-areas:
     "life  chars  chars   chars   chars  chars"
@@ -9,25 +9,48 @@
     "donDeck don  don     hand    hand   trash";
 }
 
-.life-zone { 
-    grid-area: life;
-    background-color: yellow;
-}
-
+/* Characters */
 .character-zone { 
     grid-area: chars;
     width: 100%;
     background-color: blue;
 }
 
-.effect-zone { 
-    grid-area: effect;
-    background-color: beige;
+.character-zone-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    width: 100%;
 }
 
+.character-slot {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.character-container {
+    background-color: lightblue;
+    width: 100%;
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Leader */
 .leader-zone { 
     grid-area: leader;
     background-color: red;
+}
+
+.leader-container {
+    width: 100%;
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .leader-card-display {
@@ -36,16 +59,31 @@
     width: fit-content;
 }
 
+/* Effect */
+.effect-zone { 
+    grid-area: effect;
+    background-color: beige;
+}
+
 .stage-zone {
     grid-area: stage;
     background-color: cyan;
 }
 
+/* Deck */
 .deck-zone { 
     grid-area: deck;
     background-color: purple;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+.deck-card-back {
+    height: 140px;
+}
+
+/* Don */
 .don-deck-zone {
     grid-area: donDeck;
     background-color: green;
@@ -56,12 +94,20 @@
     background-color: lime;
 }
 
+/* Hand */
 .hand-zone { 
     grid-area: hand;
     background-color: lightgray;
 }
 
+/* Trash */
 .trash-zone { 
     grid-area: trash;
     background-color: black;
+}
+
+/* Life */
+.life-zone { 
+    grid-area: life;
+    background-color: yellow;
 }

@@ -1,7 +1,4 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
 import './App.css'
 import { CardImage } from './components/CardImage.tsx'
 import { PlayerArea } from './components/Board/PlayerArea/PlayerArea.tsx'

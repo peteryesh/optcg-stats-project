@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { CharacterZone } from './components/CharacterZone/CharacterZone';
 import { LeaderZone } from './components/LeaderZone.tsx';
+import { DeckZone } from './components/DeckZone.tsx';
 import { LifeZone } from './components/LifeZone.tsx';
 import './PlayerArea.css';
+import { StageZone } from './components/StageZone.tsx';
+import { DonDeckZone } from './components/DonDeckZone.tsx';
+import { TrashZone } from './components/TrashZone.tsx';
+import { DonZone } from './components/DonZone.tsx';
 
 export function PlayerArea() {
     return (
@@ -14,24 +19,14 @@ export function PlayerArea() {
                     Effect Zone
                 </div>
                 <LeaderZone />
-                <div className="stage-zone">
-                    Stage Zone
-                </div>
-                <div className="deck-zone">
-                    Deck Zone
-                </div>
-                <div className="don-deck-zone">
-                    Don Deck Zone
-                </div>
-                <div className="don-zone">
-                    Don Zone
-                </div>
+                <StageZone />
+                <DeckZone />
+                <DonDeckZone />
+                <DonZone />
                 <div className="hand-zone">
                     Hand Zone
                 </div>
-                <div className="trash-zone">
-                    Trash Zone
-                </div>
+                <TrashZone />
             </div>
         </>
     );
