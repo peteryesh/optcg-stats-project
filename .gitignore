@@ -9,7 +9,7 @@ lerna-debug.log*
 
 packages/*/node_modules
 apps/*/node_modules
-./node_modules
+node_modules
 
 dist
 dist-ssr
