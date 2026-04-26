@@ -8,9 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-./apps/optcg-deck-navigator/node_modules
-./packages/node_modules
-./packages/engine/node_modules
+*/node_modules
 
 
 dist
