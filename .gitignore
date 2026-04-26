@@ -7,9 +7,11 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-packages/*/node_modules
-apps/*/node_modules
-node_modules
+./node_modules
+./apps/optcg-deck-navigator/node_modules
+./packages/node_modules
+./packages/engine/node_modules
+
 
 dist
 dist-ssr
@@ -25,4 +27,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env
+*.env*
