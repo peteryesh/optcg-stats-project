@@ -1,0 +1,1 @@
+import type { CardDatabase } from '@optcg/engine';
