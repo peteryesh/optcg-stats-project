@@ -65,7 +65,8 @@ export function createInitialState(
         const playerState = buildPlayerState(playerId, playerCards);
 
         // Shuffle player cards
-        rng.shuffle(playerState.zones.deck);
+        playerState.zones.deck = rng.shuffle(playerState.zones.deck);
+        console.log(playerState.zones.deck);
 
         gameState.players[playerId] = playerState;
     }
@@ -124,9 +125,8 @@ function buildPlayerCards(
         database,
     );
 
-    let i = 0
-    for (const cardId of deckInput.deckCardIds) {
-        const cardInstanceId = makeCardInstanceId(`${playerId}-card-${i}`)
+    for (const [index, cardId] of deckInput.deckCardIds.entries()) {
+        const cardInstanceId = makeCardInstanceId(`${playerId}-card-${index}`)
         result[cardInstanceId] = buildCardInstance(
             cardInstanceId,
             cardId,

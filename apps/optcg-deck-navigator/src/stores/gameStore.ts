@@ -53,7 +53,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     history: [],
     initialize: async (input) => {
         const database = await loadCardDatabase();
-        const state = createInitialState(input, database, rng)
+        const state = createInitialState(input, database, rng);
+        set({state, database});
     },
     dispatch: (action) => {
         const { state, database } = get();

@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import { CardImage } from './components/CardImage.tsx'
 import { PlayerArea } from './components/Board/PlayerArea/PlayerArea.tsx'
+import { useGameStore } from './stores/gameStore.ts';
+
+import type { CardId } from '@optcg/engine';
 
 interface Card {
     id: string;
@@ -28,7 +31,39 @@ function App() {
   const [cardList, setCardList] = useState<Card[]>([]);
   const [deckInput, setDeckInput] = useState<string>('');
 
+  const state = useGameStore((s) => s. state);
+  const initialize = useGameStore((s) => s.initialize);
+
   const BASE_URL = `${import.meta.env.VITE_PUBLIC_CARDS_URL}`;
+
+  useEffect(() => {
+    console.log("initializing")
+    initialize({
+        decks: {
+            'p1': {
+                leaderCardId: "ST21-001" as CardId,
+                deckCardIds: [
+                    "OP01-016",
+                    "ST21-003",
+                    "ST21-010",
+                    "ST21-008",
+                    "ST21-014"
+                ] as CardId[]
+            },
+            'p2': {
+                leaderCardId: "ST21-001" as CardId,
+                deckCardIds: [
+                    "OP01-016",
+                    "ST21-003",
+                    "ST21-010",
+                    "ST21-008",
+                    "ST21-014"
+                ] as CardId[]
+            }
+        },
+        firstPlayer: 'p1'
+    })
+  }, [initialize]);
 
   const getCard = async (cardID: string) => {
     // Implementation for fetching card details
@@ -60,14 +95,19 @@ function App() {
     setCardList(cardDetails);
   }
 
+  const handleLogState = () => {
+    console.log(state);
+  }
+
   return (
     <>
-      {/* <section>
+      <section>
         <textarea 
           value={deckInput}
           onChange={(e) => setDeckInput(e.target.value)}
         />
         <button onClick={handleOnSubmit}>Add Deck</button>
+        <button onClick={handleLogState}>Log State</button>
         <div>
             {cardList.map((card, index) => (
                 <div className="character-card-image-container">
@@ -76,7 +116,7 @@ function App() {
             ))}
 
         </div>
-      </section> */}
+      </section>
 
 
       <section className="game-board">
