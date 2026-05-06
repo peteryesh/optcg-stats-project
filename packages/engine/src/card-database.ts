@@ -1,11 +1,11 @@
-import { CardKind } from "./constants";
+import type { CardKind, Attribute, Color } from "./constants";
 import { CardId } from "./state";
 
 export interface CardDefinition {
     id: CardId;
     set_id: string;
     name: string;
-    kind: CardKind;
+    class: CardKind;
     rarity: string;
     block: number;
     cost: number;
@@ -13,9 +13,9 @@ export interface CardDefinition {
     counter: number;
     raw_effect: string;
     artist: string;
-    colors: string[];
+    colors: Color[];
     types: string[];
-    attributes: string[];
+    attributes: Attribute[];
     alts: object[];
     aliases: string[];
     restrictions: object[];

@@ -11,6 +11,11 @@ export class InvalidActionError extends Error {
     }
 }
 
+/**
+ * Takes a state and returns an updated state based on the action provided.
+ * The core of the OPTCG game engine that directs what action to use.
+ * Given a state and an action, the reducer will always return the same updated state.
+ */
 export function reducer(state: GameState, action: Action): GameState {
     if (state.status.type === 'finished') {
         throw new InvalidActionError('Cannot apply action to a finished game');

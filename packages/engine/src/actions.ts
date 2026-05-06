@@ -1,6 +1,9 @@
 import type { CardInstanceId, CardId, PlayerId} from './state';
 import type { Phase } from './constants';
 
+/**
+ * Metadata used for debugging and assisting in tracking the history of actions
+ */
 export interface ActionMetadata {
     actor: PlayerId;
     seq: number;
@@ -92,6 +95,9 @@ export interface ConcedeAction {
     meta: ActionMetadata;
 }
 
+/**
+ * Export for Action definitions, used to define the action to use when a player makes a move
+ */
 export type Action = 
     | StartGameAction
     | MulliganAction
@@ -106,4 +112,7 @@ export type Action =
     | ResolveTriggerAction
     | ConcedeAction;
 
+/**
+ * Adds the ability for each action definition to be referenced by the string in its type field
+ */
 export type ActionOfType<T extends Action['type']> = Extract<Action, { type: T }>;

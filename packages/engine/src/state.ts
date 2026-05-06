@@ -1,4 +1,5 @@
 import type { CardKind, Phase } from './constants';
+import { BaseCostOverride, BasePowerOverride, CostModifier, PowerModifier, StatusEffect } from './modifiers';
 
 export type CardInstanceId = string & { __brand: 'CardInstanceId' };
 export const CardInstanceId = (s: string): CardInstanceId => s as CardInstanceId;
@@ -14,37 +15,68 @@ export type PlayerId = 'p1' | 'p2';
 export interface BaseCard {
     instanceId: CardInstanceId;
     cardId: CardId;
-    ownerId: PlayerId;
+    playerId: PlayerId;
 }
 
 export interface LeaderCard extends BaseCard {
-    kind: Extract<CardKind, 'leader'>;
-    rested: boolean;
+    kind: Extract<CardKind, 'LEADER'>;
     attachedDon: CardInstanceId[];
+
+    // Status
+    rested: boolean;
     abilityUsage: Record<number, number>;
+
+    // Power
+    basePowerOverrides: BasePowerOverride[];
+    basePowerModifiers: PowerModifier[];
+    powerModifiers: PowerModifier[];
 }
 
 export interface CharacterCard extends BaseCard {
-    kind: Extract<CardKind, 'character'>;
-    rested: boolean;
+    kind: Extract<CardKind, 'CHARACTER'>;
     attachedDon: CardInstanceId[];
+
+    // Status
+    rested: boolean;
     playedThisTurn: boolean;
     abilityUsage: Record<number, number>;
+    statusEffects: StatusEffect[];
+    
+    // Power
+    basePowerOverrides: BasePowerOverride[];
+    basePowerModifiers: PowerModifier[];
+    powerModifiers: PowerModifier[];
+
+    // Cost
+    baseCostOverrides: BaseCostOverride[];
+    baseCostModifiers: CostModifier[];
+    costModifiers: CostModifier[];
 }
 
 export interface StageCard extends BaseCard {
-    kind: Extract<CardKind, 'stage'>;
+    kind: Extract<CardKind, 'STAGE'>;
     rested: boolean;
     abilityUsage: Record<number, number>;
+
+    // Cost
+    baseCostOverrides: BaseCostOverride[];
+    baseCostModifiers: CostModifier[];
+    costModifiers: CostModifier[];
 }
 
 export interface EventCard extends BaseCard {
-    kind: Extract<CardKind, 'event'>;
+    kind: Extract<CardKind, 'EVENT'>;
     abilityUsage: Record<number, number>;
+
+    // Cost
+    baseCostOverrides: BaseCostOverride[];
+    baseCostModifiers: CostModifier[];
+    costModifiers: CostModifier[];
 }
 
 export interface DonCard extends BaseCard {
-    kind: Extract<CardKind, 'don'>;
+    kind: Extract<CardKind, 'DON'>;
+    statusEffects: StatusEffect[]
 }
 
 export type Card =
@@ -85,7 +117,6 @@ export interface PlayerZones {
 export interface PlayerState {
     id: PlayerId;
     zones: PlayerZones;
-    hasMulliganed: boolean;
 }
 
 ///----------------------------------------------------------------
@@ -95,7 +126,6 @@ export interface TurnState {
     activePlayer: PlayerId;
     phase: Phase;
     turnNumber: number;
-    isFirstTurn: boolean;
 }
 
 ///----------------------------------------------------------------
