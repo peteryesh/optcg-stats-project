@@ -152,12 +152,11 @@ function buildCardInstance(
 
     const base = {instanceId, cardId, playerId};
 
-    // "class" is translated to "kind"
     switch (cardDef.class) {
         case "LEADER":
             return {
                 ...base,
-                kind: "LEADER",
+                class: "LEADER",
                 attachedDon: [],
                 rested: false,
                 abilityUsage: [],
@@ -169,7 +168,7 @@ function buildCardInstance(
         case "CHARACTER":
             return {
                 ...base,
-                kind: "CHARACTER",
+                class: "CHARACTER",
                 attachedDon: [],
                 rested: false,
                 playedThisTurn: false,
@@ -186,7 +185,7 @@ function buildCardInstance(
         case "STAGE":
             return {
                 ...base,
-                kind: "STAGE",
+                class: "STAGE",
                 rested: false,
                 abilityUsage: [],
                 baseCostOverrides: [],
@@ -197,7 +196,7 @@ function buildCardInstance(
         case "EVENT":
             return {
                 ...base,
-                kind: "EVENT",
+                class: "EVENT",
                 abilityUsage: [],
                 baseCostOverrides: [],
                 baseCostModifiers: [],
@@ -207,7 +206,7 @@ function buildCardInstance(
         case "DON":
             return {
                 ...base,
-                kind: "DON",
+                class: "DON",
                 statusEffects: []
             }
     }

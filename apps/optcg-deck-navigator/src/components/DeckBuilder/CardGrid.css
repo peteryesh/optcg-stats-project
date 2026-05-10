@@ -1,0 +1,27 @@
+.card-grid-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  overflow-y: auto;
+}
+
+.card-thumbnail {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: transform 0.1s, box-shadow 0.1s;
+  width: 100%;
+}
+
+.card-thumbnail:hover {
+  transform: scale(1.07);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.card-thumbnail img {
+  display: block;
+  aspect-ratio: 5 / 7;  /* OPTCG card aspect ratio */
+  object-fit: cover;
+}

@@ -1,5 +1,5 @@
-import type { CardKind, Phase } from './constants';
-import { BaseCostOverride, BasePowerOverride, CostModifier, PowerModifier, StatusEffect } from './modifiers';
+import type { CardClass, Phase } from './constants';
+import type { BaseCostOverride, BasePowerOverride, CostModifier, PowerModifier, StatusEffect } from './modifiers';
 
 export type CardInstanceId = string & { __brand: 'CardInstanceId' };
 export const CardInstanceId = (s: string): CardInstanceId => s as CardInstanceId;
@@ -19,7 +19,7 @@ export interface BaseCard {
 }
 
 export interface LeaderCard extends BaseCard {
-    kind: Extract<CardKind, 'LEADER'>;
+    class: Extract<CardClass, 'LEADER'>;
     attachedDon: CardInstanceId[];
 
     // Status
@@ -33,7 +33,7 @@ export interface LeaderCard extends BaseCard {
 }
 
 export interface CharacterCard extends BaseCard {
-    kind: Extract<CardKind, 'CHARACTER'>;
+    class: Extract<CardClass, 'CHARACTER'>;
     attachedDon: CardInstanceId[];
 
     // Status
@@ -54,7 +54,7 @@ export interface CharacterCard extends BaseCard {
 }
 
 export interface StageCard extends BaseCard {
-    kind: Extract<CardKind, 'STAGE'>;
+    class: Extract<CardClass, 'STAGE'>;
     rested: boolean;
     abilityUsage: Record<number, number>;
 
@@ -65,7 +65,7 @@ export interface StageCard extends BaseCard {
 }
 
 export interface EventCard extends BaseCard {
-    kind: Extract<CardKind, 'EVENT'>;
+    class: Extract<CardClass, 'EVENT'>;
     abilityUsage: Record<number, number>;
 
     // Cost
@@ -75,7 +75,7 @@ export interface EventCard extends BaseCard {
 }
 
 export interface DonCard extends BaseCard {
-    kind: Extract<CardKind, 'DON'>;
+    class: Extract<CardClass, 'DON'>;
     statusEffects: StatusEffect[]
 }
 

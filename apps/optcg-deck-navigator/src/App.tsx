@@ -1,130 +1,48 @@
-import { useEffect, useState } from 'react'
-import './App.css'
-import { CardImage } from './components/CardImage.tsx'
-import { PlayerArea } from './components/Board/PlayerArea/PlayerArea.tsx'
-import { useGameStore } from './stores/gameStore.ts';
+import { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import './App.css';
+import { CardImage } from './components/CardImage.tsx';
+import { PlayerArea } from './components/Board/PlayerArea/PlayerArea.tsx';
+import { useGameStore } from './stores/gameStore';
+import { useDatabaseStore } from './stores/databaseStore';
 
 import type { CardId } from '@optcg/engine';
 
-interface Card {
-    id: string;
-    set_id: string;
-    name: string;
-    class: string;
-    rarity: string;
-    block: number;
-    cost: number;
-    power: number;
-    counter: number;
-    raw_effect: string;
-    artist: string;
-    colors: string[];
-    types: string[];
-    attributes: string[];
-    alts: { id: string, artist: string }[];
-    aliases: string[];
-    restrictions: string[];
-}
+import { LandingPage } from './pages/LandingPage';
+import { DeckBuilderPage } from './pages/DeckBuilderPage';
+
 
 function App() {
-  const [count, setCount] = useState<number>(0);
-  const [cardList, setCardList] = useState<Card[]>([]);
-  const [deckInput, setDeckInput] = useState<string>('');
+    const [count, setCount] = useState<number>(0);
+    const [deckInput, setDeckInput] = useState<string>('');
 
-  const state = useGameStore((s) => s. state);
-  const initialize = useGameStore((s) => s.initialize);
+    const state = useGameStore((s) => s.state);
+    const initialize = useGameStore((s) => s.initialize);
 
-  const BASE_URL = `${import.meta.env.VITE_PUBLIC_CARDS_URL}`;
+    const db = useDatabaseStore((s) => s.database);
 
-  useEffect(() => {
-    console.log("initializing")
-    initialize({
-        decks: {
-            'p1': {
-                leaderCardId: "ST21-001" as CardId,
-                deckCardIds: [
-                    "OP01-016",
-                    "ST21-003",
-                    "ST21-010",
-                    "ST21-008",
-                    "ST21-014"
-                ] as CardId[]
-            },
-            'p2': {
-                leaderCardId: "ST21-001" as CardId,
-                deckCardIds: [
-                    "OP01-016",
-                    "ST21-003",
-                    "ST21-010",
-                    "ST21-008",
-                    "ST21-014"
-                ] as CardId[]
-            }
-        },
-        firstPlayer: 'p1'
-    })
-  }, [initialize]);
-
-  const getCard = async (cardID: string) => {
-    // Implementation for fetching card details
-    const cardDataURL = `${BASE_URL}/cards/${cardID}.json`;
-    const res = await fetch(cardDataURL);
-    const cardData = await res.json();
-    console.log(cardData);
-    return cardData;
-  }
-
-  const parseDeckInput = (input: string) => {
-    return input.trim().split('\n').map(line => {
-      const [quantity, cardCode] = line.trim().split('x');
-      return { quantity: parseInt(quantity), cardCode };
-    });
-  }
-
-  const expandDeck = (parsedDeck: { quantity: number; cardCode: string }[]) => {
-    return parsedDeck.flatMap(entry => {
-      const { quantity, cardCode } = entry;
-      return Array(quantity).fill(cardCode);
-    });
-  }
-
-  const handleOnSubmit = async () => {
-    const parsedDeck = parseDeckInput(deckInput);
-    const expandedDeck = expandDeck(parsedDeck);
-    const cardDetails = await Promise.all(expandedDeck.map(getCard));
-    setCardList(cardDetails);
-  }
-
-  const handleLogState = () => {
-    console.log(state);
-  }
-
-  return (
-    <>
-      <section>
-        <textarea 
-          value={deckInput}
-          onChange={(e) => setDeckInput(e.target.value)}
-        />
-        <button onClick={handleOnSubmit}>Add Deck</button>
-        <button onClick={handleLogState}>Log State</button>
-        <div>
-            {cardList.map((card, index) => (
-                <div className="character-card-image-container">
-                    <CardImage key={index} id={card.id} name={card.name} />
-                </div>
-            ))}
-
-        </div>
-      </section>
-
-
-      <section className="game-board">
-        <PlayerArea />
-        <PlayerArea />
-      </section>
-    </>
-  )
+    return (
+        <BrowserRouter>
+            <div className="flex flex-col h-dvh bg-red-500">
+                <header>
+                    <Link to="/">OPTCG Practice Tool</Link>
+                    <nav>
+                        <Link to="/practice">Practice</Link>
+                        <Link to="/decks">Decks</Link>
+                    </nav>
+                </header>
+                <main className="flex-1 min-h-0 overflow-hidden bg-blue-500">
+                    <Routes>
+                        <Route path="/" element={<LandingPage />} />
+                        <Route path="/decks" element={<DeckBuilderPage />} />
+                        <Route path="/decks/new" element={<DeckBuilderPage />} />
+                        <Route path="/decks/:id" element={<DeckBuilderPage />} />
+                    </Routes>
+                </main>
+            </div>
+            
+        </BrowserRouter>
+    );
 }
 
 export default App

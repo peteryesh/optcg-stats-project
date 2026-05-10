@@ -1,5 +1,5 @@
 // Card Components
-export type CardKind = 'LEADER' | 'CHARACTER' | 'DON' | 'EVENT' | 'STAGE'; // class of the card, using "kind" to avoid reserved keywords
+export type CardClass = 'LEADER' | 'CHARACTER' | 'DON' | 'EVENT' | 'STAGE';
 
 export type Color = 'Red' | 'Green' | 'Blue' | 'Purple' | 'Black' | 'Yellow';
 
