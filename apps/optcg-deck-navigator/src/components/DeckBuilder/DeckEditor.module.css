@@ -1,0 +1,53 @@
+.stack {
+    position: relative;
+    aspect-ratio: 5 / 7;
+}
+
+.card {
+    position: absolute;
+    aspect-ratio: 5 / 7;
+}
+
+.firstCard {
+    --glow-color: 251 191 36;
+    border-radius: 0.5rem;
+    transition: box-shadow 200ms ease-out, transform 200ms ease-out;
+    cursor: pointer;
+}
+
+.stack:has(.card:hover) .firstCard {
+    transform: translateY(-1px);
+    box-shadow:
+        /* Tight core — sells the "this is the light source" feel */
+        0 0 4px 0 rgb(var(--glow-color) / 1),
+        0 0 12px 2px rgb(var(--glow-color) / 0.9),
+
+        /* Bright bloom — the main visible glow */
+        0 0 28px 6px rgb(var(--glow-color) / 0.7),
+        0 0 56px 12px rgb(var(--glow-color) / 0.5),
+
+        /* Far atmosphere — extends the bloom outward */
+        0 0 96px 24px rgb(var(--glow-color) / 0.3),
+        0 0 4000px 40px rgb(var(--glow-color) / 0.15),
+
+        /* Lift shadow underneath */
+        0 12px 32px rgba(0, 0, 0, 0.4);
+    /* lift shadow */
+    z-index: 10;
+}
+
+.copyCount {
+    font-size: clamp(11px, 9cqi, 22px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.02em;
+
+    padding: clamp(2px, 1.5cqi, 5px) clamp(4px, 3cqi, 10px);
+    border-radius: clamp(3px, 1.5cqi, 8px);
+
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+
+    pointer-events: none;
+}

@@ -1,21 +1,24 @@
 import type { CardDefinition } from "@optcg/engine";
-import './CardGrid.css';
 
 interface CardThumbnailProps {
-    card: CardDefinition;
+    card: CardDefinition | null;
+    quality?: 'thumb' | 'full';
     onClick?: () => void;
 }
-
-export function CardThumbnail({card, onClick}: CardThumbnailProps) {
+// !!! IDK ABOUT PASSING DOWN A SPECIFIC CLASS NAME
+export function CardThumbnail({ card, quality, onClick }: CardThumbnailProps) {
     const DATABASE_IMG_URL = `${import.meta.env.VITE_PUBLIC_CARDS_URL}`;
-    return <button onClick={onClick} className="card-thumbnail">
+    if (!card) {
+        return;
+    }
+    return <button onClick={onClick} className='aspect-[5/7] h-full w-full'>
         <img
-            src={`${DATABASE_IMG_URL}/images/${card.id}-thumb.webp`}
+            src={`${DATABASE_IMG_URL}/images/${card.id}-${quality ? quality : 'thumb'}.webp`}
             alt={card.name}
             loading="lazy"
             draggable={false}              // disables HTML5 drag API
             onDragStart={(e) => e.preventDefault()}  // belt-and-suspenders
-            className="select-none w-full hover:z-10"    // prevents text/image selection
+            className="select-none w-full cursor-pointer block aspect-[5/7]"    // prevents text/image selection
             style={{ WebkitUserDrag: 'none' }}  // Safari-specific
         />
     </button>

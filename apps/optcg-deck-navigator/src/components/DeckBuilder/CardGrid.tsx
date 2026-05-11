@@ -3,7 +3,7 @@
 import { VirtuosoGrid } from 'react-virtuoso';
 import type { CardId, CardDefinition } from '@optcg/engine';
 import { CardThumbnail } from './CardThumbnail';
-import './CardGrid.css';
+import styles from './CardGrid.module.css';
 
 interface CardGridProps {
   cards: CardDefinition[];
@@ -15,15 +15,15 @@ export function CardGrid({ cards, onCardClick }: CardGridProps) {
     
     <VirtuosoGrid
         totalCount={cards.length}
-        overscan={{main: 1000, reverse: 200}}
+        overscan={{main: 1000, reverse: 600}}
         itemContent={(index) => (
             <CardThumbnail
-            card={cards[index]}
-            onClick={() => onCardClick(cards[index].id)}
+                card={cards[index]}
+                onClick={() => onCardClick(cards[index].id)}
             />
         )}
-        listClassName="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] p-4"
-        itemClassName="mt-2"
+        listClassName="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))]"
+        itemClassName={`mt-2 mx-1 h-full ${styles.card}`}
     />
     
     

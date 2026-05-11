@@ -6,6 +6,7 @@ import type { CardId } from '@optcg/engine';
 
 import { CardGrid } from '../components/DeckBuilder/CardGrid';
 import './DeckBuilderPage.css';
+import { DeckEditor } from '../components/DeckBuilder/DeckEditor';
 
 
 
@@ -89,6 +90,7 @@ export function DeckBuilderPage() {
             }
         }
         else {
+            // requires fix, maybe have the decks/new path redirect to a deck with an id immediately but doesn't save until the user says so
             navigate('/decks');
         }
     }
@@ -100,14 +102,14 @@ export function DeckBuilderPage() {
         }
     };
 
-    const handleViewDeck = () => {
-        console.log(cardIds);
+    const handleLogDeck = () => {
+        console.log(grouped);
     }
 
     const grouped = useMemo(() => {
         const counts = new Map<CardId, number>();
 
-        if (isLoading || !database) return counts;
+        if (isLoading || !database) return [];
 
         cardIds.forEach((id) => counts.set(id, (counts.get(id) ?? 0) + 1));
 
@@ -162,11 +164,16 @@ export function DeckBuilderPage() {
                         Discard Changes
                     </button>
                     {id && <button onClick={handleDelete}>Delete Deck</button>}
-                    <button onClick={handleViewDeck}>Print Deck</button>
+                    <button onClick={handleLogDeck}>Log Deck</button>
                 </div>
             </header>
-            <div className="h-full w-full">
-                <CardGrid cards={Object.values(database)} onCardClick={handleAddCard} />
+            <div className="h-full w-full flex row">
+                <div className="h-full w-1/4">
+                    <CardGrid cards={Object.values(database)} onCardClick={handleAddCard} />
+                </div>
+                <div className='h-full w-3/4 bg-green-500 overflow-y-auto'>
+                    <DeckEditor deckCards={grouped} onCardClick={handleRemoveCard}/>
+                </div>
             </div>
         </div>
     );
