@@ -1,6 +1,4 @@
-import type { CardInstanceId, CardId, PlayerId} from './state';
-import type { Phase } from './state';
-import type { FrameId } from './state';
+import { CardId, CardInstanceId, PlayerId, FrameId } from "./primitives";
 
 export type Action =
   // Setup

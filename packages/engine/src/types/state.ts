@@ -1,58 +1,13 @@
-import { Action } from './actions';
-import type { Attribute, CardClass, Color } from './card-database';
-import type { BaseCostOverride, BasePowerOverride, CostModifier, PowerModifier, StatusEffect } from './modifiers';
-import type { GameSignal } from './signals';
+import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId } from './primitives';
+import type { GameSignal } from './signal';
+import type { CardFilter } from './filter';
+import type { CardInstance } from './card';
+import type { Action } from './action';
 
-// CardInstanceId
-export type CardInstanceId = string & { __brand: 'CardInstanceId' };
-export const CardInstanceId = (s: string): CardInstanceId => s as CardInstanceId;
-
-// CardId
-export type CardId = string & { __brand: 'CardId' };
-export const CardId = (s: string): CardId => s as CardId;
-
-export type PlayerId = 'p1' | 'p2'; // add player 3 and 4 support later
-
-export type ListenerId = string;
-export type FrameId = string;
-
-export type Zone =
-    | 'DECK'
-    | 'HAND'
-    | 'LIFE'
-    | 'TRASH'
-    | 'CHARACTERS'
-    | 'STAGE'
-    | 'LEADER'
-    | 'DON_DECK'
-    | 'DON_ACTIVE'
-    | 'DON_RESTED'
-    | 'LOOK';
-
-// Game Phases
-export type Phase = 'SETUP' | 'START_OF_TURN' | 'REFRESH' | 'DRAW' | 'MAIN' | 'END_OF_TURN' | 'GAME_END';
-export type BattlePhase = 'WHEN_ATTACKING' | 'ON_OPPONENT_ATTACK' | 'BLOCKER' | 'COUNTER' | 'RESOLUTION' | 'DAMAGE';
-export type TriggerPhase = 'ACTIVATE_TRIGGER' | 'TO_HAND' | 'TO_TRASH' | 'EFFECT';
-
-export type EndReason = 'KNOCKOUT' | 'DECKOUT' | 'CONCEDE' | 'TIMEOUT' | 'DISCONNECT';
 
 type BattleRecord = { attackerId: CardInstanceId; defenderId: CardInstanceId; };
 
-type CardFilter =
-  | { kind: "ANY" }
-  | { kind: "SPECIFIC";    instanceId: CardInstanceId }
-  | { kind: "CONTROLLER";  controller: "SELF" | "OPPONENT" | "ANY" }
-  | { kind: "NAME";        name: string }              // checks name and aliases
-  | { kind: "CLASS";       cardClass: CardClass }
-  | { kind: "COST";        op: ">=" | "<=" | "==" | ">" | "<"; value: number, base: boolean }
-  | { kind: "POWER";       op: ">=" | "<=" | "==" | ">" | "<"; value: number, base: boolean }
-  | { kind: "COUNTER";     op: ">=" | "<=" | "==" | ">" | "<"; value: number }
-  | { kind: "COLOR";       color: Color }
-  | { kind: "TYPE";        cardType: string }          // OPTCG group/affiliation
-  | { kind: "ATTRIBUTE";   attribute: Attribute }
-  | { kind: "AND";         filters: CardFilter[] }
-  | { kind: "OR";          filters: CardFilter[] }
-  | { kind: "NOT";         filter: CardFilter };
+
 
 type EffectFrame = {
     frameId: string;
@@ -182,54 +137,9 @@ export interface PlayerZones {
 /// Cards (runtime instances)
 ///----------------------------------------------------------------
 // Base — fields every instance has
-interface BaseInstance {
-  instanceId: CardInstanceId;
-  cardId: CardId;
-  controller: PlayerId;
-  currentZone: Zone;
-  isRested: boolean;
-}
 
-// Character — can attack, have DON!! attached, use effects
-interface CharacterInstance extends BaseInstance {
-  class: "CHARACTER";
-  attachedDon: CardInstanceId[];
-  playedOnTurns: number[];
-  effectsUsedThisTurn: Record<string, boolean>;
-}
 
-// Leader — like character but tracks life and has rule modifiers
-interface LeaderInstance extends BaseInstance {
-  class: "LEADER";
-  attachedDon: CardInstanceId[];
-  playedOnTurns: number[];
-  effectsUsedThisTurn: Record<string, boolean>;
-}
 
-// Stage — enters play, can be bounced, no DON!!
-interface StageInstance extends BaseInstance {
-  class: "STAGE";
-  playedOnTurns: number[];
-  effectsUsedThisTurn: Record<string, boolean>;
-}
-
-interface EventInstance extends BaseInstance {
-  class: "EVENT";
-  playedOnTurns: number[];
-}
-
-// DON!! — attaches to characters/leader, tracks attachment
-interface DonInstance extends BaseInstance {
-  class: "DON";
-  attachedTo: CardInstanceId | null;
-}
-
-type CardInstance =
-  | CharacterInstance
-  | LeaderInstance
-  | StageInstance
-  | EventInstance
-  | DonInstance;
 
 
 ///----------------------------------------------------------------

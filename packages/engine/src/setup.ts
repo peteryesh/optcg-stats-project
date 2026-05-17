@@ -9,9 +9,9 @@ import type {
     CardInstanceId,
     CardId,
     TurnState
-} from "./state";
-import { CardInstanceId as makeCardInstanceId, CardId as makeCardId } from "./state";
-import type { CardDatabase } from "./card-database";
+} from "./types/state";
+import { CardInstanceId as makeCardInstanceId, CardId as makeCardId } from "./types/state";
+import type { CardDatabase } from "./types/card";
 import type { RngSource } from "./rng";
 
 const STATE_VERSION = 1;

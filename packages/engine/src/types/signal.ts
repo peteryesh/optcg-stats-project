@@ -1,29 +1,24 @@
-import { Zone, EndReason } from "./state";
-import { CardInstanceId, PlayerId, PlayerZones } from "./state";
+import type { CardId, CardInstanceId, Attribute, CardClass, Color, PlayerId, Zone, EndReason, Position, RevealedTo } from './primitives';
 
 // ============================================================
 // Shared Types
 // ============================================================
-
-type Position = "TOP" | "BOTTOM";
-type RevealedTo = "BOTH" | "SELF" | "OPPONENT";
-
-type PlayCause =
+export type PlayCause =
   | { kind: "PLAYER" }
   | { kind: "EFFECT"; sourceId: CardInstanceId }
   | { kind: "RULE" };
 
-type RemovalCause =
+export type RemovalCause =
   | { kind: "BATTLE"; sourceId: CardInstanceId }
   | { kind: "EFFECT"; sourceId: CardInstanceId }
   | { kind: "OVERFLOW" }
   | { kind: "RULE" };
 
-type DamageCause =
+export type DamageCause =
   | { kind: "BATTLE"; sourceId: CardInstanceId }
   | { kind: "EFFECT"; sourceId: CardInstanceId };
 
-type SignalCause =
+export type SignalCause =
   | { kind: "EFFECT"; sourceId: CardInstanceId }
   | { kind: "RULE" };
 

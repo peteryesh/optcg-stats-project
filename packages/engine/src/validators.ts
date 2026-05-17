@@ -1,5 +1,5 @@
-import { GameState } from "./state";
-import { Action } from "./actions";
+import { GameState } from "./types/state";
+import { Action } from "./types/action";
 
 export function validate(state: GameState, action: Action): string | null {
     return null;

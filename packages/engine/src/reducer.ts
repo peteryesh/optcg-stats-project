@@ -1,5 +1,5 @@
-import type { GameState } from './state';
-import type { Action } from './actions';
+import type { GameState } from './types/state';
+import type { Action } from './action';
 // import { RngSource } from './rng';
 import { validate } from './validators';
 // import {} from './apply';
@@ -33,3 +33,5 @@ export function reducer(state: GameState, action: Action): GameState {
 
     return state; // change later to return the new state after applying the action
 }
+
+// Keep for reference, delete later
