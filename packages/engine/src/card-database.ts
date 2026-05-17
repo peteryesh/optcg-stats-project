@@ -1,11 +1,14 @@
-import type { CardKind, Attribute, Color } from "./constants";
 import { CardId } from "./state";
 
-export interface CardDefinition {
+export type CardClass = 'LEADER' | 'CHARACTER' | 'DON' | 'EVENT' | 'STAGE';
+export type Color = 'RED' | 'GREEN' | 'BLUE' | 'PURPLE' | 'BLACK' | 'YELLOW';
+export type Attribute = 'SLASH' | 'STRIKE' | 'RANGED' | 'SPECIAL' | 'WISDOM' | '?';
+
+export interface Card {
     id: CardId;
     set_id: string;
     name: string;
-    class: CardKind;
+    class: CardClass;
     rarity: string;
     block: number;
     cost?: number;
@@ -14,12 +17,29 @@ export interface CardDefinition {
     life?: number;
     raw_effect?: string;
     artist?: string;
-    colors?: Color[];
-    types?: string[];
-    attributes?: Attribute[];
-    alts?: object[];
-    aliases?: string[];
-    restrictions?: object[];
+    colors: Color[];
+    types: string[];
+    attributes: Attribute[];
+    alts: object[];
+    aliases: string[];
+    restrictions: object[];
 }
 
-export type CardDatabase = Record<CardId, CardDefinition>;
+// Engine-specific shape — derived from Card, omits display-only fields
+export interface CardDef {
+    id: CardId;
+    name: string;
+    class: CardClass;
+    cost?: number;
+    power?: number;
+    counter?: number;
+    life?: number;
+    colors: Color[];
+    types: string[];
+    attributes: Attribute[];
+    aliases: string[];
+    restrictions: object[];
+    // effects: EffectDeclaration[];   // added by engine, not in database
+}
+
+export type CardDatabase = Record<CardId, Card>;

@@ -153,10 +153,10 @@ function buildCardInstance(
     const base = {instanceId, cardId, playerId};
 
     switch (cardDef.class) {
-        case "LEADER":
+        case "leader":
             return {
                 ...base,
-                class: "LEADER",
+                class: "leader",
                 attachedDon: [],
                 rested: false,
                 abilityUsage: [],
@@ -165,10 +165,10 @@ function buildCardInstance(
                 powerModifiers: []
             }
         
-        case "CHARACTER":
+        case "character":
             return {
                 ...base,
-                class: "CHARACTER",
+                class: "character",
                 attachedDon: [],
                 rested: false,
                 playedThisTurn: false,
@@ -182,10 +182,10 @@ function buildCardInstance(
                 costModifiers: []
             }
         
-        case "STAGE":
+        case "stage":
             return {
                 ...base,
-                class: "STAGE",
+                class: "stage",
                 rested: false,
                 abilityUsage: [],
                 baseCostOverrides: [],
@@ -193,20 +193,20 @@ function buildCardInstance(
                 costModifiers: []
             }
 
-        case "EVENT":
+        case "event":
             return {
                 ...base,
-                class: "EVENT",
+                class: "event",
                 abilityUsage: [],
                 baseCostOverrides: [],
                 baseCostModifiers: [],
                 costModifiers: []
             }
         
-        case "DON":
+        case "don":
             return {
                 ...base,
-                class: "DON",
+                class: "don",
                 statusEffects: []
             }
     }

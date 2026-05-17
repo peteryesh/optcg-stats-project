@@ -1,118 +1,31 @@
 import type { CardInstanceId, CardId, PlayerId} from './state';
-import type { Phase } from './constants';
+import type { Phase } from './state';
+import type { FrameId } from './state';
 
-/**
- * Metadata used for debugging and assisting in tracking the history of actions
- */
-export interface ActionMetadata {
-    actor: PlayerId;
-    seq: number;
-    timestamp: number;
-}
+export type Action =
+  // Setup
+  | { type: "CHOOSE_TURN_ORDER"; playerId: PlayerId; choice: "FIRST" | "SECOND" }
+  | { type: "KEEP_HAND";         playerId: PlayerId }
+  | { type: "MULLIGAN";          playerId: PlayerId }
 
-// Setup
-export interface StartGameAction {
-    type: 'START_GAME';
-    meta: ActionMetadata;
-    decks: Record<PlayerId, {
-        leaderCardId: CardId;
-        deckCardIds: CardId[];
-        donCardIds: CardId[];
-    }>;
-    firstPlayer: PlayerId;
-}
+  // Game Flow
+  | { type: "END_PHASE";         playerId: PlayerId }
 
-export interface MulliganAction {
-    type: 'MULLIGAN';
-    meta: ActionMetadata;
-    keep: boolean;
-}
+  // Main Phase
+  | { type: "PLAY_CARD";         playerId: PlayerId; instanceId: CardInstanceId; targetSlot?: number }
+  | { type: "ACTIVATE_EFFECT";  playerId: PlayerId; instanceId: CardInstanceId; abilityId: string }
+  | { type: "ATTACH_DON";        playerId: PlayerId; donId: CardInstanceId; targetId: CardInstanceId }
 
+  // Combat
+  | { type: "DECLARE_ATTACK";    playerId: PlayerId; attackerId: CardInstanceId; defenderId: CardInstanceId }
+  | { type: "DECLARE_BLOCKER";   playerId: PlayerId; blockerId: CardInstanceId }
+  | { type: "PLAY_COUNTER";      playerId: PlayerId; counterId: CardInstanceId }
+  | { type: "PASS_COUNTER";      playerId: PlayerId }
 
-// Phases
-export interface AdvancePhaseAction {
-    type: 'ADVANCE_PHASE';
-    meta: ActionMetadata;
-    fromPhase: Phase;
-}
-
-// Main Phase Actions
-export interface PlayCardAction {
-    type: 'PLAY_CARD';
-    meta: ActionMetadata;
-    instanceId: CardInstanceId;
-    displaceTargetId?: CardInstanceId;
-    count: number;
-}
-
-export interface AttachDonAction {
-    type: 'ATTACH_DON';
-    meta: ActionMetadata;
-    targetInstanceId: CardInstanceId;
-}
-
-// Combat
-export interface DeclareAttackAction {
-    type: 'DECLARE_ATTACK';
-    meta: ActionMetadata;
-    attackerId: CardInstanceId;
-    targetId: CardInstanceId;
-}
-
-export interface DeclareBlockerAction {
-    type: 'DECLARE_BLOCKER';
-    meta: ActionMetadata;
-    blockerId: CardInstanceId;
-}
-
-export interface SkipBlockerAction {
-    type: 'SKIP_BLOCKER';
-    meta: ActionMetadata;
-}
-
-export interface PlayCounterAction {
-    type: 'PLAY_COUNTER';
-    meta: ActionMetadata;
-    counterCardInstanceId: CardInstanceId;
-    targetId: CardInstanceId;
-}
-
-export interface ResolveAttackAction {
-    type: 'RESOLVE_ATTACK';
-    meta: ActionMetadata;
-}
-
-// Triggers
-export interface ResolveTriggerAction {
-    type: 'RESOLVE_TRIGGER';
-    meta: ActionMetadata;
-    activate: boolean;
-}
-
-// Concession
-export interface ConcedeAction {
-    type: 'CONCEDE';
-    meta: ActionMetadata;
-}
-
-/**
- * Export for Action definitions, used to define the action to use when a player makes a move
- */
-export type Action = 
-    | StartGameAction
-    | MulliganAction
-    | AdvancePhaseAction
-    | PlayCardAction
-    | AttachDonAction
-    | DeclareAttackAction
-    | DeclareBlockerAction
-    | SkipBlockerAction
-    | PlayCounterAction
-    | ResolveAttackAction
-    | ResolveTriggerAction
-    | ConcedeAction;
-
-/**
- * Adds the ability for each action definition to be referenced by the string in its type field
- */
-export type ActionOfType<T extends Action['type']> = Extract<Action, { type: T }>;
+  // Decision Resolutions
+  | { type: "CHOOSE_NEXT_EFFECT"; playerId: PlayerId; frameId: FrameId }
+  | { type: "CHOOSE_TARGETS";     playerId: PlayerId; instanceIds: CardInstanceId[] }
+  | { type: "CHOOSE_FROM_HAND";   playerId: PlayerId; instanceIds: CardInstanceId[] }
+  | { type: "CHOOSE_FROM_LOOK";   playerId: PlayerId; instanceIds: CardInstanceId[] }
+  | { type: "CONFIRM";            playerId: PlayerId }
+  | { type: "DECLINE";            playerId: PlayerId };
