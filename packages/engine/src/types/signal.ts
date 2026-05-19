@@ -79,12 +79,12 @@ export type GameSignal =
   | { type: "LIFE_REVEALED_AS_TRIGGER"; instanceId: CardInstanceId; playerId: PlayerId; position: Position }
 
   // Game Setup (review this section after finalizing game setup flow)
-    | { type: "GAME_SETUP_STARTED";  turnOrder: PlayerId[] }
-    | { type: "COIN_FLIP_RESOLVED";  winner: PlayerId; result: "HEADS" | "TAILS" }
-    | { type: "TURN_ORDER_DECIDED";  turnOrder: PlayerId[] }
-    | { type: "HAND_DEALT";          playerId: PlayerId; instanceIds: CardInstanceId[] }
-    | { type: "LIFE_SET_UP";         playerId: PlayerId; instanceIds: CardInstanceId[] }
-    | { type: "GAME_STARTED";        firstPlayerId: PlayerId }
+  | { type: "GAME_SETUP_STARTED";  turnOrder: PlayerId[] }
+  | { type: "COIN_FLIP_RESOLVED";  winner: PlayerId; result: "HEADS" | "TAILS" }
+  | { type: "TURN_ORDER_DECIDED";  turnOrder: PlayerId[] }
+  | { type: "HAND_DEALT";          playerId: PlayerId; instanceIds: CardInstanceId[] }
+  | { type: "LIFE_SET_UP";         playerId: PlayerId; instanceIds: CardInstanceId[] }
+  | { type: "GAME_STARTED";        firstPlayerId: PlayerId }
 
   // Game Flow
   | { type: "TURN_STARTED";                   playerId: PlayerId; turnNumber: number }

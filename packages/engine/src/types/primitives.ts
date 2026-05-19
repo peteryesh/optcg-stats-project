@@ -6,6 +6,9 @@ export const CardInstanceId = (s: string): CardInstanceId => s as CardInstanceId
 export type CardId = string & { __brand: 'CardId' };
 export const CardId = (s: string): CardId => s as CardId;
 
+export type Seed = bigint;
+export type Nonce = bigint;
+
 export type CardClass = 'LEADER' | 'CHARACTER' | 'DON' | 'EVENT' | 'STAGE';
 export type Color = 'RED' | 'GREEN' | 'BLUE' | 'PURPLE' | 'BLACK' | 'YELLOW';
 export type Attribute = 'SLASH' | 'STRIKE' | 'RANGED' | 'SPECIAL' | 'WISDOM' | '?';
@@ -37,3 +40,10 @@ export type EndReason = 'KNOCKOUT' | 'DECKOUT' | 'CONCEDE' | 'TIMEOUT' | 'DISCON
 export type Position = "TOP" | "BOTTOM";
 export type RevealedTo = "BOTH" | "SELF" | "OPPONENT";
 export type CompareOp = ">=" | "<=" | "==" | ">" | "<";
+
+export type Keyword =
+  | "BLOCKER"
+  | "RUSH"
+  | "BANISH"
+  | "DOUBLE_ATTACK"
+  | "LIFE_TRIGGER";      // replaces "TRIGGER"

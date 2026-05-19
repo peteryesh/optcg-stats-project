@@ -1,22 +1,13 @@
-import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId } from './primitives';
+import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId } from './primitives';
 import type { GameSignal } from './signal';
 import type { CardFilter } from './filter';
-import type { CardInstance } from './card';
+import type { CardDef, CardInstance } from './card';
 import type { Action } from './action';
+import { EffectSequence } from './effect';
 
 
 type BattleRecord = { attackerId: CardInstanceId; defenderId: CardInstanceId; };
-
-
-
-type EffectFrame = {
-    frameId: string;
-    sourceInstanceId: CardInstanceId;
-    effectId: string;
-    gameSignal: GameSignal;
-    resolvedValues: Record<string, any>;
-    controllerAtQueueTime: PlayerId;
-}
+type PendingEffects = Record<PlayerId, EffectSequence[]>;
 
 type PendingDecision =
   | {
@@ -60,6 +51,13 @@ type PendingDecision =
       defenderId: CardInstanceId;
     };
 
+// RNG Cursors
+type RngCursors = {
+    game: bigint;
+    players: Record<PlayerId, bigint>;
+    life: Record<PlayerId, bigint>;
+};
+
 ///----------------------------------------------------------------
 /// Game State
 ///----------------------------------------------------------------
@@ -69,6 +67,7 @@ export interface GameState {
     version: number;
 
     // The Game Board
+    definitions: Record<CardId, CardDef>; // card definitions, loaded at game start and immutable
     instances: Record<CardInstanceId, CardInstance>; // Card instances for all players
     players: Record<PlayerId, PlayerZones>; // Card zones for each player, keeps the card locations
 
@@ -84,19 +83,20 @@ export interface GameState {
     battlesThisTurn: BattleRecord[]; // used for tracking multiple attacks with the same character and same-turn attack effects
 
     // Effect Resolution
-    currentEffect: EffectFrame | null;  // the currently resolving effect, if any
-    pendingEffects: Record<PlayerId, EffectFrame[]>;
+    currentEffect: EffectSequence | null;  // the currently resolving effect, if any
+    pendingEffects: Record<PlayerId, EffectSequence[]>;
     pendingDecision: PendingDecision | null;
 
     // Modifier Layers
     // listeners: Record<SignalType, Listener[]>;
     // continuousEffects: ContinuousEffect[];
-    // replacementEffects: ReplacementEffect[];
+    // replacementEffects: ReplacementEffect[]; // needs the ReplacementEffect type and "would" functions to be defined
     // effectSuppressions: AbilitySuppression[];
 
     // History
     signalLog: GameSignal[];
     actionLog: Action[];
+    rngCursors: RngCursors;
 
     // Game Outcome
     winner: PlayerId | null;
