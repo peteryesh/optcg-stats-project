@@ -1,4 +1,5 @@
 import type { CardId, CardInstanceId, Attribute, CardClass, Color, PlayerId, Zone } from './primitives';
+import { EffectDefinition } from './effect';
 
 export interface Card {
     id: CardId;
@@ -35,7 +36,14 @@ export interface CardDef {
     attributes: Attribute[];
     aliases: string[];
     restrictions: object[];
-    // effects: EffectDeclaration[];   // added by engine, not in database
+    effects: EffectDefinition[];   // added by engine, not in database
+}
+
+export type DeckList = {
+    leader: CardId;
+    deck: CardId[];
+    sideDeck: CardId[];
+    donCount: number;
 }
 
 export interface BaseInstance {

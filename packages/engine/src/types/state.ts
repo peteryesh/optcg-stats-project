@@ -1,54 +1,54 @@
 import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId } from './primitives';
-import type { GameSignal } from './signal';
+import type { GameSignal, SignalType, Listener } from './signal';
 import type { CardFilter } from './filter';
 import type { CardDef, CardInstance } from './card';
 import type { Action } from './action';
-import { EffectSequence } from './effect';
+import { EffectSequence, ContinuousEffect, ReplacementEffect, AbilitySuppression } from './effect';
 
 
 type BattleRecord = { attackerId: CardInstanceId; defenderId: CardInstanceId; };
 type PendingEffects = Record<PlayerId, EffectSequence[]>;
 
 type PendingDecision =
-  | {
-      type: "NEXT_EFFECT";
-      playerId: PlayerId;
+    | {
+        type: "NEXT_EFFECT";
+        playerId: PlayerId;
     }
-  | {
-      type: "CHOOSE_TARGET";
-      playerId: PlayerId;
-      sourceFrameId: FrameId;
-      validTargets: CardInstanceId[];
-      min: number;
-      max: number;
+    | {
+        type: "CHOOSE_TARGET";
+        playerId: PlayerId;
+        sourceFrameId: FrameId;
+        validTargets: CardInstanceId[];
+        min: number;
+        max: number;
     }
-  | {
-      type: "CHOOSE_FROM_HAND";
-      playerId: PlayerId;
-      sourceFrameId: FrameId;
-      count: number;
-      filter: CardFilter;
-      optional: boolean;
+    | {
+        type: "CHOOSE_FROM_HAND";
+        playerId: PlayerId;
+        sourceFrameId: FrameId;
+        count: number;
+        filter: CardFilter;
+        optional: boolean;
     }
-  | {
-      type: "CHOOSE_FROM_LOOK";
-      playerId: PlayerId;
-      sourceFrameId: FrameId;
-      count: number;
-      filter: CardFilter;
-      optional: boolean;
+    | {
+        type: "CHOOSE_FROM_LOOK";
+        playerId: PlayerId;
+        sourceFrameId: FrameId;
+        count: number;
+        filter: CardFilter;
+        optional: boolean;
     }
-  | {
-      type: "BLOCKER_RESPONSE";
-      playerId: PlayerId;
-      attackerId: CardInstanceId;
-      eligibleBlockers: CardInstanceId[];
+    | {
+        type: "BLOCKER_RESPONSE";
+        playerId: PlayerId;
+        attackerId: CardInstanceId;
+        eligibleBlockers: CardInstanceId[];
     }
-  | {
-      type: "COUNTER_RESPONSE";
-      playerId: PlayerId;
-      attackerId: CardInstanceId;
-      defenderId: CardInstanceId;
+    | {
+        type: "COUNTER_RESPONSE";
+        playerId: PlayerId;
+        attackerId: CardInstanceId;
+        defenderId: CardInstanceId;
     };
 
 // RNG Cursors
@@ -58,6 +58,31 @@ type RngCursors = {
     life: Record<PlayerId, bigint>;
 };
 
+type TeamConfig =
+    | { kind: "FREE_FOR_ALL" }                    // every player for themselves
+    | { kind: "TEAMS"; teams: PlayerId[][] };      // e.g. [["p1","p3"], ["p2","p4"]]
+
+type WinCondition =
+    | { kind: "LAST_STANDING" }                   // last player with life wins
+    | { kind: "TEAM" }                            // team-based, derived from TeamConfig
+
+type PlayerConfig = {
+    playerId: PlayerId;
+    isActive: boolean;                            // false = auto-pass
+};
+
+export type GameConfig = {
+    gameId: string;
+    players: Record<PlayerId, PlayerConfig>;
+    teamConfig: TeamConfig;
+    winCondition: WinCondition;
+};
+
+export type SetupState = {
+    decksSubmitted: Record<PlayerId, boolean>;
+    mulligan: Record<PlayerId, boolean>;
+};
+
 ///----------------------------------------------------------------
 /// Game State
 ///----------------------------------------------------------------
@@ -65,6 +90,12 @@ export interface GameState {
     // Game Metadata
     gameId: string;
     version: number;
+
+    config: GameConfig;
+
+    // Game Settings
+    setup: SetupState;
+    rngCursors: RngCursors;
 
     // The Game Board
     definitions: Record<CardId, CardDef>; // card definitions, loaded at game start and immutable
@@ -88,21 +119,17 @@ export interface GameState {
     pendingDecision: PendingDecision | null;
 
     // Modifier Layers
-    // listeners: Record<SignalType, Listener[]>;
-    // continuousEffects: ContinuousEffect[];
-    // replacementEffects: ReplacementEffect[]; // needs the ReplacementEffect type and "would" functions to be defined
-    // effectSuppressions: AbilitySuppression[];
+    listeners: Partial<Record<SignalType, Listener[]>>;
+    continuousEffects: ContinuousEffect[];
+    replacementEffects: ReplacementEffect[]; // needs the ReplacementEffect type and "would" functions to be defined
+    effectSuppressions: AbilitySuppression[];
 
     // History
-    signalLog: GameSignal[];
     actionLog: Action[];
-    rngCursors: RngCursors;
 
     // Game Outcome
     winner: PlayerId | null;
     endReason: EndReason | null;
-
-    tick: number;  // increments with every state change, used for synchronization and replay purposes
 }
 
 
@@ -117,7 +144,7 @@ export interface PlayerZones {
     // Visible Card Zones
     characters: CardInstanceId[];
     stage: CardInstanceId | null;
-    leader: CardInstanceId;
+    leader: CardInstanceId | null;
     trash: CardInstanceId[];
 
     // Only visible to the owning player

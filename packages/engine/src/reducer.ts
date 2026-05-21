@@ -1,5 +1,5 @@
 import type { GameState } from './types/state';
-import type { Action } from './action';
+import type { Action } from './types/action';
 // import { RngSource } from './rng';
 import { validate } from './validators';
 // import {} from './apply';
@@ -9,6 +9,10 @@ export class InvalidActionError extends Error {
         super(message);
         this.name = 'InvalidActionError';
     }
+}
+
+export function step(state: GameState, action: Action): GameState {
+    return;
 }
 
 /**

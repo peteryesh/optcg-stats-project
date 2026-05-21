@@ -13,7 +13,7 @@ export type CardClass = 'LEADER' | 'CHARACTER' | 'DON' | 'EVENT' | 'STAGE';
 export type Color = 'RED' | 'GREEN' | 'BLUE' | 'PURPLE' | 'BLACK' | 'YELLOW';
 export type Attribute = 'SLASH' | 'STRIKE' | 'RANGED' | 'SPECIAL' | 'WISDOM' | '?';
 
-export type PlayerId = 'p1' | 'p2'; // add player 3 and 4 support later
+export type PlayerId = string;
 export type ListenerId = string;
 export type FrameId = string;
 

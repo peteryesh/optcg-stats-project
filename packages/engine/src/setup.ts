@@ -1,221 +1,99 @@
 import { produce } from "immer";
 import type { 
+    GameConfig,
     GameState,
-    GameStatus,
-    PlayerId,
-    PlayerState,
-    PlayerZones,
-    Card,
-    CardInstanceId,
-    CardId,
-    TurnState
+    PlayerZones
 } from "./types/state";
-import { CardInstanceId as makeCardInstanceId, CardId as makeCardId } from "./types/state";
-import type { CardDatabase } from "./types/card";
-import type { RngSource } from "./rng";
+import type { CardDef } from "./types/card";
+import { CardId, PlayerId } from "./types/primitives";
+import { LocalGameSeeds } from "./types/record";
+import { EffectSequence } from "./types/effect";
 
 const STATE_VERSION = 1;
 const DECK_SIZE = 50;
 const OPENING_HAND_SIZE = 5;
 const DEFAULT_DON_DECK_SIZE = 10;
 
-const PLAYER_IDS: readonly PlayerId[] = ["p1", "p2"] as const;
-
-export interface DeckInput {
-    leaderCardId: CardId;
-    deckCardIds: CardId[];
-}
-
-export interface SetupInput {
-    decks: Record<PlayerId, DeckInput>;
-    firstPlayer: PlayerId;
-}
-
-export function createInitialState(
-    input: SetupInput,
-    database: CardDatabase,
-    rng: RngSource,
-): GameState {
-    // Current game version (change to an environment variable)
-    let version = 0;
-
-    // Game State to be returned
-    // Need to decide where and how to actually fill the information given the parameters of the game
-    // like how much life, how much don, etc.
-    const gameState = {
+export function initGame(params: {
+    gameId: string;
+    playerCount: number;
+    defs: Record<CardId, CardDef>;
+    seeds: LocalGameSeeds;
+    config: GameConfig;
+}): GameState {
+    const { gameId, playerCount, defs, seeds, config } = params;
+    
+    const playerIds = ['p1', 'p2', 'p3', 'p4'].slice(0, playerCount) as PlayerId[];
+    
+    const state: GameState = {
+        gameId,
         version: STATE_VERSION,
-        players: {},
-        status: {type: 'not_started'},
-        tick: 0
-    } as GameState;
-
-    const cards: Record<CardInstanceId, Card> = {}
-
-    // Build cards list and individual player zones
-    for (const playerId of PLAYER_IDS) {
-        const deckInput = input.decks[playerId];
         
-        // Build the list of all cards in the player's deck
-        const playerCards = buildPlayerCards(playerId, deckInput, database);
+        config: config,
+        rngCursors: {
+            game: 0n,
+            players: Object.fromEntries(playerIds.map(id => [id, 0n])),
+            life: Object.fromEntries(playerIds.map(id => [id, 0n]))
+        },
 
-        // Add player's deck to the list of total cards in the game
-        Object.assign(cards, playerCards);
+        setup: {
+            decksSubmitted: Object.fromEntries(playerIds.map(id => [id, false])),
+            mulligan: Object.fromEntries(playerIds.map(id => [id, false]))
+        },
 
-        // Build the player state
-        const playerState = buildPlayerState(playerId, playerCards);
+        definitions: defs,
+        instances: {},
+        players: emptyPlayerZones(playerIds),
 
-        // Shuffle player cards
-        playerState.zones.deck = rng.shuffle(playerState.zones.deck);
-        console.log(playerState.zones.deck);
+        turnOrder: playerIds,
+        turnNumber: 0,
+        activePlayerId: playerIds[0],
+        phase: "SETUP",
+        cardsPlayedThisTurn: [],
 
-        gameState.players[playerId] = playerState;
-    }
-    gameState.cards = cards;
+        battlePhase: null,
+        battlesThisTurn: [],
 
-    const turnState = {
-        activePlayer: 'p1',
-        phase: 'game-start',
-        turnNumber: 0
-    } as TurnState;
-    gameState.turn = turnState;
+        currentEffect: null,
+        pendingEffects: setupEffectQueue(playerIds),
+        pendingDecision: null,
 
-    return gameState;
+        listeners: {},
+        continuousEffects: [],
+        replacementEffects: [],
+        effectSuppressions: [],
+
+        actionLog: [],
+
+        winner: null,
+        endReason: null
+    };
+    return state;
 }
 
-function getLeaderInstanceId(playerId: PlayerId) {
-    return makeCardInstanceId(`${playerId}-leader`);
-}
-
-// Still need to shuffle cards using whatever RNG implementation is passed in
-function buildPlayerState(
-    playerId: PlayerId,
-    playerCards: Record<CardInstanceId, Card>
-): PlayerState {
-    const {[getLeaderInstanceId(playerId)]: _, ...deckCards} = playerCards;
-    const playerState = {
-        id: playerId,
-        zones: {
-            deck: Object.keys(deckCards) as CardInstanceId[],
+function emptyPlayerZones(playerIds: PlayerId[]): Record<PlayerId, PlayerZones> {
+    const zones: Record<PlayerId, PlayerZones> = {} as Record<PlayerId, PlayerZones>;
+    for (const id of playerIds) {
+        zones[id] = {
+            deck: [],
             life: [],
             characters: [],
             stage: null,
-            leader: getLeaderInstanceId(playerId),
+            leader: null,
             trash: [],
             hand: [],
-            donDeck: buildDonDeck(playerId),
+            donDeck: [],
             donActive: [],
-            donRested: []
-        }
+            donRested: [],
+            look: []
+        };
     }
-    return playerState;
+    return zones;
 }
 
-function buildPlayerCards(
-    playerId: PlayerId,
-    deckInput: DeckInput,
-    database: CardDatabase,
-): Record<CardInstanceId, Card> {
-    const result: Record<CardInstanceId, Card> = {};
-
-    const leaderInstanceId = getLeaderInstanceId(playerId);
-    result[leaderInstanceId] = buildCardInstance(
-        leaderInstanceId,
-        deckInput.leaderCardId,
-        playerId,
-        database,
-    );
-
-    for (const [index, cardId] of deckInput.deckCardIds.entries()) {
-        const cardInstanceId = makeCardInstanceId(`${playerId}-card-${index}`)
-        result[cardInstanceId] = buildCardInstance(
-            cardInstanceId,
-            cardId,
-            playerId,
-            database,
-        );
-    }
-
-    return result;
-}
-
-function buildCardInstance(
-    instanceId: CardInstanceId,
-    cardId: CardId,
-    playerId: PlayerId,
-    database: CardDatabase
-): Card {
-    const cardDef = database[cardId];
-    
-    if (!cardDef) {
-        throw new Error(`Card defintion not found for ${cardId}`);
-    }
-
-    const base = {instanceId, cardId, playerId};
-
-    switch (cardDef.class) {
-        case "leader":
-            return {
-                ...base,
-                class: "leader",
-                attachedDon: [],
-                rested: false,
-                abilityUsage: [],
-                basePowerOverrides: [],
-                basePowerModifiers: [],
-                powerModifiers: []
-            }
-        
-        case "character":
-            return {
-                ...base,
-                class: "character",
-                attachedDon: [],
-                rested: false,
-                playedThisTurn: false,
-                abilityUsage: [],
-                statusEffects: [],
-                basePowerOverrides: [],
-                basePowerModifiers: [],
-                powerModifiers: [],
-                baseCostOverrides: [],
-                baseCostModifiers: [],
-                costModifiers: []
-            }
-        
-        case "stage":
-            return {
-                ...base,
-                class: "stage",
-                rested: false,
-                abilityUsage: [],
-                baseCostOverrides: [],
-                baseCostModifiers: [],
-                costModifiers: []
-            }
-
-        case "event":
-            return {
-                ...base,
-                class: "event",
-                abilityUsage: [],
-                baseCostOverrides: [],
-                baseCostModifiers: [],
-                costModifiers: []
-            }
-        
-        case "don":
-            return {
-                ...base,
-                class: "don",
-                statusEffects: []
-            }
-    }
-}
-
-function buildDonDeck(playerId: PlayerId): CardInstanceId[] {
-    const don = [];
-    for(let i = 0; i < DEFAULT_DON_DECK_SIZE; i++) {
-        don.push(makeCardInstanceId(`${playerId}-don-${i}`))
-    }
-    return don;
+function setupEffectQueue(playerIds: PlayerId[]) {
+    return playerIds.reduce((acc, id) => ({
+        ...acc,
+        [id]: []
+    }), {} as Record<PlayerId, EffectSequence[]>);
 }
