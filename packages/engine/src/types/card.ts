@@ -46,44 +46,46 @@ export type DeckList = {
     donCount: number;
 }
 
-export interface BaseInstance {
+export interface BaseCardInstance {
     instanceId: CardInstanceId;
-    cardId: CardId;
     controller: PlayerId;
     currentZone: Zone;
     isRested: boolean;
 }
 
+// Leader — like character but tracks life and has rule modifiers
+export interface LeaderInstance extends BaseCardInstance {
+    cardId: CardId;
+    class: "LEADER";
+    attachedDon: CardInstanceId[];
+    effectsUsedThisTurn: Record<string, boolean>;
+}
+
 // Character — can attack, have DON!! attached, use effects
-export interface CharacterInstance extends BaseInstance {
+export interface CharacterInstance extends BaseCardInstance {
+    cardId: CardId;
     class: "CHARACTER";
     attachedDon: CardInstanceId[];
     playedOnTurns: number[];
     effectsUsedThisTurn: Record<string, boolean>;
 }
 
-// Leader — like character but tracks life and has rule modifiers
-export interface LeaderInstance extends BaseInstance {
-    class: "LEADER";
-    attachedDon: CardInstanceId[];
-    playedOnTurns: number[];
-    effectsUsedThisTurn: Record<string, boolean>;
-}
-
 // Stage — enters play, can be bounced, no DON!!
-export interface StageInstance extends BaseInstance {
+export interface StageInstance extends BaseCardInstance {
+    cardId: CardId;
     class: "STAGE";
     playedOnTurns: number[];
     effectsUsedThisTurn: Record<string, boolean>;
 }
 
-export interface EventInstance extends BaseInstance {
+export interface EventInstance extends BaseCardInstance {
+    cardId: CardId;
     class: "EVENT";
     playedOnTurns: number[];
 }
 
 // DON!! — attaches to characters/leader, tracks attachment
-export interface DonInstance extends BaseInstance {
+export interface DonInstance extends BaseCardInstance {
     class: "DON";
     attachedTo: CardInstanceId | null;
 }

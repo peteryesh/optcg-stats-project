@@ -9,6 +9,11 @@ export const CardId = (s: string): CardId => s as CardId;
 export type Seed = bigint;
 export type Nonce = bigint;
 
+export type GameSeeds = {
+    game: Seed;
+    players: Record<PlayerId, Seed>;
+};
+
 export type CardClass = 'LEADER' | 'CHARACTER' | 'DON' | 'EVENT' | 'STAGE';
 export type Color = 'RED' | 'GREEN' | 'BLUE' | 'PURPLE' | 'BLACK' | 'YELLOW';
 export type Attribute = 'SLASH' | 'STRIKE' | 'RANGED' | 'SPECIAL' | 'WISDOM' | '?';

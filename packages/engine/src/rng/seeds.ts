@@ -1,12 +1,15 @@
-import type { Nonce, PlayerId, Seed } from '../types/primitives';
-import { GameSeeds } from '../types/record';
+import type { Nonce, PlayerId, Seed, GameSeeds } from '../types/primitives';
 
-export function generateGameSeeds(playerIds: PlayerId[]): GameSeeds {
+function generateGameSeeds(playerCount: number, fixedSeed?: Seed): GameSeeds {
+    const playerIds = Array.from({ length: playerCount }, (_, i) => `p${i + 1}`);
     return {
-        game: generateSeed(),
-        players: Object.fromEntries(playerIds.map(id => [id, generateSeed()])) as Record<PlayerId, Seed>,
-        life: Object.fromEntries(playerIds.map(id => [id, generateSeed()])) as Record<PlayerId, Seed>,
-        nonce: generateSeed(),
+        game: fixedSeed ?? generateSeed(),
+        players: Object.fromEntries(
+            playerIds.map((id, i) => [id, fixedSeed !== undefined
+                ? fixedSeed + BigInt(i + 1)
+                : generateSeed()
+            ])
+        ),
     };
 }
 

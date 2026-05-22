@@ -3,7 +3,6 @@ import { CardId, CardInstanceId, PlayerId, FrameId } from "./primitives";
 
 export type Action =
   // Setup
-  | { type: "SUBMIT_DECK"; playerId: PlayerId; decklist: DeckList }
   | { type: "CHOOSE_TURN_ORDER"; playerId: PlayerId; choice: "FIRST" | "SECOND" }
   | { type: "KEEP_HAND";         playerId: PlayerId }
   | { type: "MULLIGAN";          playerId: PlayerId }

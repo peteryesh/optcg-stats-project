@@ -1,4 +1,4 @@
-import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId } from './primitives';
+import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId, GameSeeds } from './primitives';
 import type { GameSignal, SignalType, Listener } from './signal';
 import type { CardFilter } from './filter';
 import type { CardDef, CardInstance } from './card';
@@ -79,7 +79,6 @@ export type GameConfig = {
 };
 
 export type SetupState = {
-    decksSubmitted: Record<PlayerId, boolean>;
     mulligan: Record<PlayerId, boolean>;
 };
 
@@ -95,12 +94,13 @@ export interface GameState {
 
     // Game Settings
     setup: SetupState;
+    seeds: GameSeeds;
     rngCursors: RngCursors;
 
     // The Game Board
     definitions: Record<CardId, CardDef>; // card definitions, loaded at game start and immutable
     instances: Record<CardInstanceId, CardInstance>; // Card instances for all players
-    players: Record<PlayerId, PlayerZones>; // Card zones for each player, keeps the card locations
+    playerZones: Record<PlayerId, PlayerZones>; // Card zones for each player, keeps the card locations
 
     // Turn and Phase
     turnOrder: PlayerId[];  // player order

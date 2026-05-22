@@ -3,33 +3,47 @@ import type {
     GameConfig,
     GameState,
     PlayerZones
-} from "./types/state";
-import type { CardDef } from "./types/card";
-import { CardId, PlayerId } from "./types/primitives";
-import { LocalGameSeeds } from "./types/record";
-import { EffectSequence } from "./types/effect";
+} from "../types/state";
+import type { CardDef, DeckList } from "../types/card";
+import { GameSeeds, CardId, PlayerId } from "../types/primitives";
+import { EffectSequence } from "../types/effect";
+import { instantiatePlayerBoard } from "./instances";
 
 const STATE_VERSION = 1;
 const DECK_SIZE = 50;
 const OPENING_HAND_SIZE = 5;
 const DEFAULT_DON_DECK_SIZE = 10;
 
+// need get all card defs, convert to engine card def, create blank game state, instantiate decks, create card instance
+
+
 export function initGame(params: {
     gameId: string;
-    playerCount: number;
-    defs: Record<CardId, CardDef>;
-    seeds: LocalGameSeeds;
+    playerIds: PlayerId[];
+    seeds: GameSeeds;
     config: GameConfig;
+    defs: Record<CardId, CardDef>;
+    decks: Record<PlayerId, DeckList>;
 }): GameState {
-    const { gameId, playerCount, defs, seeds, config } = params;
+    const { gameId, playerIds, seeds, config, defs, decks } = params;
     
-    const playerIds = ['p1', 'p2', 'p3', 'p4'].slice(0, playerCount) as PlayerId[];
-    
-    const state: GameState = {
+    let state = createEmptyGameState(gameId, playerIds, seeds, config);
+
+    // Instantiate player boards
+    for (const playerId of playerIds) {
+        state = instantiatePlayerBoard(state, decks[playerId], defs, playerId);
+    }
+
+    return state;
+}
+
+function createEmptyGameState(gameId: string, playerIds: PlayerId[], seeds: GameSeeds, config: GameConfig): GameState {
+    return {
         gameId,
         version: STATE_VERSION,
         
         config: config,
+        seeds: seeds,
         rngCursors: {
             game: 0n,
             players: Object.fromEntries(playerIds.map(id => [id, 0n])),
@@ -37,13 +51,13 @@ export function initGame(params: {
         },
 
         setup: {
-            decksSubmitted: Object.fromEntries(playerIds.map(id => [id, false])),
             mulligan: Object.fromEntries(playerIds.map(id => [id, false]))
         },
 
-        definitions: defs,
+        definitions: {},
         instances: {},
-        players: emptyPlayerZones(playerIds),
+        
+        playerZones: emptyPlayerZones(playerIds),
 
         turnOrder: playerIds,
         turnNumber: 0,
@@ -68,7 +82,6 @@ export function initGame(params: {
         winner: null,
         endReason: null
     };
-    return state;
 }
 
 function emptyPlayerZones(playerIds: PlayerId[]): Record<PlayerId, PlayerZones> {
