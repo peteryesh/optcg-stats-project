@@ -1,10 +1,8 @@
 // CardInstanceId
-export type CardInstanceId = string & { __brand: 'CardInstanceId' };
-export const CardInstanceId = (s: string): CardInstanceId => s as CardInstanceId;
+export type CardInstanceId = string;
 
 // CardId
-export type CardId = string & { __brand: 'CardId' };
-export const CardId = (s: string): CardId => s as CardId;
+export type CardId = string;
 
 export type Seed = bigint;
 export type Nonce = bigint;

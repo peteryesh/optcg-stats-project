@@ -55,7 +55,6 @@ type PendingDecision =
 type RngCursors = {
     game: bigint;
     players: Record<PlayerId, bigint>;
-    life: Record<PlayerId, bigint>;
 };
 
 type TeamConfig =
@@ -72,7 +71,6 @@ type PlayerConfig = {
 };
 
 export type GameConfig = {
-    gameId: string;
     players: Record<PlayerId, PlayerConfig>;
     teamConfig: TeamConfig;
     winCondition: WinCondition;

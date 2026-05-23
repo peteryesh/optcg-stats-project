@@ -1,5 +1,5 @@
 import { produce } from "immer";
-import type { 
+import type {
     GameConfig,
     GameState,
     PlayerZones
@@ -8,6 +8,7 @@ import type { CardDef, DeckList } from "../types/card";
 import { GameSeeds, CardId, PlayerId } from "../types/primitives";
 import { EffectSequence } from "../types/effect";
 import { instantiatePlayerBoard } from "./instances";
+import { getCardDefsFromDeckList } from "../database/definitions";
 
 const STATE_VERSION = 1;
 const DECK_SIZE = 50;
@@ -26,7 +27,7 @@ export function initGame(params: {
     decks: Record<PlayerId, DeckList>;
 }): GameState {
     const { gameId, playerIds, seeds, config, defs, decks } = params;
-    
+
     let state = createEmptyGameState(gameId, playerIds, seeds, config);
 
     // Instantiate player boards
@@ -41,13 +42,12 @@ function createEmptyGameState(gameId: string, playerIds: PlayerId[], seeds: Game
     return {
         gameId,
         version: STATE_VERSION,
-        
+
         config: config,
         seeds: seeds,
         rngCursors: {
             game: 0n,
-            players: Object.fromEntries(playerIds.map(id => [id, 0n])),
-            life: Object.fromEntries(playerIds.map(id => [id, 0n]))
+            players: Object.fromEntries(playerIds.map(id => [id, 0n]))
         },
 
         setup: {
@@ -56,7 +56,7 @@ function createEmptyGameState(gameId: string, playerIds: PlayerId[], seeds: Game
 
         definitions: {},
         instances: {},
-        
+
         playerZones: emptyPlayerZones(playerIds),
 
         turnOrder: playerIds,

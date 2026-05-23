@@ -36,7 +36,7 @@ export interface CardDef {
     attributes: Attribute[];
     aliases: string[];
     restrictions: object[];
-    effects: EffectDefinition[];   // added by engine, not in database
+    effects: EffectDefinition[];   // added later, not in database currently
 }
 
 export type DeckList = {

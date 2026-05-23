@@ -1,6 +1,6 @@
 import type { Nonce, PlayerId, Seed, GameSeeds } from '../types/primitives';
 
-function generateGameSeeds(playerCount: number, fixedSeed?: Seed): GameSeeds {
+export function generateGameSeeds(playerCount: number, fixedSeed?: Seed): GameSeeds {
     const playerIds = Array.from({ length: playerCount }, (_, i) => `p${i + 1}`);
     return {
         game: fixedSeed ?? generateSeed(),
