@@ -4,6 +4,7 @@ import type { CardFilter } from './filter';
 import type { CardDef, CardInstance } from './card';
 import type { Action } from './action';
 import { EffectSequence, ContinuousEffect, ReplacementEffect, AbilitySuppression } from './effect';
+import { ActionRecord } from './record';
 
 
 type BattleRecord = { attackerId: CardInstanceId; defenderId: CardInstanceId; };
@@ -123,7 +124,7 @@ export interface GameState {
     effectSuppressions: AbilitySuppression[];
 
     // History
-    actionLog: Action[];
+    actionLog: ActionRecord[];
 
     // Game Outcome
     winner: PlayerId | null;
@@ -135,26 +136,17 @@ export interface GameState {
 /// Zones
 ///----------------------------------------------------------------
 export interface PlayerZones {
-    // Hidden Card Zones
-    deck: CardInstanceId[];
-    life: CardInstanceId[];
-
-    // Visible Card Zones
     characters: CardInstanceId[];
-    stage: CardInstanceId | null;
-    leader: CardInstanceId | null;
-    trash: CardInstanceId[];
-
-    // Only visible to the owning player
-    hand: CardInstanceId[];
-
-    // Don Card Zones
-    donDeck: CardInstanceId[];
+    deck: CardInstanceId[];
     donActive: CardInstanceId[];
+    donDeck: CardInstanceId[];
     donRested: CardInstanceId[];
-
-    // System Card Zones (not visible to players, used for game state management)
-    look: CardInstanceId[];  // used for temporarily holding cards that are being looked at or manipulated
+    hand: CardInstanceId[];
+    leader: CardInstanceId[]; // Only one allowed, but creating space for alternate game modes with multiple or shared leaders
+    life: CardInstanceId[];
+    look: CardInstanceId[];   // system zone: temporarily holds cards being looked at or manipulated
+    stage: CardInstanceId[];  // only one allowed, but using array for consistency and ease of indexing
+    trash: CardInstanceId[];
 }
 
 

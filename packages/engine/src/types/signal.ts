@@ -1,5 +1,5 @@
 import { CardFilter } from './filter';
-import type { CardId, CardInstanceId, Attribute, CardClass, Color, PlayerId, Zone, EndReason, Position, RevealedTo } from './primitives';
+import type { CardId, CardInstanceId, Attribute, CardClass, Color, PlayerId, Zone, EndReason, StackPosition, RevealedTo } from './primitives';
 
 // ============================================================
 // Shared Types
@@ -37,18 +37,18 @@ export type GameSignal =
     | { type: "CHARACTER_KOD"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause }
     | { type: "CHARACTER_TRASHED"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause }
     | { type: "CHARACTER_BOUNCED"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause }
-    | { type: "CHARACTER_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause; position: Position }
+    | { type: "CHARACTER_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause; position: StackPosition }
     | { type: "STAGE_KOD"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause }
     | { type: "STAGE_TRASHED"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause }
     | { type: "STAGE_BOUNCED"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause }
-    | { type: "STAGE_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause; position: Position }
+    | { type: "STAGE_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause; position: StackPosition }
 
     // Hand & Deck
     | { type: "CARD_DRAWN"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     | { type: "CARD_DISCARDED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     | { type: "CARD_RETURNED_TO_HAND"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; cause: SignalCause }
     | { type: "CARD_MILLED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-    | { type: "CARD_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; position: Position; cause: SignalCause }
+    | { type: "CARD_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; position: StackPosition; cause: SignalCause }
     | { type: "DECK_SHUFFLED"; playerId: PlayerId; cause: SignalCause }
 
     // Rest State
@@ -58,9 +58,6 @@ export type GameSignal =
     | { type: "LEADER_SET_ACTIVE"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     | { type: "STAGE_RESTED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     | { type: "STAGE_SET_ACTIVE"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-    | { type: "CARD_RESTED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-    | { type: "CARD_SET_ACTIVE"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-
     // Combat
     | { type: "ATTACK_DECLARED"; attackerId: CardInstanceId; defenderId: CardInstanceId; controller: PlayerId }
     | { type: "BLOCKER_DECLARED"; blockerId: CardInstanceId; attackerId: CardInstanceId; controller: PlayerId }
@@ -70,14 +67,14 @@ export type GameSignal =
 
     // Life & Damage
     | { type: "DAMAGE_DEALT"; instanceId: CardInstanceId; controller: PlayerId; amount: number; cause: DamageCause }
-    | { type: "LIFE_REMOVED"; instanceId: CardInstanceId; playerId: PlayerId; position: Position; cause: SignalCause }
-    | { type: "LIFE_TAKEN_TO_HAND"; instanceId: CardInstanceId; playerId: PlayerId; position: Position; cause: SignalCause }
-    | { type: "LIFE_TRASHED"; instanceId: CardInstanceId; playerId: PlayerId; position: Position; cause: SignalCause }
-    | { type: "LIFE_ADDED"; instanceId: CardInstanceId; playerId: PlayerId; position: Position; cause: SignalCause }
-    | { type: "LIFE_REVEALED"; instanceId: CardInstanceId; playerId: PlayerId; position: Position; revealedTo: RevealedTo; cause: SignalCause }
-    | { type: "LIFE_FLIPPED"; instanceId: CardInstanceId; playerId: PlayerId; position: Position; cause: SignalCause }
+    | { type: "LIFE_REMOVED"; instanceId: CardInstanceId; playerId: PlayerId; position: StackPosition; cause: SignalCause }
+    | { type: "LIFE_TAKEN_TO_HAND"; instanceId: CardInstanceId; playerId: PlayerId; position: StackPosition; cause: SignalCause }
+    | { type: "LIFE_TRASHED"; instanceId: CardInstanceId; playerId: PlayerId; position: StackPosition; cause: SignalCause }
+    | { type: "LIFE_ADDED"; instanceId: CardInstanceId; playerId: PlayerId; position: StackPosition; cause: SignalCause }
+    | { type: "LIFE_REVEALED"; instanceId: CardInstanceId; playerId: PlayerId; position: StackPosition; revealedTo: RevealedTo; cause: SignalCause }
+    | { type: "LIFE_FLIPPED"; instanceId: CardInstanceId; playerId: PlayerId; position: StackPosition; cause: SignalCause }
     | { type: "LIFE_REORDERED"; playerId: PlayerId; cause: SignalCause }
-    | { type: "LIFE_REVEALED_AS_TRIGGER"; instanceId: CardInstanceId; playerId: PlayerId; position: Position }
+    | { type: "LIFE_REVEALED_AS_TRIGGER"; instanceId: CardInstanceId; playerId: PlayerId; position: StackPosition }
 
     // Game Setup (review this section after finalizing game setup flow)
     | { type: "GAME_SETUP_STARTED"; turnOrder: PlayerId[] }
@@ -118,6 +115,7 @@ export type GameSignal =
     | { type: "DON_DRAWN"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     | { type: "DON_ATTACHED"; donId: CardInstanceId; targetId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     | { type: "DON_DETACHED"; donId: CardInstanceId; targetId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    | { type: "DON_BATCH_RESTED"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
     | { type: "DON_RESTED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     | { type: "DON_SET_ACTIVE"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     | { type: "DON_RETURNED_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
@@ -141,21 +139,18 @@ type SignalCategory =
     | "CARD_TRASHED"
     | "CARD_RETURNED"
     | "REST_STATE_CHANGED"
+    | "CARD_RESTED"
+    | "CARD_SET_ACTIVE"
     | "DON_CHANGED"
     | "LIFE_CHANGED"
     | "TURN_BOUNDARY"
     | "BATTLE_BOUNDARY";
 
-type ListenerCondition = {
-    filter: CardFilter | null;        // additional card-level filtering
-    activeZones: Zone[];              // zones where this listener is active
-};
-
 export type Listener = {
     listenerId: string;
     instanceId: CardInstanceId;
     activeZones: Zone[];
-    condition: ListenerCondition;
+    condition: CardFilter | null;
     effectDefinitionId: string;
     signalType: SignalType;          // exactly one signal type per listener
 };

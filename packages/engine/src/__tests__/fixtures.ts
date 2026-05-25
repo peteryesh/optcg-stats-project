@@ -1,10 +1,10 @@
 // src/__tests__/fixtures.ts
 import type {
     CardId, CardDef, DeckList, GameSeeds,
-    GameConfig, PlayerId, CardClass,
+    GameConfig, PlayerId,
     GameState,
 } from "../types";
-import { initGame } from "../game/setup";
+import { createEmptyGameState, initGame } from "../game/setup";
 
 // ============================================================
 // Mock card IDs
@@ -13,7 +13,6 @@ export const MOCK_LEADER_ID: CardId = "TEST-LEADER-001";
 export const MOCK_CHAR_ID: CardId = "TEST-CHAR-001";
 export const MOCK_EVENT_ID: CardId = "TEST-EVENT-001";
 export const MOCK_STAGE_ID: CardId = "TEST-STAGE-001";
-export const DON_ID: CardId = "DON!!";
 
 // ============================================================
 // Mock definitions
@@ -111,17 +110,27 @@ export function mockConfig(playerIds: PlayerId[]): GameConfig {
 }
 
 // ============================================================
-// Setup helper — initializes RNGs and returns game state
+// Empty state helper
+// ============================================================
+export function makeEmptyState(playerIds: PlayerId[] = ["p1", "p2"]): GameState {
+    return createEmptyGameState(
+        "test-game",
+        playerIds,
+        mockSeeds(playerIds),
+        mockConfig(playerIds),
+    );
+}
+
+// ============================================================
+// Full initialized game helper
 // ============================================================
 export function setupTestGame(playerIds: PlayerId[] = ["p1", "p2"]): GameState {
-    const seeds = mockSeeds(playerIds);
-
     return initGame({
         gameId: "test-game",
         playerIds,
-        seeds,
+        seeds: mockSeeds(playerIds),
         config: mockConfig(playerIds),
-        decklists: Object.fromEntries(playerIds.map(id => [id, mockDecklist()])),
         defs: mockDefs,
+        decks: Object.fromEntries(playerIds.map(id => [id, mockDecklist()])),
     });
 }

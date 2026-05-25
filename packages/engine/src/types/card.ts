@@ -49,14 +49,14 @@ export type DeckList = {
 export interface BaseCardInstance {
     instanceId: CardInstanceId;
     controller: PlayerId;
-    currentZone: Zone;
-    isRested: boolean;
+    currentZone: Zone | null;
 }
 
 // Leader — like character but tracks life and has rule modifiers
 export interface LeaderInstance extends BaseCardInstance {
     cardId: CardId;
     class: "LEADER";
+    isRested: boolean;
     attachedDon: CardInstanceId[];
     effectsUsedThisTurn: Record<string, boolean>;
 }
@@ -65,6 +65,7 @@ export interface LeaderInstance extends BaseCardInstance {
 export interface CharacterInstance extends BaseCardInstance {
     cardId: CardId;
     class: "CHARACTER";
+    isRested: boolean;
     attachedDon: CardInstanceId[];
     playedOnTurns: number[];
     effectsUsedThisTurn: Record<string, boolean>;
@@ -74,6 +75,8 @@ export interface CharacterInstance extends BaseCardInstance {
 export interface StageInstance extends BaseCardInstance {
     cardId: CardId;
     class: "STAGE";
+    isRested: boolean;
+    attachedDon: CardInstanceId[];
     playedOnTurns: number[];
     effectsUsedThisTurn: Record<string, boolean>;
 }
@@ -81,7 +84,9 @@ export interface StageInstance extends BaseCardInstance {
 export interface EventInstance extends BaseCardInstance {
     cardId: CardId;
     class: "EVENT";
+    isRested: boolean;
     playedOnTurns: number[];
+    effectsUsedThisTurn: Record<string, boolean>;
 }
 
 // DON!! — attaches to characters/leader, tracks attachment

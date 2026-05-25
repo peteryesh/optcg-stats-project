@@ -11,12 +11,6 @@ import { instantiatePlayerBoard } from "./instances";
 import { getCardDefsFromDeckList } from "../database/definitions";
 
 const STATE_VERSION = 1;
-const DECK_SIZE = 50;
-const OPENING_HAND_SIZE = 5;
-const DEFAULT_DON_DECK_SIZE = 10;
-
-// need get all card defs, convert to engine card def, create blank game state, instantiate decks, create card instance
-
 
 export function initGame(params: {
     gameId: string;
@@ -38,7 +32,7 @@ export function initGame(params: {
     return state;
 }
 
-function createEmptyGameState(gameId: string, playerIds: PlayerId[], seeds: GameSeeds, config: GameConfig): GameState {
+export function createEmptyGameState(gameId: string, playerIds: PlayerId[], seeds: GameSeeds, config: GameConfig): GameState {
     return {
         gameId,
         version: STATE_VERSION,
@@ -84,27 +78,27 @@ function createEmptyGameState(gameId: string, playerIds: PlayerId[], seeds: Game
     };
 }
 
-function emptyPlayerZones(playerIds: PlayerId[]): Record<PlayerId, PlayerZones> {
+export function emptyPlayerZones(playerIds: PlayerId[]): Record<PlayerId, PlayerZones> {
     const zones: Record<PlayerId, PlayerZones> = {} as Record<PlayerId, PlayerZones>;
     for (const id of playerIds) {
         zones[id] = {
-            deck: [],
-            life: [],
             characters: [],
-            stage: null,
-            leader: null,
-            trash: [],
-            hand: [],
-            donDeck: [],
+            deck: [],
             donActive: [],
+            donDeck: [],
             donRested: [],
-            look: []
+            hand: [],
+            leader: [],
+            life: [],
+            look: [],
+            stage: [],
+            trash: [],
         };
     }
     return zones;
 }
 
-function setupEffectQueue(playerIds: PlayerId[]) {
+export function setupEffectQueue(playerIds: PlayerId[]) {
     return playerIds.reduce((acc, id) => ({
         ...acc,
         [id]: []

@@ -22,34 +22,32 @@ import {
 export function instantiatePlayerBoard(state: GameState, deckList: DeckList, defs: Record<CardId, CardDef>, controller: PlayerId): GameState {
     const { leader, deck, sideDeck, donCount } = deckList;
 
-    const instances: Record<CardInstanceId, CardInstance> = {};
-
     // Instantiate leader
     state = instantiateLeader(state, leader, defs, controller);
 
     // Instantiate deck cards
-    state = instantiateDeckCards(state, deck, defs, controller);
+    state = instantiateDeck(state, deck, defs, controller);
 
     // Instantiate DON!! cards
-    state = instantiateDonDeck(state, donCount, controller);
+    state = instantiateDon(state, donCount, controller);
 
     return state;
 }
 
-function instantiateLeader(state: GameState, cardId: CardId, defs: Record<CardId, CardDef>, controller: PlayerId): GameState {
+export function instantiateLeader(state: GameState, cardId: CardId, defs: Record<CardId, CardDef>, controller: PlayerId): GameState {
     const instanceId = `${controller}-LEADER` as CardInstanceId;
     const leaderInstance = createInstance(instanceId, "LEADER", controller, defs[cardId]) as LeaderInstance;
 
     return produce(state, draft => {
         draft.instances[instanceId] = leaderInstance;
-        draft.playerZones[controller].leader = instanceId;
+        draft.playerZones[controller].leader.push(instanceId);
     });
 }
 
-function instantiateDeckCards(state: GameState, cardIds: CardId[], defs: Record<CardId, CardDef>, controller: PlayerId): GameState {
+export function instantiateDeck(state: GameState, cardIds: CardId[], defs: Record<CardId, CardDef>, controller: PlayerId): GameState {
     const newInstances: Record<CardInstanceId, CardInstance> = {};
     cardIds.forEach((cardId, index) => {
-        const instanceId = `${controller}-CARD-${Date.now()}-${index}` as CardInstanceId; // unique instance ID
+        const instanceId = `${controller}-CARD-${index}` as CardInstanceId; // unique instance ID
         newInstances[instanceId] = createInstance(instanceId, defs[cardId].class, controller, defs[cardId]);
     });
 
@@ -59,10 +57,10 @@ function instantiateDeckCards(state: GameState, cardIds: CardId[], defs: Record<
     });
 }
 
-function instantiateDonDeck(state: GameState, donCount: number, controller: PlayerId): GameState {
+export function instantiateDon(state: GameState, donCount: number, controller: PlayerId): GameState {
     const newInstances: Record<CardInstanceId, CardInstance> = {};
     for (let i = 0; i < donCount; i++) {
-        const instanceId = `${controller}-DON-${Date.now()}-${i}` as CardInstanceId; // unique instance ID
+        const instanceId = `${controller}-DON-${i}` as CardInstanceId; // unique instance ID
         newInstances[instanceId] = createInstance(instanceId, "DON", controller);
     }
 
@@ -72,11 +70,11 @@ function instantiateDonDeck(state: GameState, donCount: number, controller: Play
     });
 }
 
-function createInstance(instanceId: CardInstanceId, cardClass: CardClass, controller: PlayerId, cardDef?: CardDef): CardInstance {
+export function createInstance(instanceId: CardInstanceId, cardClass: CardClass, controller: PlayerId, cardDef?: CardDef): CardInstance {
     const baseInstance = {
         instanceId,
         controller,
-        currentZone: "DECK",
+        currentZone: null,
         isRested: false
     };
     switch (cardClass) {
@@ -102,6 +100,7 @@ function createInstance(instanceId: CardInstanceId, cardClass: CardClass, contro
                 ...baseInstance,
                 cardId: cardDef?.id,
                 class: "STAGE",
+                attachedDon: [],
                 playedOnTurns: [],
                 effectsUsedThisTurn: {}
             } as StageInstance;
@@ -110,7 +109,8 @@ function createInstance(instanceId: CardInstanceId, cardClass: CardClass, contro
                 ...baseInstance,
                 cardId: cardDef?.id,
                 class: "EVENT",
-                playedOnTurns: []
+                playedOnTurns: [],
+                effectsUsedThisTurn: {}
             } as EventInstance;
         case "DON":
             return {
@@ -118,5 +118,7 @@ function createInstance(instanceId: CardInstanceId, cardClass: CardClass, contro
                 class: "DON",
                 attachedTo: null
             } as DonInstance;
+        default:
+            throw new Error(`Unknown card class ${cardClass} for instance ${instanceId}`);
     }
 }

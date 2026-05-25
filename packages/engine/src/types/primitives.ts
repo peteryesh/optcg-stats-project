@@ -12,26 +12,26 @@ export type GameSeeds = {
     players: Record<PlayerId, Seed>;
 };
 
-export type CardClass = 'LEADER' | 'CHARACTER' | 'DON' | 'EVENT' | 'STAGE';
-export type Color = 'RED' | 'GREEN' | 'BLUE' | 'PURPLE' | 'BLACK' | 'YELLOW';
-export type Attribute = 'SLASH' | 'STRIKE' | 'RANGED' | 'SPECIAL' | 'WISDOM' | '?';
+export type CardClass = 'CHARACTER' | 'DON' | 'EVENT' | 'LEADER' | 'STAGE';
+export type Color = 'BLACK' | 'BLUE' | 'GREEN' | 'PURPLE' | 'RED' | 'YELLOW';
+export type Attribute = '?' | 'RANGED' | 'SLASH' | 'SPECIAL' | 'STRIKE' | 'WISDOM';
 
 export type PlayerId = string;
 export type ListenerId = string;
 export type FrameId = string;
 
 export type Zone =
-    | 'DECK'
-    | 'HAND'
-    | 'LIFE'
-    | 'TRASH'
     | 'CHARACTERS'
-    | 'STAGE'
-    | 'LEADER'
-    | 'DON_DECK'
+    | 'DECK'
     | 'DON_ACTIVE'
+    | 'DON_DECK'
     | 'DON_RESTED'
-    | 'LOOK';
+    | 'HAND'
+    | 'LEADER'
+    | 'LIFE'
+    | 'LOOK'
+    | 'STAGE'
+    | 'TRASH';
 
 // Game Phases
 export type Phase = 'SETUP' | 'START_OF_TURN' | 'REFRESH' | 'DRAW' | 'MAIN' | 'END_OF_TURN' | 'GAME_END';
@@ -40,7 +40,8 @@ export type TriggerPhase = 'ACTIVATE_TRIGGER' | 'TO_HAND' | 'TO_TRASH' | 'EFFECT
 
 export type EndReason = 'KNOCKOUT' | 'DECKOUT' | 'CONCEDE' | 'TIMEOUT' | 'DISCONNECT';
 
-export type Position = "TOP" | "BOTTOM";
+export type StackPosition = "TOP" | "BOTTOM"
+
 export type RevealedTo = "BOTH" | "SELF" | "OPPONENT";
 export type CompareOp = ">=" | "<=" | "==" | ">" | "<";
 

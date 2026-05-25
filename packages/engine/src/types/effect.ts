@@ -1,4 +1,4 @@
-import type { CardInstanceId, PlayerId, Zone, Keyword, Position } from './primitives';
+import type { CardInstanceId, PlayerId, Zone, Keyword, StackPosition } from './primitives';
 import type { GameSignal, SignalType } from './signal';
 import type { CardFilter } from './filter';
 
@@ -11,7 +11,7 @@ export type EffectSequence = {
     resolved: Record<string, CardInstanceId | CardInstanceId[] | boolean | number>;
 };
 
-type EffectStep = {
+export type EffectStep = {
     type: EffectStepType;
     resolution: EffectResolution;
     condition: CardFilter | null;
@@ -26,11 +26,11 @@ type EffectStep = {
     duration: EffectDuration | null;
 };
 
-type EffectResolution =
+export type EffectResolution =
     | { kind: "AUTO" }
     | { kind: "PLAYER"; outputKey: string };
 
-type EffectStepType =
+export type EffectStepType =
     | "CHOOSE_TARGET"
     | "CHOOSE_FROM_ZONE"
     | "MOVE_CARD"
@@ -50,7 +50,7 @@ type EffectStepType =
     | "GRANT_KEYWORD"
     | "CONDITION";
 
-type EffectActivationType =
+export type EffectActivationType =
     | { kind: "ON_PLAY" }
     | { kind: "ON_KO" }
     | { kind: "WHEN_ATTACKING" }
@@ -67,15 +67,15 @@ export type EffectDefinition = {
     sequence: EffectStep[];
 };
 
-type EffectOperation =
+export type EffectOperation =
     // Zone movement
-    | { kind: "MOVE_CARD"; toZone: Zone; position: Position }
+    | { kind: "MOVE_CARD"; toZone: Zone; position: StackPosition }
 
     // Card removal
     | { kind: "KO_TARGET" }
     | { kind: "TRASH_TARGET" }
     | { kind: "BOUNCE_TARGET" }
-    | { kind: "SEND_TO_DECK"; position: Position }
+    | { kind: "SEND_TO_DECK"; position: StackPosition }
 
     // Draw & hand
     | { kind: "DRAW_CARDS"; count: number }
@@ -92,8 +92,8 @@ type EffectOperation =
     | { kind: "APPLY_REPLACEMENT"; replacedAction: ReplacedActionType; duration: EffectDuration }
 
     // Life
-    | { kind: "ADD_LIFE"; count: number; position: Position }
-    | { kind: "TRASH_LIFE"; count: number; position: Position }
+    | { kind: "ADD_LIFE"; count: number; position: StackPosition }
+    | { kind: "TRASH_LIFE"; count: number; position: StackPosition }
 
     // Look zone
     | { kind: "ADD_TO_LOOK"; count: number; fromZone: Zone }
