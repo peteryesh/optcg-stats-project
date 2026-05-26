@@ -1,7 +1,7 @@
-import type { CardDefinition } from "@optcg/engine";
+import type { CardDef } from "@optcg/engine";
 
 interface CardThumbnailProps {
-    card: CardDefinition | null;
+    card: CardDef | null;
     quality?: 'thumb' | 'full';
     onClick?: () => void;
 }

@@ -50,13 +50,13 @@ export interface BaseCardInstance {
     instanceId: CardInstanceId;
     controller: PlayerId;
     currentZone: Zone | null;
+    isRested: boolean;
 }
 
 // Leader — like character but tracks life and has rule modifiers
 export interface LeaderInstance extends BaseCardInstance {
     cardId: CardId;
     class: "LEADER";
-    isRested: boolean;
     attachedDon: CardInstanceId[];
     effectsUsedThisTurn: Record<string, boolean>;
 }
@@ -65,7 +65,6 @@ export interface LeaderInstance extends BaseCardInstance {
 export interface CharacterInstance extends BaseCardInstance {
     cardId: CardId;
     class: "CHARACTER";
-    isRested: boolean;
     attachedDon: CardInstanceId[];
     playedOnTurns: number[];
     effectsUsedThisTurn: Record<string, boolean>;
@@ -75,7 +74,6 @@ export interface CharacterInstance extends BaseCardInstance {
 export interface StageInstance extends BaseCardInstance {
     cardId: CardId;
     class: "STAGE";
-    isRested: boolean;
     attachedDon: CardInstanceId[];
     playedOnTurns: number[];
     effectsUsedThisTurn: Record<string, boolean>;
@@ -84,14 +82,15 @@ export interface StageInstance extends BaseCardInstance {
 export interface EventInstance extends BaseCardInstance {
     cardId: CardId;
     class: "EVENT";
-    isRested: boolean;
     playedOnTurns: number[];
     effectsUsedThisTurn: Record<string, boolean>;
 }
 
 // DON!! — attaches to characters/leader, tracks attachment
+// isRested is always false: DON!! active/rested state is tracked by zone (DON_ACTIVE / DON_RESTED)
 export interface DonInstance extends BaseCardInstance {
     class: "DON";
+    isRested: false;
     attachedTo: CardInstanceId | null;
 }
 

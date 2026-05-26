@@ -1,12 +1,12 @@
 // apps/web/src/components/CardGrid.tsx
 
 import { VirtuosoGrid } from 'react-virtuoso';
-import type { CardId, CardDefinition } from '@optcg/engine';
+import type { CardId, CardDef } from '@optcg/engine';
 import { CardThumbnail } from './CardThumbnail';
 import styles from './CardGrid.module.css';
 
 interface CardGridProps {
-  cards: CardDefinition[];
+  cards: CardDef[];
   onCardClick: (card: CardId) => void;
 }
 

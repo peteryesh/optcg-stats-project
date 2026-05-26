@@ -18,6 +18,7 @@ import {
     CardDef,
     EventInstance
 } from "../types/card";
+import type { Zone } from "../types/primitives";
 
 export function instantiatePlayerBoard(state: GameState, deckList: DeckList, defs: Record<CardId, CardDef>, controller: PlayerId): GameState {
     const { leader, deck, sideDeck, donCount } = deckList;
@@ -36,7 +37,7 @@ export function instantiatePlayerBoard(state: GameState, deckList: DeckList, def
 
 export function instantiateLeader(state: GameState, cardId: CardId, defs: Record<CardId, CardDef>, controller: PlayerId): GameState {
     const instanceId = `${controller}-LEADER` as CardInstanceId;
-    const leaderInstance = createInstance(instanceId, "LEADER", controller, defs[cardId]) as LeaderInstance;
+    const leaderInstance = createInstance(instanceId, "LEADER", controller, defs[cardId], "LEADER") as LeaderInstance;
 
     return produce(state, draft => {
         draft.instances[instanceId] = leaderInstance;
@@ -48,7 +49,7 @@ export function instantiateDeck(state: GameState, cardIds: CardId[], defs: Recor
     const newInstances: Record<CardInstanceId, CardInstance> = {};
     cardIds.forEach((cardId, index) => {
         const instanceId = `${controller}-CARD-${index}` as CardInstanceId; // unique instance ID
-        newInstances[instanceId] = createInstance(instanceId, defs[cardId].class, controller, defs[cardId]);
+        newInstances[instanceId] = createInstance(instanceId, defs[cardId].class, controller, defs[cardId], "DECK");
     });
 
     return produce(state, draft => {
@@ -61,7 +62,7 @@ export function instantiateDon(state: GameState, donCount: number, controller: P
     const newInstances: Record<CardInstanceId, CardInstance> = {};
     for (let i = 0; i < donCount; i++) {
         const instanceId = `${controller}-DON-${i}` as CardInstanceId; // unique instance ID
-        newInstances[instanceId] = createInstance(instanceId, "DON", controller);
+        newInstances[instanceId] = createInstance(instanceId, "DON", controller, undefined, "DON_DECK");
     }
 
     return produce(state, draft => {
@@ -70,11 +71,11 @@ export function instantiateDon(state: GameState, donCount: number, controller: P
     });
 }
 
-export function createInstance(instanceId: CardInstanceId, cardClass: CardClass, controller: PlayerId, cardDef?: CardDef): CardInstance {
+export function createInstance(instanceId: CardInstanceId, cardClass: CardClass, controller: PlayerId, cardDef?: CardDef, initialZone: Zone | null = null): CardInstance {
     const baseInstance = {
         instanceId,
         controller,
-        currentZone: null,
+        currentZone: initialZone,
         isRested: false
     };
     switch (cardClass) {
@@ -116,6 +117,7 @@ export function createInstance(instanceId: CardInstanceId, cardClass: CardClass,
             return {
                 ...baseInstance,
                 class: "DON",
+                isRested: false,
                 attachedTo: null
             } as DonInstance;
         default:

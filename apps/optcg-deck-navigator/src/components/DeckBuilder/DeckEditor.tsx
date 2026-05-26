@@ -1,4 +1,4 @@
-import type { CardId, CardDefinition } from '@optcg/engine';
+import type { CardId, CardDef } from '@optcg/engine';
 import { CardThumbnail } from './CardThumbnail';
 import styles from './DeckEditor.module.css';
 
@@ -6,7 +6,7 @@ interface DeckEditorProps {
     deckCards: {
         cardId: CardId;
         count: number;
-        card: CardDefinition;
+        card: CardDef;
     }[]
 
     // Deck Editor Functions

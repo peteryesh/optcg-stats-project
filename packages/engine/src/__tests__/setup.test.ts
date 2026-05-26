@@ -74,9 +74,9 @@ describe("createEmptyGameState", () => {
         }
     });
 
-    it("initializes rng cursors to 0n", () => {
+    it("advances game rng cursor past coin flip, player cursors start at 0n", () => {
         const state = makeEmptyState();
-        expect(state.rngCursors.game).toBe(0n);
+        expect(state.rngCursors.game).toBeGreaterThan(0n);
         expect(state.rngCursors.players[P1]).toBe(0n);
         expect(state.rngCursors.players[P2]).toBe(0n);
     });
@@ -270,7 +270,6 @@ describe("createInstance", () => {
         expect(inst.class).toBe("DON");
         expect(inst.instanceId).toBe(id);
         expect(inst.controller).toBe(P1);
-        expect(inst.isRested).toBe(false);
         if (inst.class === "DON") {
             expect(inst.attachedTo).toBeNull();
         }

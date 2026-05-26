@@ -78,7 +78,9 @@ export type GameConfig = {
 };
 
 export type SetupState = {
-    mulligan: Record<PlayerId, boolean>;
+    coinFlipWinner: PlayerId; // player who gets to call CHOOSE_TURN_ORDER
+    // null = not yet decided, false = kept hand, true = chose to mulligan
+    mulligan: Record<PlayerId, boolean | null>;
 };
 
 ///----------------------------------------------------------------
@@ -87,7 +89,7 @@ export type SetupState = {
 export interface GameState {
     // Game Metadata
     gameId: string;
-    version: number;
+    version: number; // not implemented
 
     config: GameConfig;
 

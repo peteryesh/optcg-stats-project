@@ -1,4 +1,4 @@
-import type { CardDatabase, CardDefinition } from '@optcg/engine';
+import type { CardDatabase, CardDef } from '@optcg/engine';
 
 const DATABASE_URL = `${import.meta.env.VITE_PUBLIC_CARDS_URL}`;
 const ALL_CARDS_URL = `${DATABASE_URL}/all/optcg-all-cards.json`;

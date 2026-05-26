@@ -1,8 +1,7 @@
 import { produce } from 'immer';
-import { GameState } from '../types/state';
-import { CardInstanceId, PlayerId, Zone, StackPosition } from '../types/primitives';
-import { CHARACTERS_MAX, LEADER_MAX, STAGE_MAX } from './rules';
-import { CardInstance } from '../types';
+import { GameState } from '../../types/state';
+import { CardInstanceId, PlayerId, Zone, StackPosition } from '../../types/primitives';
+import { CHARACTERS_MAX, LEADER_MAX, STAGE_MAX } from '../rules';
 
 /**
  * Helper function to get the zone array for the provided player
@@ -100,10 +99,10 @@ export function addToZone(state: GameState, instanceId: CardInstanceId, targetZo
         }
 
         if (position === "TOP") {
-            targetZoneArray.push(instance.instanceId);
-        }    
-        else if (position === "BOTTOM") {
             targetZoneArray.unshift(instance.instanceId);
+        }
+        else if (position === "BOTTOM") {
+            targetZoneArray.push(instance.instanceId);
         }
         else {
             throw new Error(`Position (top or bottom of stack) was not provided`);

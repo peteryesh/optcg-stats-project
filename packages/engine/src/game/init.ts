@@ -9,6 +9,7 @@ import { GameSeeds, CardId, PlayerId } from "../types/primitives";
 import { EffectSequence } from "../types/effect";
 import { instantiatePlayerBoard } from "./instances";
 import { getCardDefsFromDeckList } from "../database/definitions";
+import { nextInt } from "../rng/splitmix64";
 
 const STATE_VERSION = 1;
 
@@ -24,7 +25,10 @@ export function initGame(params: {
 
     let state = createEmptyGameState(gameId, playerIds, seeds, config);
 
-    // Instantiate player boards
+    state = produce(state, draft => {
+        Object.assign(draft.definitions, defs);
+    });
+
     for (const playerId of playerIds) {
         state = instantiatePlayerBoard(state, decks[playerId], defs, playerId);
     }
@@ -33,6 +37,10 @@ export function initGame(params: {
 }
 
 export function createEmptyGameState(gameId: string, playerIds: PlayerId[], seeds: GameSeeds, config: GameConfig): GameState {
+    // Coin flip uses game seed at cursor 0 — deterministic and reproducible from the seed
+    const [postFlipCursor, flipIdx] = nextInt(seeds.game, 0n, playerIds.length);
+    const coinFlipWinner = playerIds[flipIdx];
+
     return {
         gameId,
         version: STATE_VERSION,
@@ -40,12 +48,13 @@ export function createEmptyGameState(gameId: string, playerIds: PlayerId[], seed
         config: config,
         seeds: seeds,
         rngCursors: {
-            game: 0n,
+            game: postFlipCursor,
             players: Object.fromEntries(playerIds.map(id => [id, 0n]))
         },
 
         setup: {
-            mulligan: Object.fromEntries(playerIds.map(id => [id, false]))
+            coinFlipWinner,
+            mulligan: Object.fromEntries(playerIds.map(id => [id, null]))
         },
 
         definitions: {},

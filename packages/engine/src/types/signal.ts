@@ -44,12 +44,12 @@ export type GameSignal =
     | { type: "STAGE_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause; position: StackPosition }
 
     // Hand & Deck
-    | { type: "CARD_DRAWN"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-    | { type: "CARD_DISCARDED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-    | { type: "CARD_RETURNED_TO_HAND"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; cause: SignalCause }
-    | { type: "CARD_MILLED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-    | { type: "CARD_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; position: StackPosition; cause: SignalCause }
-    | { type: "DECK_SHUFFLED"; playerId: PlayerId; cause: SignalCause }
+    | { type: "CARDS_DRAWN"; instanceIds: CardInstanceId[], controller: PlayerId, cause: SignalCause}
+    // | { type: "CARD_DISCARDED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    // | { type: "CARD_RETURNED_TO_HAND"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; cause: SignalCause }
+    // | { type: "CARD_MILLED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    // | { type: "CARD_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; position: StackPosition; cause: SignalCause }
+    // | { type: "DECK_SHUFFLED"; playerId: PlayerId; cause: SignalCause }
 
     // Rest State
     | { type: "CHARACTER_RESTED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
@@ -112,13 +112,13 @@ export type GameSignal =
     | { type: "GAME_OVER"; winner: PlayerId; endReason: EndReason }
 
     // DON!!
-    | { type: "DON_DRAWN"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-    | { type: "DON_ATTACHED"; donId: CardInstanceId; targetId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-    | { type: "DON_DETACHED"; donId: CardInstanceId; targetId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-    | { type: "DON_BATCH_RESTED"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
-    | { type: "DON_RESTED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-    | { type: "DON_SET_ACTIVE"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-    | { type: "DON_RETURNED_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    | { type: "ADDED_ACTIVE_DON"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
+    | { type: "ADDED_RESTED_DON"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
+    | { type: "DON_RESTED"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
+    | { type: "DON_SET_ACTIVE"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
+    | { type: "DON_RETURNED"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
+    // | { type: "DON_ATTACHED"; donId: CardInstanceId; targetId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    // | { type: "DON_DETACHED"; donId: CardInstanceId; targetId: CardInstanceId; controller: PlayerId; cause: SignalCause }
 
     // Look Zone
     | { type: "CARD_ADDED_TO_LOOK"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; cause: SignalCause }
