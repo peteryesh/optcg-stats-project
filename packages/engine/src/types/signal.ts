@@ -45,7 +45,7 @@ export type GameSignal =
 
     // Hand & Deck
     | { type: "CARDS_DRAWN"; instanceIds: CardInstanceId[], controller: PlayerId, cause: SignalCause}
-    // | { type: "CARD_DISCARDED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    | { type: "CARDS_DISCARDED"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
     // | { type: "CARD_RETURNED_TO_HAND"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; cause: SignalCause }
     // | { type: "CARD_MILLED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     // | { type: "CARD_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; position: StackPosition; cause: SignalCause }
