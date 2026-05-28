@@ -7,7 +7,7 @@ import type {
 import type { CardDef, DeckList } from "../types/card";
 import { GameSeeds, CardId, PlayerId } from "../types/primitives";
 import { EffectSequence } from "../types/effect";
-import { instantiatePlayerBoard } from "./instances";
+import { instantiatePlayerBoard } from "./instantiation";
 import { getCardDefsFromDeckList } from "../database/definitions";
 import { nextInt } from "../rng/splitmix64";
 

@@ -1,55 +1,7 @@
-// Operations are functions that perform state manipulation and emit one or more signals to describe
-// what was changed for other cards in the game to listen to
-
-import { Action, GameSignal, GameState, PlayerId, SignalCause, CardInstanceId, DonInstance } from "../types";
-import { moveCard, getZoneArray } from "./mechanics/zones";
-import { attachDon, detachDon } from "./mechanics/don";
-import { emit } from "./emitter";
-import { InvalidActionError } from "../errors";
-
-// Hand and Deck
-
-/**
- * Draws one or more cards to a player's hand.
- * @param state - Game state
- * @param playerId - Player to draw cards for
- * @param count - Number of cards to draw
- * @param signalCause - Reason for drawing cards (game rule or card effect)
- * @returns Game state with cards drawn from the deck and placed into the target player's hand
- */
-export function drawCards(state: GameState, playerId: PlayerId, count: number, signalCause: SignalCause): GameState {
-    const cardsDrawn = [];
-    for (let i = 0; i < count; i++) {
-        const topCard = getZoneArray(state, playerId, "DECK")[0];
-        if (!topCard) break;
-        cardsDrawn.push(topCard);
-        state = moveCard(state, topCard, "HAND", "TOP");
-    }
-    if (cardsDrawn.length === 0) return state;
-    return emit(state, { type: "CARDS_DRAWN", instanceIds: cardsDrawn, controller: playerId, cause: signalCause });
-}
-
-/**
- * Discards one or more cards from a player's hand and moves them to the player's trash
- * @param state - Game state
- * @param playerId - Player to discard cards from
- * @param instanceIds - Array of card ids to discard
- * @param signalCause - Cause of discard action
- * @returns Game state with the cards specified discarded from the player's hand
- */
-export function discardCards(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], signalCause: SignalCause): GameState {
-    const playerHand = getZoneArray(state, playerId, "HAND");
-    for (const instanceId of instanceIds) {
-        if (!(instanceId in playerHand)){
-            throw new InvalidActionError(`${instanceId} not found in hand of player ${playerId}`);
-        }
-        state = moveCard(state, instanceId, "TRASH", "TOP");
-    }
-    return emit(state, { type: "CARDS_DISCARDED", instanceIds: instanceIds, controller: playerId, cause: signalCause })
-}
-
-
-// DON!!
+import { Action, GameSignal, GameState, PlayerId, SignalCause, CardInstanceId, DonInstance, StackPosition, Zone } from "../../types";
+import { moveCard, getZoneArray, attachDon, detachDon } from "../mechanics";
+import { emit } from "../emitter";
+import { InvalidActionError } from "../../errors";
 
 /**
  * Adds one or more DON to a player's active or rested DON cards.
@@ -60,7 +12,7 @@ export function discardCards(state: GameState, playerId: PlayerId, instanceIds: 
  * @param signalCause - Reason for adding DON (game rule or card effect)
  * @returns Game state with the DON added to the correct active or rested zone
  */
-export function addDon(state: GameState, playerId: PlayerId, count: number, rested: boolean, signalCause: SignalCause): GameState {
+export function donAdd(state: GameState, playerId: PlayerId, count: number, rested: boolean, signalCause: SignalCause): GameState {
     const donAdded = [];
     for (let i = 0; i < count; i++) {
         const topDon = getZoneArray(state, playerId, "DON_DECK")[0];
@@ -84,7 +36,7 @@ export function addDon(state: GameState, playerId: PlayerId, count: number, rest
  * @param signalCause - Reason for resting DON (game rule or card effect)
  * @returns Game state with DON moved from active to rested
  */
-export function restDon(state: GameState, playerId: PlayerId, count: number, signalCause: SignalCause): GameState {
+export function donRest(state: GameState, playerId: PlayerId, count: number, signalCause: SignalCause): GameState {
     const activeCount = getZoneArray(state, playerId, "DON_ACTIVE").length;
     if (count > activeCount) {
         throw new InvalidActionError(`${count} DON requested to be rested but player ${playerId} only has ${activeCount} active`);
@@ -106,14 +58,14 @@ export function restDon(state: GameState, playerId: PlayerId, count: number, sig
  * @param signalCause - Reason for setting DON as active (game rule or card effect)
  * @returns Game state with DON moved from rested to active
  */
-export function setDonActive(state: GameState, playerId: PlayerId, count: number, signalCause: SignalCause): GameState {
+export function donSetActive(state: GameState, playerId: PlayerId, count: number, signalCause: SignalCause): GameState {
     const restedCount = getZoneArray(state, playerId, "DON_RESTED").length;
     if (count > restedCount) {
         throw new InvalidActionError(`${count} DON requested to be set as active but player ${playerId} only has ${restedCount} rested`);
     }
     const donActivated = [];
     for (let i = 0; i < count; i++) {
-        const topRestedDon = getZoneArray(state, playerId, "DON_ACTIVE")[0];
+        const topRestedDon = getZoneArray(state, playerId, "DON_RESTED")[0];
         donActivated.push(topRestedDon);
         state = moveCard(state, topRestedDon, "DON_ACTIVE", "TOP");
     }
@@ -128,9 +80,9 @@ export function setDonActive(state: GameState, playerId: PlayerId, count: number
  * @param signalCause - Reason for returning DON (game rule or card effect)
  * @returns Game state with the DON returned to the DON deck
  */
-export function returnDon(state: GameState, playerId: PlayerId, donIds: CardInstanceId[], signalCause: SignalCause): GameState {
+export function donReturn(state: GameState, playerId: PlayerId, donIds: CardInstanceId[], signalCause: SignalCause): GameState {
     for (const donId of donIds) {
-        const don = state.instances[donId] as DonInstance;
+        const don = state.instances[donId];
         if (don.class !== "DON") throw new InvalidActionError(`Cannot return non-DON instance ${donId} to DON deck`);
         if (don.attachedTo !== null) {
             state = detachDon(state, donId, "DON_DECK");
@@ -142,15 +94,41 @@ export function returnDon(state: GameState, playerId: PlayerId, donIds: CardInst
     return emit(state, { type: "DON_RETURNED", instanceIds: donIds, controller: playerId, cause: signalCause});
 }
 
-
-// Life
-
-// Need to figure out if the origin matters
-export function addLife(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], signalCause: SignalCause): GameState {
-    return state;
+/**
+ * Attaches one or more DON to a target. It is the responsibility of the caller to check that the DON being attached are valid.
+ * @param state - Game state
+ * @param playerId - Player performing DON attachment
+ * @param donIds - One or more DON to be attached to the target
+ * @param targetId - The target to attach one or more DON to
+ * @param signalCause - The cause for DON attachment
+ * @return Game state with the specified DON attached to the target
+ */
+export function donAttach(state: GameState, playerId: PlayerId, donIds: CardInstanceId[], targetId: CardInstanceId, signalCause: SignalCause): GameState {
+    for (const donId of donIds) {
+        const don = state.instances[donId];
+        const targetCard = state.instances[targetId];
+        if (don.controller !== targetCard.controller) throw new InvalidActionError(`${donId} cannot be attached to ${targetId} as they are controlled by different players`);
+        state = attachDon(state, donId, targetId);
+    }
+    return emit(state, { type: "DON_ATTACHED", instanceIds: donIds, targetId: targetId, controller: playerId, cause: signalCause })
 }
 
-// Need to figure out if we want to separate this into different functions and different signals based on location and cause of life loss
-export function removeLife(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], signalCause: SignalCause): GameState {
-    return state;
+/**
+ * Detaches one or more DON from a target.
+ * @param state - Game state
+ * @param playerId - Player performing DON detachment
+ * @param donIds - One or more DON to be detached
+ * @param originId - The card to detach the DON from
+ * @param signalCause - The cause for DON detachment
+ * @return Game state with the specified DON attached to the target
+ */
+export function donDetach(state: GameState, playerId: PlayerId, donIds: CardInstanceId[], originId: CardInstanceId, signalCause: SignalCause): GameState {
+    const originCard = state.instances[originId];
+    if (!originCard) throw new InvalidActionError(`Origin card ${originId} was not found`);
+    if (!(originCard.class === "LEADER" || originCard.class === "CHARACTER")) throw new InvalidActionError(`Attempting to detach DON from invalid DON attachment origin ${originId}`); 
+    for (const donId of donIds) {
+        if (!(originCard.attachedDon.includes(donId))) throw new InvalidActionError(`DON ${donId} is not attached to the origin card ${originId}`)
+        state = detachDon(state, donId, "DON_RESTED");
+    }
+    return emit(state, { type: "DON_DETACHED", instanceIds: donIds, originId: originId, controller: playerId, cause: signalCause })
 }

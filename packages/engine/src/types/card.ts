@@ -87,10 +87,10 @@ export interface EventInstance extends BaseCardInstance {
 }
 
 // DON!! — attaches to characters/leader, tracks attachment
-// isRested is always false: DON!! active/rested state is tracked by zone (DON_ACTIVE / DON_RESTED)
+// isRested reflects zone: true in DON_RESTED, false in DON_ACTIVE or DON_DECK; unchanged while attached
 export interface DonInstance extends BaseCardInstance {
     class: "DON";
-    isRested: false;
+    isRested: boolean;
     attachedTo: CardInstanceId | null;
 }
 

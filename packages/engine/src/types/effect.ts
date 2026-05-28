@@ -2,6 +2,20 @@ import type { CardInstanceId, PlayerId, Zone, Keyword, StackPosition } from './p
 import type { GameSignal, SignalType } from './signal';
 import type { CardFilter } from './filter';
 
+export type ActivatedEffect = null;
+export type PassiveEffect = null;
+export type StatusEffect = null;
+export type ReplacementEffect = null;
+export type SuppressionEffect = null;
+
+export type CardEffect =
+    | ActivatedEffect
+    | PassiveEffect
+    | StatusEffect
+    | ReplacementEffect;
+
+export type CardModifier = null;
+
 export type EffectSequence = {
     sequenceId: string;
     sourceInstanceId: CardInstanceId;
@@ -88,8 +102,8 @@ export type EffectOperation =
 
     // Modifier layer interactions
     | { kind: "APPLY_CONTINUOUS"; modification: Modification; duration: EffectDuration }
-    | { kind: "APPLY_SUPPRESSION"; scope: SuppressionScope; duration: EffectDuration }
-    | { kind: "APPLY_REPLACEMENT"; replacedAction: ReplacedActionType; duration: EffectDuration }
+    // | { kind: "APPLY_SUPPRESSION"; scope: SuppressionScope; duration: EffectDuration }
+    // | { kind: "APPLY_REPLACEMENT"; replacedAction: ReplacedActionType; duration: EffectDuration }
 
     // Life
     | { kind: "ADD_LIFE"; count: number; position: StackPosition }
@@ -132,50 +146,64 @@ type Modification =
     | CostModification
     | KeywordModification;
 
-export type ContinuousEffect = {
-    effectId: string;
-    sourceInstanceId: CardInstanceId;
-    affects: CardFilter;
-    modification: Modification;
-    duration: EffectDuration;
-    appliedAt: number;              // rngCursor position for ordering
-    condition: CardFilter | null;   // null = always applies
-};
+// export type ContinuousEffect = {
+//     effectId: string;
+//     sourceInstanceId: CardInstanceId;
+//     affects: CardFilter;
+//     modification: Modification;
+//     duration: EffectDuration;
+//     appliedAt: number;              // rngCursor position for ordering
+//     condition: CardFilter | null;   // null = always applies
+// };
 
 // Replacement Effects
-type ReplacedActionType =
-    | "KO"
-    | "TRASH"
-    | "BOUNCE"
-    | "DISCARD"
-    | "MILL"
-    | "SEND_TO_DECK"
-    | "LEAVE_FIELD";
+// type ReplacedActionType =
+//     | "KO"
+//     | "TRASH"
+//     | "BOUNCE"
+//     | "DISCARD"
+//     | "MILL"
+//     | "SEND_TO_DECK"
+//     | "LEAVE_FIELD";
 
-export type ReplacementEffect = {
-    replacementId: string;
-    sourceInstanceId: CardInstanceId;
-    targetFilter: CardFilter;
-    replacedAction: ReplacedActionType;
-    effectCost: EffectCost | null;
-    duration: EffectDuration;
-    appliedAt: number;
-    condition: CardFilter | null;
-};
+// rework this to include hooks
+// export type ReplacementEffect = {
+//     replacementId: string;
+//     sourceInstanceId: CardInstanceId;
+//     targetFilter: CardFilter;
+//     replacedAction: ReplacedActionType;
+//     effectCost: EffectCost | null;
+//     duration: EffectDuration;
+//     appliedAt: number;
+//     condition: CardFilter | null;
+// };
 
 // Effect Suppressions
-type SuppressionScope =
-    | "ALL_ABILITIES"
-    | "ON_PLAY"
-    | "ON_KO"
-    | "WHEN_ATTACKING"
-    | "ACTIVATED";
+// type SuppressionScope =
+//     | "ALL_ABILITIES"
+//     | "ON_PLAY"
+//     | "ON_KO"
+//     | "WHEN_ATTACKING"
+//     | "ACTIVATED";
 
-export type AbilitySuppression = {
-    suppressionId: string;
-    sourceInstanceId: CardInstanceId;
-    targetFilter: CardFilter;
-    scope: SuppressionScope;
-    duration: EffectDuration;
-    appliedAt: number;
-};
+// export type AbilitySuppression = {
+//     suppressionId: string;
+//     sourceInstanceId: CardInstanceId;
+//     targetFilter: CardFilter;
+//     scope: SuppressionScope;
+//     duration: EffectDuration;
+//     appliedAt: number;
+// };
+
+// we want ActivatedEffect, PassiveEffect, ReplacementEffect
+// PassiveEffect are checked via emit, as they are waiting for some game event
+// ReplacementEffect are checked via hooks, which are waiting for something that is about to happen to replace it if it applies
+// ActivatedEffects are immediately applied, and are instant. They do not wait inside the effect queue, they are enqueued immediately
+// Ability suppressions may be more of a type of replacement effect, like "instead of that, do nothing"
+// Ability suppressions are different though, they need to take away effects and reapply them when the suppression ends
+
+// For now, just emit signals on actions and operations
+// First, implement ActivatedEffects, Modifiers, and Triggers (which are activated)
+// Then, PassiveEffects will be checked on the activeEffects array by the emit function
+// Then, add ReplacementEffects and ReplacementHooks to be watched in anticipation of state changes
+// Then, add SuppressionEffects that suppress other effects before they fire

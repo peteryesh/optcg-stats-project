@@ -1,9 +1,9 @@
 import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId, GameSeeds } from './primitives';
 import type { GameSignal, SignalType, Listener } from './signal';
 import type { CardFilter } from './filter';
-import type { CardDef, CardInstance } from './card';
+import type { Card, CardDef, CardInstance } from './card';
 import type { Action } from './action';
-import { EffectSequence, ContinuousEffect, ReplacementEffect, AbilitySuppression } from './effect';
+import { EffectSequence, CardEffect, CardModifier } from './effect';
 import { ActionRecord } from './record';
 
 
@@ -83,6 +83,11 @@ export type SetupState = {
     mulligan: Record<PlayerId, boolean | null>;
 };
 
+export type PlayerEffectQueues = {
+    effectQueue: EffectSequence[];
+    effectCluster: EffectSequence[]; // a staging area for effects before they are enqueued, made to handle simultaneous effects and user decides order of resolution
+}
+
 ///----------------------------------------------------------------
 /// Game State
 ///----------------------------------------------------------------
@@ -114,16 +119,15 @@ export interface GameState {
     battlePhase: BattlePhase | null;
     battlesThisTurn: BattleRecord[]; // used for tracking multiple attacks with the same character and same-turn attack effects
 
-    // Effect Resolution
+    // Effects
     currentEffect: EffectSequence | null;  // the currently resolving effect, if any
-    pendingEffects: Record<PlayerId, EffectSequence[]>;
+    effectQueues: Record<PlayerId, PlayerEffectQueues[]>;
     pendingDecision: PendingDecision | null;
-
-    // Modifier Layers
-    listeners: Partial<Record<SignalType, Listener[]>>;
-    continuousEffects: ContinuousEffect[];
-    replacementEffects: ReplacementEffect[]; // needs the ReplacementEffect type and "would" functions to be defined
-    effectSuppressions: AbilitySuppression[];
+    
+    // listeners: Partial<Record<SignalType, Listener[]>>;
+    activeEffects: CardEffect[]; // need to refactor this to accept Passive, Replacement, and Suppression effects
+    boardModifiers: CardModifier[]; // temporary modifications to cards on the board, public and cleaned up on signal or phase change
+    handModifiers: Record<PlayerId, CardModifier[]>; // temporary modifications to cards in hand, private to the player and cleaned up on phase change
 
     // History
     actionLog: ActionRecord[];
