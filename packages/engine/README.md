@@ -1,5 +1,8 @@
 OPTCG VEGA ENGINE
 
+TODO
+- 
+
 Terminology
 Cards
 - Describes Leader, Character, Stage, and Event cards
@@ -16,13 +19,13 @@ Game Engine Structure
 - emitter: Houses the emit function, which takes a state and signal and checks the appropriate parts of the state to serve the signal to.
 
 Effects
-- OPTCG has 4 categories of effects: auto, activate, permanent, and replacement.
+- OPTCG official rules has 4 categories of effects: auto, activate, permanent, and replacement.
 - The engine defines effects differently and categorizes them into these categories:
-    - ActivatedEffect
+    - ActiveEffect
         - Similar to "activate" in the official rules
-        - "Activate: Main", "Main", "On Play", "Trigger", "Counter"
+        - "Activate: Main", "Main", "Counter"
         - Anything that activates its effect as a result of player choice
-    - PassiveEffect
+    - ReactiveEffect
         - Encompasses "permanent" and "auto" effects
         - Effects that activate as a result of a signal and not direct player choice
         - When in play, these effects are added as listeners on the state and activate when one or more specific signals are emitted

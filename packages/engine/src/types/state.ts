@@ -3,7 +3,7 @@ import type { GameSignal, SignalType, Listener } from './signal';
 import type { CardFilter } from './filter';
 import type { Card, CardDef, CardInstance } from './card';
 import type { Action } from './action';
-import { EffectSequence, CardEffect, CardModifier } from './effect';
+import { EffectSequence, CardEffect, CardModifier, StatusEffect } from './effect';
 import { ActionRecord } from './record';
 
 
@@ -122,13 +122,14 @@ export interface GameState {
     // Effects
     currentEffect: EffectSequence | null;  // the currently resolving effect, if any
     effectQueues: Record<PlayerId, PlayerEffectQueues[]>;
+
     pendingDecision: PendingDecision | null;
     
-    // listeners: Partial<Record<SignalType, Listener[]>>;
-    activeEffects: CardEffect[]; // need to refactor this to accept Passive, Replacement, and Suppression effects
-    boardModifiers: CardModifier[]; // temporary modifications to cards on the board, public and cleaned up on signal or phase change
-    handModifiers: Record<PlayerId, CardModifier[]>; // temporary modifications to cards in hand, private to the player and cleaned up on phase change
-
+    // Listener arrays that cards add their effects to in response to game signals and hooks
+    listeners: CardEffect[];
+    activatableEffects: CardEffect[]; // need to refactor this to accept Passive, Replacement, and Suppression effects
+    statusEffects: StatusEffect[]; // temporary modifications to cards on the board, public and cleaned up on signal or phase change
+    
     // History
     actionLog: ActionRecord[];
 

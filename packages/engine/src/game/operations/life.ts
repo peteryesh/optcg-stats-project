@@ -26,6 +26,7 @@ export function lifeRemove(state: GameState, playerId: PlayerId, lifePosition: S
 
 export function dealDamage(state: GameState, playerId: PlayerId, cause: DamageCause, lifeDamaged: number = 1): GameState {
     const leaderId = getZoneArray(state, playerId, "LEADER")[0];
+    if (!leaderId) throw new InvalidActionError(`No leader id found`);
 
     if (getZoneArray(state, playerId, "LIFE").length === 0) {
         const winner = state.instances[cause.sourceId].controller;

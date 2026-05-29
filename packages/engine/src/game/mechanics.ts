@@ -16,7 +16,6 @@ export function getZoneArray(state: GameState, playerId: PlayerId, zone: Zone | 
     if (!playerZones) {
         throw new Error(`Unknown playerId ${playerId}`);
     }
-
     switch (zone) {
         case "CHARACTERS":  return playerZones.characters;
         case "DECK":        return playerZones.deck;
@@ -142,7 +141,7 @@ export function addToZone(state: GameState, instanceId: CardInstanceId, targetZo
  * @param index - The index to insert the card at. Must be a valid index.
  * @returns The state with the card inserted at the index and all other items shifted accordingly.
  */
-export function insertCardAtZone(state: GameState, instanceId: CardInstanceId, targetZone: Zone, index: number): GameState {
+export function insertCardAtZoneIndex(state: GameState, instanceId: CardInstanceId, targetZone: Zone, index: number): GameState {
     const instance = state.instances[instanceId];
     if (!instance) {
         throw new Error(`Cannot move unknown instance ${instanceId}`);
@@ -171,6 +170,32 @@ export function insertCardAtZone(state: GameState, instanceId: CardInstanceId, t
         draft.instances[instance.instanceId].currentZone = targetZone;
     });
 }
+
+export function replaceCardAtZoneIndex(state: GameState, instanceId: CardInstanceId, targetZone: Zone, index: number): GameState {
+    const instance = state.instances[instanceId];
+    if (!instance) throw new Error(`Cannot move unknown instance ${instanceId}`);
+    if (instance.currentZone !== null) throw new Error(`Attempting to add ${instanceId} to new zone when previous zone has not been cleared`);
+    if (targetZone !== "CHARACTERS" && targetZone !== "LIFE" && targetZone !== "STAGE") {
+        throw new Error(`replaceCardAtZoneIndex only applies to CHARACTERS, LIFE, and STAGE zones`);
+    }
+
+    return produce(state, draft => {
+        const targetZoneArray = getZoneArray(draft, instance.controller, targetZone);
+        if (targetZone === "CHARACTERS" && instance.class !== "CHARACTER") throw new Error(`Attempting to move non-character card to the character area: ${instance.instanceId}`);
+        if (targetZone === "STAGE" && instance.class !== "STAGE") throw new Error(`Attempting to move non-stage card to the stage area: ${instance.instanceId}`);
+
+        if (index < 0 || index >= targetZoneArray.length) throw new Error(`Index ${index} is out of bounds for zone ${targetZone} with length ${targetZoneArray.length}`);
+
+        const replacedId = targetZoneArray[index];
+        const trashZone = getZoneArray(draft, instance.controller, "TRASH");
+        trashZone.unshift(replacedId);
+        draft.instances[replacedId].currentZone = "TRASH";
+
+        targetZoneArray[index] = instance.instanceId;
+        draft.instances[instance.instanceId].currentZone = targetZone;
+    });
+}
+
 
 /**
  * Set card as active

@@ -4,7 +4,7 @@ import type {
     GameConfig, PlayerId,
     GameState,
 } from "../types";
-import { createEmptyGameState, initGame } from "../game/setup";
+import { createEmptyGameState, initGame } from "../game/init";
 
 // ============================================================
 // Mock card IDs

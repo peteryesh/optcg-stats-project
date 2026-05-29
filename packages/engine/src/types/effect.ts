@@ -2,15 +2,14 @@ import type { CardInstanceId, PlayerId, Zone, Keyword, StackPosition } from './p
 import type { GameSignal, SignalType } from './signal';
 import type { CardFilter } from './filter';
 
-export type ActivatedEffect = null;
-export type PassiveEffect = null;
+export type ActiveEffect = null;
+export type ReactiveEffect = null;
 export type StatusEffect = null;
 export type ReplacementEffect = null;
-export type SuppressionEffect = null;
 
 export type CardEffect =
-    | ActivatedEffect
-    | PassiveEffect
+    | ActiveEffect
+    | ReactiveEffect
     | StatusEffect
     | ReplacementEffect;
 

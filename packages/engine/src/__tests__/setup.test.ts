@@ -4,14 +4,14 @@ import {
     emptyPlayerZones,
     setupEffectQueue,
     initGame,
-} from "../game/setup";
+} from "../game/init";
 import {
     createInstance,
     instantiateLeader,
     instantiateDeck,
     instantiateDon,
     instantiatePlayerBoard,
-} from "../game/instances";
+} from "../game/instantiation";
 import { assertInvariants } from "./invariants";
 import {
     MOCK_LEADER_ID,
@@ -103,16 +103,15 @@ describe("createEmptyGameState", () => {
 
     it("initializes modifier layers as empty", () => {
         const state = makeEmptyState();
-        expect(state.continuousEffects).toHaveLength(0);
-        expect(state.replacementEffects).toHaveLength(0);
-        expect(state.effectSuppressions).toHaveLength(0);
-        expect(Object.keys(state.listeners)).toHaveLength(0);
+        expect(state.listeners).toHaveLength(0);
+        expect(state.activatableEffects).toHaveLength(0);
+        expect(state.statusEffects).toHaveLength(0);
     });
 
-    it("initializes pending effects as empty per player", () => {
+    it("initializes effect queues as empty per player", () => {
         const state = makeEmptyState();
         for (const id of PLAYERS) {
-            expect(state.pendingEffects[id]).toHaveLength(0);
+            expect(state.effectQueues[id]).toHaveLength(0);
         }
     });
 
@@ -128,7 +127,7 @@ describe("createEmptyGameState", () => {
         expect(state.turnOrder).toEqual(ids);
         expect(Object.keys(state.playerZones)).toHaveLength(4);
         expect(Object.keys(state.rngCursors.players)).toHaveLength(4);
-        expect(Object.keys(state.pendingEffects)).toHaveLength(4);
+        expect(Object.keys(state.effectQueues)).toHaveLength(4);
     });
 
     it("passes invariants", () => {

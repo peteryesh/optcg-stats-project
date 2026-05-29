@@ -2,13 +2,12 @@ import { produce } from "immer";
 import type {
     GameConfig,
     GameState,
-    PlayerZones
+    PlayerZones,
+    PlayerEffectQueues,
 } from "../types/state";
 import type { CardDef, DeckList } from "../types/card";
 import { GameSeeds, CardId, PlayerId } from "../types/primitives";
-import { EffectSequence } from "../types/effect";
 import { instantiatePlayerBoard } from "./instantiation";
-import { getCardDefsFromDeckList } from "../database/definitions";
 import { nextInt } from "../rng/splitmix64";
 
 const STATE_VERSION = 1;
@@ -72,13 +71,12 @@ export function createEmptyGameState(gameId: string, playerIds: PlayerId[], seed
         battlesThisTurn: [],
 
         currentEffect: null,
-        pendingEffects: setupEffectQueue(playerIds),
+        effectQueues: setupEffectQueue(playerIds),
         pendingDecision: null,
 
-        listeners: {},
-        continuousEffects: [],
-        replacementEffects: [],
-        effectSuppressions: [],
+        listeners: [],
+        activatableEffects: [],
+        statusEffects: [],
 
         actionLog: [],
 
@@ -107,9 +105,9 @@ export function emptyPlayerZones(playerIds: PlayerId[]): Record<PlayerId, Player
     return zones;
 }
 
-export function setupEffectQueue(playerIds: PlayerId[]) {
+export function setupEffectQueue(playerIds: PlayerId[]): Record<PlayerId, PlayerEffectQueues[]> {
     return playerIds.reduce((acc, id) => ({
         ...acc,
         [id]: []
-    }), {} as Record<PlayerId, EffectSequence[]>);
+    }), {} as Record<PlayerId, PlayerEffectQueues[]>);
 }
