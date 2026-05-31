@@ -1,13 +1,11 @@
-import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId, GameSeeds } from './primitives';
+import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId, GameSeeds, BattleRecord } from './primitives';
 import type { GameSignal, SignalType, Listener } from './signal';
 import type { CardFilter } from './filter';
 import type { Card, CardDef, CardInstance } from './card';
-import type { Action } from './action';
+import type { GameAction } from './action';
 import { EffectSequence, CardEffect, CardModifier, StatusEffect } from './effect';
 import { ActionRecord } from './record';
 
-
-type BattleRecord = { attackerId: CardInstanceId; defenderId: CardInstanceId; };
 type PendingEffects = Record<PlayerId, EffectSequence[]>;
 
 type PendingDecision =
@@ -85,7 +83,7 @@ export type SetupState = {
 
 export type PlayerEffectQueues = {
     effectQueue: EffectSequence[];
-    effectCluster: EffectSequence[]; // a staging area for effects before they are enqueued, made to handle simultaneous effects and user decides order of resolution
+    simultaneousEffects: EffectSequence[]; // a staging area for effects before they are enqueued, made to handle simultaneous effects and user decides order of resolution
 }
 
 ///----------------------------------------------------------------

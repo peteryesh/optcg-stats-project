@@ -11,7 +11,7 @@ import {
     setRested,
     attachDon,
     detachDon,
-    donReattach,
+    reattachDon,
 } from "../game/mechanics";
 import { createInstance } from "../game/instantiation";
 import { assertInvariants } from "./invariants";
@@ -628,48 +628,48 @@ describe("donReattach", () => {
     it("updates attachedTo on the DON to new target", () => {
         let state = setupTestGame();
         state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
-        state = donReattach(state, "p1-DON-0" as CardInstanceId, "p1-CARD-1" as CardInstanceId);
+        state = reattachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-1" as CardInstanceId);
         expect((state.instances["p1-DON-0" as CardInstanceId] as any).attachedTo).toBe("p1-CARD-1");
     });
 
     it("removes DON from origin's attachedDon", () => {
         let state = setupTestGame();
         state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
-        state = donReattach(state, "p1-DON-0" as CardInstanceId, "p1-CARD-1" as CardInstanceId);
+        state = reattachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-1" as CardInstanceId);
         expect((state.instances["p1-CARD-0" as CardInstanceId] as any).attachedDon).not.toContain("p1-DON-0");
     });
 
     it("adds DON to new target's attachedDon", () => {
         let state = setupTestGame();
         state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
-        state = donReattach(state, "p1-DON-0" as CardInstanceId, "p1-CARD-1" as CardInstanceId);
+        state = reattachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-1" as CardInstanceId);
         expect((state.instances["p1-CARD-1" as CardInstanceId] as any).attachedDon).toContain("p1-DON-0");
     });
 
     it("does not change DON's currentZone (stays null)", () => {
         let state = setupTestGame();
         state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
-        state = donReattach(state, "p1-DON-0" as CardInstanceId, "p1-CARD-1" as CardInstanceId);
+        state = reattachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-1" as CardInstanceId);
         expect(state.instances["p1-DON-0" as CardInstanceId].currentZone).toBeNull();
     });
 
     it("throws if DON is not currently attached", () => {
         const state = setupTestGame();
-        expect(() => donReattach(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId))
+        expect(() => reattachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId))
             .toThrow("not attached");
     });
 
     it("throws when reattaching to a STAGE card", () => {
         const { state, stageId } = makeStateWithStage();
         let next = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
-        expect(() => donReattach(next, "p1-DON-0" as CardInstanceId, stageId))
+        expect(() => reattachDon(next, "p1-DON-0" as CardInstanceId, stageId))
             .toThrow("stage card");
     });
 
     it("passes invariants", () => {
         let state = setupTestGame();
         state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
-        state = donReattach(state, "p1-DON-0" as CardInstanceId, "p1-CARD-1" as CardInstanceId);
+        state = reattachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-1" as CardInstanceId);
         assertInvariants(state);
     });
 });

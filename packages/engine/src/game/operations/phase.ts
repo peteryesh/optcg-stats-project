@@ -1,5 +1,6 @@
+import { produce } from 'immer';
 import type { GameState } from '../../types/state';
-import type { Phase } from '../../types/primitives';
+import type { Phase, PlayerId } from '../../types/primitives';
 import { setPhase } from '../mechanics';
 import { emit } from '../emitter';
 import { InvalidActionError } from '../../errors';

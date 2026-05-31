@@ -7,7 +7,7 @@ import {
     donAttach,
     donDetach,
 } from "../game/operations/don";
-import { attachDon } from "../game/mechanics";
+import { attachDon, moveCard } from "../game/mechanics";
 import { assertInvariants } from "./invariants";
 import { setupTestGame } from "./fixtures";
 import { InvalidActionError } from "../errors";
@@ -210,38 +210,92 @@ describe("donReturn", () => {
 // ============================================================
 
 describe("donAttach", () => {
-    it("attaches DON to target card", () => {
-        const state = setupTestGame();
-        const next = donAttach(state, P1, ["p1-DON-0" as CardInstanceId], "p1-CARD-0" as CardInstanceId, { kind: "RULE" });
-        expect((next.instances["p1-CARD-0" as CardInstanceId] as any).attachedDon).toContain("p1-DON-0");
-        expect((next.instances["p1-DON-0" as CardInstanceId] as any).attachedTo).toBe("p1-CARD-0");
+    it("attaches active DON to target card", () => {
+        let state = setupTestGame();
+        state = donAdd(state, P1, 1, false, { kind: "RULE" });
+        const don = state.playerZones[P1].donActive[0];
+        const next = donAttach(state, P1, "p1-CARD-0" as CardInstanceId, [don], "DON_ACTIVE", { kind: "RULE" });
+        expect((next.instances["p1-CARD-0" as CardInstanceId] as any).attachedDon).toContain(don);
+        expect((next.instances[don] as any).attachedTo).toBe("p1-CARD-0");
+    });
+
+    it("attaches rested DON to target card", () => {
+        let state = setupTestGame();
+        state = donAdd(state, P1, 1, true, { kind: "RULE" });
+        const don = state.playerZones[P1].donRested[0];
+        const next = donAttach(state, P1, "p1-CARD-0" as CardInstanceId, [don], "DON_RESTED", { kind: "RULE" });
+        expect((next.instances["p1-CARD-0" as CardInstanceId] as any).attachedDon).toContain(don);
+        expect((next.instances[don] as any).attachedTo).toBe("p1-CARD-0");
     });
 
     it("attaches multiple DON to target", () => {
-        const state = setupTestGame();
-        const next = donAttach(
-            state, P1,
-            ["p1-DON-0" as CardInstanceId, "p1-DON-1" as CardInstanceId],
-            "p1-CARD-0" as CardInstanceId,
-            { kind: "RULE" }
-        );
+        let state = setupTestGame();
+        state = donAdd(state, P1, 2, false, { kind: "RULE" });
+        const [don0, don1] = state.playerZones[P1].donActive;
+        const next = donAttach(state, P1, "p1-CARD-0" as CardInstanceId, [don0, don1], "DON_ACTIVE", { kind: "RULE" });
         expect((next.instances["p1-CARD-0" as CardInstanceId] as any).attachedDon).toHaveLength(2);
     });
 
-    it("throws InvalidActionError when DON and target have different controllers", () => {
+    it("attaches DON to the leader", () => {
+        let state = setupTestGame();
+        state = donAdd(state, P1, 1, false, { kind: "RULE" });
+        const don = state.playerZones[P1].donActive[0];
+        const next = donAttach(state, P1, "p1-LEADER" as CardInstanceId, [don], "DON_ACTIVE", { kind: "RULE" });
+        expect((next.instances["p1-LEADER" as CardInstanceId] as any).attachedDon).toContain(don);
+    });
+
+    it("throws InvalidActionError when DON is not in the expected zone", () => {
         const state = setupTestGame();
-        // p1-DON-0 is controlled by P1, p2-CARD-0 is controlled by P2
+        // DON is in DON_DECK, not DON_ACTIVE
         expect(() => donAttach(
             state, P1,
+            "p1-CARD-0" as CardInstanceId,
             ["p1-DON-0" as CardInstanceId],
+            "DON_ACTIVE",
+            { kind: "RULE" }
+        )).toThrow(InvalidActionError);
+    });
+
+    it("throws InvalidActionError for invalid fromDonZone", () => {
+        const state = setupTestGame();
+        expect(() => donAttach(
+            state, P1,
+            "p1-CARD-0" as CardInstanceId,
+            ["p1-DON-0" as CardInstanceId],
+            "DON_DECK" as any,
+            { kind: "RULE" }
+        )).toThrow(InvalidActionError);
+    });
+
+    it("throws InvalidActionError when DON and target have different controllers", () => {
+        let state = setupTestGame();
+        state = donAdd(state, P1, 1, false, { kind: "RULE" });
+        const don = state.playerZones[P1].donActive[0];
+        expect(() => donAttach(
+            state, P1,
             "p2-CARD-0" as CardInstanceId,
+            [don],
+            "DON_ACTIVE",
+            { kind: "RULE" }
+        )).toThrow(InvalidActionError);
+    });
+
+    it("throws InvalidActionError for non-DON instance", () => {
+        const state = setupTestGame();
+        expect(() => donAttach(
+            state, P1,
+            "p1-LEADER" as CardInstanceId,
+            ["p1-CARD-0" as CardInstanceId],
+            "DON_ACTIVE",
             { kind: "RULE" }
         )).toThrow(InvalidActionError);
     });
 
     it("passes invariants", () => {
-        const state = setupTestGame();
-        const next = donAttach(state, P1, ["p1-DON-0" as CardInstanceId], "p1-LEADER" as CardInstanceId, { kind: "RULE" });
+        let state = setupTestGame();
+        state = donAdd(state, P1, 1, false, { kind: "RULE" });
+        const don = state.playerZones[P1].donActive[0];
+        const next = donAttach(state, P1, "p1-LEADER" as CardInstanceId, [don], "DON_ACTIVE", { kind: "RULE" });
         assertInvariants(next);
     });
 });
@@ -254,7 +308,7 @@ describe("donDetach", () => {
     it("detaches DON from origin and moves to donRested", () => {
         let state = setupTestGame();
         state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
-        state = donDetach(state, P1, ["p1-DON-0" as CardInstanceId], "p1-CARD-0" as CardInstanceId, { kind: "RULE" });
+        state = donDetach(state, P1, "p1-CARD-0" as CardInstanceId, ["p1-DON-0" as CardInstanceId], { kind: "RULE" });
         expect(state.playerZones[P1].donRested).toContain("p1-DON-0");
         expect((state.instances["p1-DON-0" as CardInstanceId] as any).attachedTo).toBeNull();
         expect((state.instances["p1-CARD-0" as CardInstanceId] as any).attachedDon).not.toContain("p1-DON-0");
@@ -266,8 +320,8 @@ describe("donDetach", () => {
         state = attachDon(state, "p1-DON-1" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
         state = donDetach(
             state, P1,
-            ["p1-DON-0" as CardInstanceId, "p1-DON-1" as CardInstanceId],
             "p1-CARD-0" as CardInstanceId,
+            ["p1-DON-0" as CardInstanceId, "p1-DON-1" as CardInstanceId],
             { kind: "RULE" }
         );
         expect(state.playerZones[P1].donRested).toHaveLength(2);
@@ -280,8 +334,8 @@ describe("donDetach", () => {
         // DON-0 is on CARD-0, not CARD-1
         expect(() => donDetach(
             state, P1,
-            ["p1-DON-0" as CardInstanceId],
             "p1-CARD-1" as CardInstanceId,
+            ["p1-DON-0" as CardInstanceId],
             { kind: "RULE" }
         )).toThrow(InvalidActionError);
     });
@@ -290,8 +344,8 @@ describe("donDetach", () => {
         const state = setupTestGame();
         expect(() => donDetach(
             state, P1,
-            ["p1-DON-0" as CardInstanceId],
             "p1-CARD-999" as CardInstanceId,  // unknown card
+            ["p1-DON-0" as CardInstanceId],
             { kind: "RULE" }
         )).toThrow(InvalidActionError);
     });
@@ -299,7 +353,7 @@ describe("donDetach", () => {
     it("passes invariants", () => {
         let state = setupTestGame();
         state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
-        state = donDetach(state, P1, ["p1-DON-0" as CardInstanceId], "p1-CARD-0" as CardInstanceId, { kind: "RULE" });
+        state = donDetach(state, P1, "p1-CARD-0" as CardInstanceId, ["p1-DON-0" as CardInstanceId], { kind: "RULE" });
         assertInvariants(state);
     });
 });

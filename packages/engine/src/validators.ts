@@ -1,7 +1,7 @@
 import { GameState } from "./types/state";
-import { Action } from "./types/action";
+import { GameAction } from "./types/action";
 
-export function validate(state: GameState, action: Action): string | null {
+export function validate(state: GameState, action: GameAction): string | null {
     switch (action.type) {
         case 'CHOOSE_TURN_ORDER':
         case 'KEEP_HAND':

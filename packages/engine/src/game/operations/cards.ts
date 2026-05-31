@@ -1,10 +1,10 @@
-import { castImmutable, produce } from 'immer';
-import { Action, GameSignal, GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card, Phase } from "../../types";
-import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex, setPhase } from "../mechanics";
+import { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card, Phase } from "../../types";
+import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex, setPhase, setCardPlayedThisTurn } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
 import { donRest, donDetach } from './don';
 import { CHARACTERS_MAX, STAGE_MAX } from '../rules';
+import { calculateCost } from '../calculations';
 
 /**
  * Draws one or more cards to a player's hand.
@@ -24,6 +24,18 @@ export function cardsDraw(state: GameState, playerId: PlayerId, count: number, s
     }
     if (cardsDrawn.length === 0) return state;
     return emit(state, { type: "CARDS_SENT_TO_HAND", instanceIds: cardsDrawn, fromZone: "DECK", controller: playerId, cause: signalCause });
+}
+
+export function cardsAddToHand(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], fromZone: Zone, signalCause: SignalCause): GameState {
+    for (const instanceId of instanceIds) {
+        const cardInstance = state.instances[instanceId];
+        if (!cardInstance) throw new InvalidActionError(`Card instance ${instanceId} not found on the state`);
+        if (cardInstance.currentZone !== fromZone) {
+            throw new InvalidActionError(`Card instance ${instanceId} is not in the expected zone ${fromZone}`);
+        }
+        state = moveCard(state, instanceId, "HAND", "TOP");
+    }
+    return emit(state, { type: "CARDS_SENT_TO_HAND", instanceIds: instanceIds, fromZone: fromZone, controller: playerId, cause: signalCause });
 }
 
 /**
@@ -108,17 +120,19 @@ export function playCard(state: GameState, playerId: PlayerId, instanceId: CardI
     if (!(cardInstance.class === "CHARACTER" || cardInstance.class === "STAGE" || cardInstance.class === "EVENT")) {
         throw new InvalidActionError(`${instanceId} is not a playable instance`);
     }
-    const cardDef = state.definitions[cardInstance.cardId];
+    const cost = calculateCost(state, instanceId);
 
     // Card was played as a result of direct player action from hand
     // The right amount of DON must be rested by rule
     if (signalCause.kind === "PLAYER") {
         const activeDon = getZoneArray(state, playerId, "DON_ACTIVE");
         if (cardInstance.currentZone !== "HAND") throw new InvalidActionError(`${instanceId} cannot be played directly from ${cardInstance.currentZone}`);
-        if (cardDef.cost === undefined) throw new InvalidActionError(`${instanceId} card definition is missing cost`);
-        if (activeDon.length < cardDef.cost) throw new InvalidActionError(`${instanceId} has a card cost greater than the amount of active DON`);
-        state = donRest(state, playerId, cardDef.cost, { kind: "RULE" });
+        if (activeDon.length < cost) throw new InvalidActionError(`${instanceId} has a card cost greater than the amount of active DON`);
+        state = donRest(state, playerId, cost, { kind: "RULE" });
     }
+
+    // Set card as played this turn
+    state = setCardPlayedThisTurn(state, instanceId);
     
     switch (cardInstance.class) {
         case "CHARACTER":

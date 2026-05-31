@@ -1,16 +1,18 @@
 import { describe, it, expect } from "vitest";
 import {
     cardsDraw,
-    cardsDiscard,
+    cardsTrashFromHand,
     cardsSetActive,
     cardsSetRested,
     playCard,
     playCharacter,
     playStage,
     playEvent,
+    playEventFromTrash,
+    removeCardFromField,
 } from "../game/operations/cards";
 import { donAdd } from "../game/operations/don";
-import { moveCard, setRested } from "../game/mechanics";
+import { moveCard, setRested, attachDon } from "../game/mechanics";
 import { assertInvariants } from "./invariants";
 import {
     setupTestGame,
@@ -154,15 +156,15 @@ describe("cardsDraw", () => {
 });
 
 // ============================================================
-// cardsDiscard
+// cardsTrashFromHand
 // ============================================================
 
-describe("cardsDiscard", () => {
+describe("cardsTrashFromHand", () => {
     it("moves card from hand to trash", () => {
         let state = setupTestGame();
         state = cardsDraw(state, P1, 1, { kind: "RULE" });
         const handCard = state.playerZones[P1].hand[0];
-        state = cardsDiscard(state, P1, [handCard], { kind: "RULE" });
+        state = cardsTrashFromHand(state, P1, [handCard], { kind: "RULE" });
         expect(state.playerZones[P1].hand).not.toContain(handCard);
         expect(state.playerZones[P1].trash).toContain(handCard);
     });
@@ -171,7 +173,7 @@ describe("cardsDiscard", () => {
         let state = setupTestGame();
         state = cardsDraw(state, P1, 3, { kind: "RULE" });
         const hand = [...state.playerZones[P1].hand];
-        state = cardsDiscard(state, P1, hand, { kind: "RULE" });
+        state = cardsTrashFromHand(state, P1, hand, { kind: "RULE" });
         expect(state.playerZones[P1].hand).toHaveLength(0);
         expect(state.playerZones[P1].trash).toHaveLength(3);
     });
@@ -180,13 +182,13 @@ describe("cardsDiscard", () => {
         let state = setupTestGame();
         state = cardsDraw(state, P1, 1, { kind: "RULE" });
         const handCard = state.playerZones[P1].hand[0];
-        state = cardsDiscard(state, P1, [handCard], { kind: "RULE" });
+        state = cardsTrashFromHand(state, P1, [handCard], { kind: "RULE" });
         expect(state.instances[handCard].currentZone).toBe("TRASH");
     });
 
     it("throws InvalidActionError if card is not in hand", () => {
         const state = setupTestGame();
-        expect(() => cardsDiscard(state, P1, ["p1-CARD-0" as CardInstanceId], { kind: "RULE" }))
+        expect(() => cardsTrashFromHand(state, P1, ["p1-CARD-0" as CardInstanceId], { kind: "RULE" }))
             .toThrow(InvalidActionError);
     });
 
@@ -194,8 +196,8 @@ describe("cardsDiscard", () => {
         let state = setupTestGame();
         state = cardsDraw(state, P1, 1, { kind: "RULE" });
         const handCard = state.playerZones[P1].hand[0];
-        // After the first discard the card is no longer in hand, so the second should throw
-        expect(() => cardsDiscard(state, P1, [handCard, handCard], { kind: "RULE" }))
+        // After the first trash the card is no longer in hand, so the second should throw
+        expect(() => cardsTrashFromHand(state, P1, [handCard, handCard], { kind: "RULE" }))
             .toThrow(InvalidActionError);
     });
 
@@ -203,7 +205,7 @@ describe("cardsDiscard", () => {
         let state = setupTestGame();
         state = cardsDraw(state, P1, 1, { kind: "RULE" });
         const handCard = state.playerZones[P1].hand[0];
-        state = cardsDiscard(state, P1, [handCard], { kind: "RULE" });
+        state = cardsTrashFromHand(state, P1, [handCard], { kind: "RULE" });
         expect(state.playerZones[P2].trash).toHaveLength(0);
     });
 
@@ -211,7 +213,7 @@ describe("cardsDiscard", () => {
         let state = setupTestGame();
         state = cardsDraw(state, P1, 3, { kind: "RULE" });
         const hand = [...state.playerZones[P1].hand];
-        state = cardsDiscard(state, P1, hand, { kind: "RULE" });
+        state = cardsTrashFromHand(state, P1, hand, { kind: "RULE" });
         assertInvariants(state);
     });
 });
@@ -597,9 +599,118 @@ describe("playEvent", () => {
             .toThrow(InvalidActionError);
     });
 
+    it("throws if played from TRASH (use playEventFromTrash instead)", () => {
+        let state = makeStateWithCardAtTop(MOCK_EVENT_ID);
+        const eventId = "p1-CARD-0" as CardInstanceId;
+        state = moveCard(state, eventId, "TRASH", "TOP");
+        expect(() => playEvent(state, P1, eventId, { kind: "RULE" }))
+            .toThrow(InvalidActionError);
+    });
+
     it("passes invariants", () => {
         const { state, eventId } = makeStateForEventPlay();
         const next = playCard(state, P1, eventId, { kind: "PLAYER" });
+        assertInvariants(next);
+    });
+});
+
+// ============================================================
+// playEventFromTrash
+// ============================================================
+
+describe("playEventFromTrash", () => {
+    it("emits EVENT_PLAYED without moving the card", () => {
+        let state = makeStateWithCardAtTop(MOCK_EVENT_ID);
+        const eventId = "p1-CARD-0" as CardInstanceId;
+        state = moveCard(state, eventId, "TRASH", "TOP");
+        const next = playEventFromTrash(state, P1, eventId, { kind: "RULE" });
+        expect(next.instances[eventId].currentZone).toBe("TRASH");
+        expect(next.playerZones[P1].trash).toContain(eventId);
+    });
+
+    it("throws if card is not in TRASH", () => {
+        const { state, eventId } = makeStateForEventPlay();
+        expect(() => playEventFromTrash(state, P1, eventId, { kind: "RULE" }))
+            .toThrow(InvalidActionError);
+    });
+
+    it("throws if card is not an EVENT", () => {
+        let state = setupTestGame();
+        state = moveCard(state, "p1-CARD-0" as CardInstanceId, "TRASH", "TOP");
+        expect(() => playEventFromTrash(state, P1, "p1-CARD-0" as CardInstanceId, { kind: "RULE" }))
+            .toThrow(InvalidActionError);
+    });
+
+    it("passes invariants", () => {
+        let state = makeStateWithCardAtTop(MOCK_EVENT_ID);
+        const eventId = "p1-CARD-0" as CardInstanceId;
+        state = moveCard(state, eventId, "TRASH", "TOP");
+        const next = playEventFromTrash(state, P1, eventId, { kind: "RULE" });
+        assertInvariants(next);
+    });
+});
+
+// ============================================================
+// removeCardFromField
+// ============================================================
+
+describe("removeCardFromField", () => {
+    it("moves CHARACTER from CHARACTERS to TRASH", () => {
+        let state = setupTestGame();
+        state = moveCard(state, "p1-CARD-0" as CardInstanceId, "CHARACTERS", "BOTTOM");
+        const next = removeCardFromField(state, P1, "p1-CARD-0" as CardInstanceId, "TRASH", "TOP", { kind: "RULE" });
+        expect(next.playerZones[P1].trash).toContain("p1-CARD-0");
+        expect(next.playerZones[P1].characters).not.toContain("p1-CARD-0");
+    });
+
+    it("moves CHARACTER from CHARACTERS to HAND", () => {
+        let state = setupTestGame();
+        state = moveCard(state, "p1-CARD-0" as CardInstanceId, "CHARACTERS", "BOTTOM");
+        const next = removeCardFromField(state, P1, "p1-CARD-0" as CardInstanceId, "HAND", "TOP", { kind: "RULE" });
+        expect(next.playerZones[P1].hand).toContain("p1-CARD-0");
+        expect(next.playerZones[P1].characters).not.toContain("p1-CARD-0");
+    });
+
+    it("moves CHARACTER from CHARACTERS to DECK", () => {
+        let state = setupTestGame();
+        state = moveCard(state, "p1-CARD-0" as CardInstanceId, "CHARACTERS", "BOTTOM");
+        const next = removeCardFromField(state, P1, "p1-CARD-0" as CardInstanceId, "DECK", "TOP", { kind: "RULE" });
+        expect(next.playerZones[P1].deck[0]).toBe("p1-CARD-0");
+    });
+
+    it("detaches attached DON before removing from field", () => {
+        let state = setupTestGame();
+        state = moveCard(state, "p1-CARD-0" as CardInstanceId, "CHARACTERS", "BOTTOM");
+        state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
+        const next = removeCardFromField(state, P1, "p1-CARD-0" as CardInstanceId, "TRASH", "TOP", { kind: "RULE" });
+        expect(next.playerZones[P1].donRested).toContain("p1-DON-0");
+        expect((next.instances["p1-DON-0" as CardInstanceId] as any).attachedTo).toBeNull();
+    });
+
+    it("throws if instance is not a CHARACTER or STAGE", () => {
+        const state = setupTestGame();
+        expect(() => removeCardFromField(state, P1, "p1-DON-0" as CardInstanceId, "TRASH", "TOP", { kind: "RULE" }))
+            .toThrow(InvalidActionError);
+    });
+
+    it("throws if card is not currently on the field", () => {
+        const state = setupTestGame();
+        // p1-CARD-0 is in DECK, not CHARACTERS or STAGE
+        expect(() => removeCardFromField(state, P1, "p1-CARD-0" as CardInstanceId, "TRASH", "TOP", { kind: "RULE" }))
+            .toThrow(InvalidActionError);
+    });
+
+    it("throws for invalid destination zone", () => {
+        let state = setupTestGame();
+        state = moveCard(state, "p1-CARD-0" as CardInstanceId, "CHARACTERS", "BOTTOM");
+        expect(() => removeCardFromField(state, P1, "p1-CARD-0" as CardInstanceId, "CHARACTERS" as any, "TOP", { kind: "RULE" }))
+            .toThrow(InvalidActionError);
+    });
+
+    it("passes invariants", () => {
+        let state = setupTestGame();
+        state = moveCard(state, "p1-CARD-0" as CardInstanceId, "CHARACTERS", "BOTTOM");
+        const next = removeCardFromField(state, P1, "p1-CARD-0" as CardInstanceId, "TRASH", "TOP", { kind: "RULE" });
         assertInvariants(next);
     });
 });

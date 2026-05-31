@@ -1,5 +1,5 @@
 import { produce } from 'immer';
-import type { Action, GameSignal, GameState } from '../types';
+import type { GameAction, GameSignal, GameState } from '../types';
 
 export function emit(state: GameState, signal: GameSignal): GameState {
     return produce(state, draft => {

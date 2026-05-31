@@ -43,6 +43,12 @@ export type Phase =
     | BattlePhase
     // | TriggerPhase;
 
+export type BattleRecord = {
+    attackerId: CardInstanceId;
+    defenderId: CardInstanceId;
+    counter: number;
+}
+
 export type EndReason = 'KNOCKOUT' | 'DECKOUT' | 'CONCEDE' | 'TIMEOUT' | 'DISCONNECT';
 
 export type StackPosition = "TOP" | "BOTTOM"

@@ -1,39 +1,9 @@
 import { produce } from 'immer';
-import { GameState } from '../types/state';
-import { CardInstanceId, PlayerId, Zone, StackPosition, Phase } from '../types/primitives';
-import { CHARACTERS_MAX, LEADER_MAX, STAGE_MAX } from './rules';
-import { DonInstance } from '../types/card';
-
-// Zone Management
-
-/**
- * Helper function to get the zone array for the provided player
- * @param state - Current game state
- * @param playerId - Player id that we want the zone of
- * @param zone - Zone for the player that we want, nullable due to the currentZone being able to provide a null value, though no null zone value should be expected or provided
- * @returns Game state with the card instance id removed from the instance's current zone, and the instance's current zone set to null
- */
-export function getZoneArray(state: GameState, playerId: PlayerId, zone: Zone | null): CardInstanceId[] {
-    const playerZones = state.playerZones[playerId];
-    if (!playerZones) {
-        throw new Error(`Unknown playerId ${playerId}`);
-    }
-    switch (zone) {
-        case "CHARACTERS":  return playerZones.characters;
-        case "DECK":        return playerZones.deck;
-        case "DON_ACTIVE":  return playerZones.donActive;
-        case "DON_DECK":    return playerZones.donDeck;
-        case "DON_RESTED":  return playerZones.donRested;
-        case "HAND":        return playerZones.hand;
-        case "LEADER":      return playerZones.leader;
-        case "LIFE":        return playerZones.life;
-        case "LOOK":        return playerZones.look;
-        case "STAGE":       return playerZones.stage;
-        case "TRASH":       return playerZones.trash;
-        case null:          throw new Error(`Null zone provided, no zone to return`);
-        default:            throw new Error(`Provided zone was not an accepted zone value`);
-    }
-}
+import { GameState } from '../../types/state';
+import { CardInstanceId, PlayerId, Zone, StackPosition, Phase } from '../../types/primitives';
+import { CHARACTERS_MAX, LEADER_MAX, STAGE_MAX } from '../rules';
+import { DonInstance } from '../../types/card';
+import { getZoneArray } from './helpers';
 
 /**
  * Function to move a player's card from one zone to another
@@ -197,44 +167,6 @@ export function replaceCardAtZoneIndex(state: GameState, instanceId: CardInstanc
         draft.instances[instance.instanceId].currentZone = targetZone;
     });
 }
-
-
-// Card State Management
-
-/**
- * Set card as active
- * @param state - Game state
- * @param playerId - Player controlling the card to set as active
- * @param instanceId - Instance id to set as active
- * @param signalCause - Cause of setting card as active
- * @returns Game state with the card specified set as active
- */
-export function setActive(state: GameState, instanceId: CardInstanceId): GameState {
-    return produce(state, draft => {
-        const card = draft.instances[instanceId];
-        if (!card) throw new Error(`Cannot find card instance ${instanceId}`);
-        card.isRested = false;
-    });
-}
-
-/**
- * Set card as rested
- * @param state - Game state
- * @param playerId - Player controlling the card to set as rested
- * @param instanceId - Instance id to set as rested
- * @param signalCause - Cause of setting card as rested
- * @returns Game state with the card specified set as rested
- */
-export function setRested(state: GameState, instanceId: CardInstanceId): GameState {
-    return produce(state, draft => {
-        const card = draft.instances[instanceId];
-        if (!card) throw new Error(`Cannot find card instance ${instanceId}`);
-        card.isRested = true;
-    });
-}
-
-
-// DON!! Management
 
 /**
  * Attaches a DON!! card to a character or leader. The DON!! is removed from its current zone,

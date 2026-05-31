@@ -1,4 +1,4 @@
-import { Action, GameSignal, GameState, PlayerId, SignalCause, CardInstanceId, DonInstance, StackPosition, Zone } from "../../types";
+import { GameState, PlayerId, SignalCause, CardInstanceId, DonInstance, StackPosition, Zone } from "../../types";
 import { moveCard, getZoneArray, attachDon, detachDon } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
@@ -104,7 +104,7 @@ export function donReturn(state: GameState, playerId: PlayerId, donIds: CardInst
  * @param signalCause - The cause for DON attachment
  * @return Game state with the specified DON attached to the target
  */
-export function donAttach(state: GameState, playerId: PlayerId, targetId: CardInstanceId, donIds: CardInstanceId[], fromDonZone: Zone, signalCause: SignalCause): GameState {
+export function donAttach(state: GameState, playerId: PlayerId, donIds: CardInstanceId[], targetId: CardInstanceId, fromDonZone: Zone, signalCause: SignalCause): GameState {
     for (const donId of donIds) {
         const don = state.instances[donId];
         if (don.class !== "DON") throw new InvalidActionError(`Cannot attach non-DON instance ${donId} as a DON`);

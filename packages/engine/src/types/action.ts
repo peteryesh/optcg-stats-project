@@ -1,7 +1,7 @@
 import { DeckList } from "./card";
 import { CardId, CardInstanceId, PlayerId, FrameId } from "./primitives";
 
-export type Action =
+export type GameAction =
   // Setup
   | { type: "CHOOSE_TURN_ORDER"; playerId: PlayerId; choice: "FIRST" | "SECOND" }
   | { type: "KEEP_HAND";         playerId: PlayerId }
@@ -11,9 +11,9 @@ export type Action =
   | { type: "END_PHASE";         playerId: PlayerId }
 
   // Main Phase
-  | { type: "PLAY_CARD";         playerId: PlayerId; instanceId: CardInstanceId; targetSlot?: number }
+  | { type: "PLAY_CARD";         playerId: PlayerId; instanceId: CardInstanceId; }
   | { type: "ACTIVATE_EFFECT";  playerId: PlayerId; instanceId: CardInstanceId; abilityId: string }
-  | { type: "ATTACH_DON";        playerId: PlayerId; donId: CardInstanceId; targetId: CardInstanceId }
+  | { type: "ATTACH_DON";        playerId: PlayerId; donIds: CardInstanceId[]; targetId: CardInstanceId }
 
   // Combat
   | { type: "DECLARE_ATTACK";    playerId: PlayerId; attackerId: CardInstanceId; defenderId: CardInstanceId }

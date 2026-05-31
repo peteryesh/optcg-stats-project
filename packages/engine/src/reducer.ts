@@ -1,14 +1,12 @@
 import { produce } from 'immer';
 import type { GameState } from './types/state';
-import type { Action } from './types/action';
+import type { GameAction } from './types/action';
 import { validate } from './validators';
 import { InvalidActionError } from './errors';
-import { applyChooseTurnOrder, applyKeepHand, applyMulligan } from './game/actions/setup';
-import { applyEndPhase } from './game/actions/phase';
 
 export { InvalidActionError } from './errors';
 
-export function reducer(state: GameState, action: Action): GameState {
+export function reducer(state: GameState, action: GameAction): GameState {
     if (state.winner !== null) {
         throw new InvalidActionError('Game is already finished');
     }
@@ -22,16 +20,16 @@ export function reducer(state: GameState, action: Action): GameState {
 
     switch (action.type) {
         case 'CHOOSE_TURN_ORDER':
-            state =  applyChooseTurnOrder(state, action);
+            
             break;
         case 'KEEP_HAND':
-            state =  applyKeepHand(state, action);
+            
             break;
         case 'MULLIGAN':
-            state =  applyMulligan(state, action);
+            
             break;
         case 'END_PHASE':
-            state =  applyEndPhase(state, action);
+            
             break;
         case 'PLAY_CARD':
         case 'ATTACH_DON':
