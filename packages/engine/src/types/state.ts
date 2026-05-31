@@ -116,7 +116,7 @@ export interface GameState {
     cardsPlayedThisTurn: CardInstanceId[]; // used for tracking same-turn played effects and eligible attackers
 
     // Combat State
-    battlePhase: BattlePhase | null;
+    currentBattle: BattleRecord | null;
     battlesThisTurn: BattleRecord[]; // used for tracking multiple attacks with the same character and same-turn attack effects
 
     // Effects

@@ -34,9 +34,14 @@ export type Zone =
     | 'TRASH';
 
 // Game Phases
-export type Phase = 'SETUP' | 'START_OF_TURN' | 'REFRESH' | 'DRAW' | 'MAIN' | 'END_OF_TURN' | 'GAME_END';
-export type BattlePhase = 'WHEN_ATTACKING' | 'ON_OPPONENT_ATTACK' | 'BLOCKER' | 'COUNTER' | 'RESOLUTION' | 'DAMAGE';
-export type TriggerPhase = 'ACTIVATE_TRIGGER' | 'TO_HAND' | 'TO_TRASH' | 'EFFECT';
+export type GamePhase = 'SETUP' | 'START_OF_TURN' | 'REFRESH' | 'DRAW' | 'MAIN' | 'END_OF_TURN' | 'GAME_END';
+export type BattlePhase = 'WHEN_ATTACKING' | 'ON_OPPONENT_ATTACK' | 'BLOCKER' | 'COUNTER' | 'BATTLE_RESOLUTION';
+// export type TriggerPhase = 'ACTIVATE_TRIGGER' | 'TO_HAND' | 'TO_TRASH' | 'EFFECT';
+
+export type Phase = 
+    | GamePhase
+    | BattlePhase
+    // | TriggerPhase;
 
 export type EndReason = 'KNOCKOUT' | 'DECKOUT' | 'CONCEDE' | 'TIMEOUT' | 'DISCONNECT';
 

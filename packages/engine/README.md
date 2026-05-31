@@ -1,7 +1,33 @@
 OPTCG VEGA ENGINE
 
-TODO
-- 
+Pending Decisions
+- Nullable field that is set when a user is required to make some kind of decision in order to advance the game state that is not a result of their main turn actions
+- Used primarily for effects in order to select targets, select simultaneous effect order, and conditional cost requirement for effects to activate
+- EffectSteps must carry a property that marks it as a step that requires player input
+- State checks for the effect queues and pendingDecision
+    - Legal actions are limited to the currently executing effects and are served to the player that must resolve the effect decision
+    - Context is provided based on the action chosen by the user and the most recent effect step that caused the decision point
+
+Battle Phases
+- Wanted to have the user consider the entire battle, similarly to how they would do it in person
+- Current implementations make phase changes binding, which is procedural and correct, but is frustrating when a defender is considering an entire battle
+- Moving phases between the attacker's effects and battle resolution should be considered a fluid "defense phase" with binding commit points should the defender select them
+- Commit Points between "ON_OPPONENT_ATTACK", "BLOCKER", "COUNTER", and "BATTLE_RESOLUTION" phases
+    - If a commit point has not been reached, user can fluidly move back and forth between phases as they consider their turn
+    - ON_OPPONENT_ATTACK: Can be returned to if no commit action has been performed
+    - BLOCKER: Declaring any blocker immediately moves to the COUNTER phase and prevents any movement between phases
+    - COUNTER: Playing any counter card or event prevents return to BLOCKER or ON_OPPONENT_ATTACK
+    - BATTLE_RESOLUTION: Entering is committal resolves attack and moves back to the attacker's main phase
+- Think about how things are in person
+    - In person, you can plan to skip an "on opponent's attack", think no blocker and no counter, then change your mind and and go back as long as no action was committed
+    - Only when you actually declare a blocker or play counter are you prevented from going back and activating effects
+    - Technically, declaring no blocker is binding, but in person, people don't declare this and begin countering right away if they do not want to block or use effects
+    - However, players declaring "no effect" is quite common, and is binding
+        - Online equivalent would be to click the character's effect and choose "no effect"
+        - When there are no more effects to consider, automatically go to the BLOCKER phase
+        - Player can then move back and forth between BLOCKER and COUNTER until they decide to make an action
+    - In an online setting, forcing a phase change commit is equivalent to just thinking "no blocker" in person and having it be a binding action
+- Actions are binding, not clicks through phases
 
 Terminology
 Cards

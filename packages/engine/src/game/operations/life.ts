@@ -4,24 +4,44 @@ import { moveCard, getZoneArray, attachDon, detachDon } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
 
-export function lifeAdd(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], position: StackPosition, signalCause: SignalCause): GameState {
+export function lifeAdd(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], fromZone: Zone, position: StackPosition, signalCause: SignalCause): GameState {
     for (const instanceId of instanceIds) {
-        const fromZone = state.instances[instanceId].currentZone!;
+        const zone = state.instances[instanceId].currentZone;
+        if (!zone) throw new InvalidActionError(`${instanceId} has no current zone`);
+        if (zone !== fromZone) throw new InvalidActionError(`Cannot add ${instanceId} to life from ${zone}, expected ${fromZone}`);
         state = moveCard(state, instanceId, "LIFE", position);
-        state = emit(state, { type: "LIFE_ADDED", instanceId, controller: playerId, fromZone, position, cause: signalCause });
     }
-    return state;
+    return emit(state, { type: "CARDS_SENT_TO_LIFE", instanceIds: instanceIds, fromZone: fromZone, position: position, controller: playerId, cause: signalCause });
 }
 
-// Need to figure out if we want to separate this into different functions and different signals based on location and cause of life loss
-export function lifeRemove(state: GameState, playerId: PlayerId, lifePosition: StackPosition, destination: Zone, destinationPosition: StackPosition, signalCause: SignalCause): GameState {
+export function lifeSentToHand(state: GameState, playerId: PlayerId, lifePosition: StackPosition, toZonePosition: StackPosition, signalCause: SignalCause): GameState {
     const lifeZone = getZoneArray(state, playerId, "LIFE");
     const lifeCardId = lifePosition === "TOP" ? lifeZone[0] : lifeZone.at(-1);
     if (!lifeCardId) return state;
 
-    state = moveCard(state, lifeCardId, destination, destinationPosition);
+    state = moveCard(state, lifeCardId, "HAND", toZonePosition);
 
-    return emit(state, { type: "LIFE_REMOVED", instanceId: lifeCardId, controller: playerId, lifePosition: lifePosition, destination: destination, destinationPosition: destinationPosition, cause: signalCause })
+    return emit(state, { type: "CARDS_SENT_TO_HAND", instanceIds: [lifeCardId], fromZone: "LIFE", controller: playerId, cause: signalCause });
+}
+
+export function lifeSentToDeck(state: GameState, playerId: PlayerId, lifePosition: StackPosition, toZonePosition: StackPosition, signalCause: SignalCause): GameState {
+    const lifeZone = getZoneArray(state, playerId, "LIFE");
+    const lifeCardId = lifePosition === "TOP" ? lifeZone[0] : lifeZone.at(-1);
+    if (!lifeCardId) return state;
+
+    state = moveCard(state, lifeCardId, "DECK", toZonePosition);
+
+    return emit(state, { type: "CARDS_SENT_TO_DECK", instanceIds: [lifeCardId], fromZone: "LIFE", position: toZonePosition, controller: playerId, cause: signalCause });
+}
+
+export function lifeSentToTrash(state: GameState, playerId: PlayerId, lifePosition: StackPosition, signalCause: SignalCause): GameState {
+    const lifeZone = getZoneArray(state, playerId, "LIFE");
+    const lifeCardId = lifePosition === "TOP" ? lifeZone[0] : lifeZone.at(-1);
+    if (!lifeCardId) return state;
+
+    state = moveCard(state, lifeCardId, "TRASH", "TOP");
+
+    return emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: [lifeCardId], fromZone: "LIFE", controller: playerId, cause: signalCause });
 }
 
 export function dealDamage(state: GameState, playerId: PlayerId, cause: DamageCause, lifeDamaged: number = 1): GameState {
@@ -45,7 +65,7 @@ export function dealDamage(state: GameState, playerId: PlayerId, cause: DamageCa
 
         const topLifeCard = lifeZone[0];
         state = emit(state, { type: "LIFE_DAMAGED", instanceId: topLifeCard, controller: playerId, cause });
-        state = lifeRemove(state, playerId, "TOP", "HAND", "TOP", { kind: "DAMAGE", sourceId: cause.sourceId });
+        state = lifeSentToHand(state, playerId, "TOP", "TOP", { kind: "DAMAGE", sourceId: cause.sourceId });
     }
 
     return state;

@@ -24,8 +24,7 @@ export function donAdd(state: GameState, playerId: PlayerId, count: number, rest
     }
     if (donAdded.length === 0) return state;
 
-    const donAddedSignalType = rested ? "ADDED_RESTED_DON" : "ADDED_ACTIVE_DON";
-    return emit(state, { type: donAddedSignalType, instanceIds: donAdded, controller: playerId, cause: signalCause });
+    return emit(state, { type: "DON_ADDED", instanceIds: donAdded, rested: rested, controller: playerId, cause: signalCause });
 }
 
 /**
@@ -47,6 +46,7 @@ export function donRest(state: GameState, playerId: PlayerId, count: number, sig
         donRested.push(topActiveDon);
         state = moveCard(state, topActiveDon, "DON_RESTED", "TOP");
     }
+    if (donRested.length === 0) return state;
     return emit(state, { type: "DON_RESTED", instanceIds: donRested, controller: playerId, cause: signalCause })
 }
 
@@ -69,6 +69,7 @@ export function donSetActive(state: GameState, playerId: PlayerId, count: number
         donActivated.push(topRestedDon);
         state = moveCard(state, topRestedDon, "DON_ACTIVE", "TOP");
     }
+    if (donActivated.length === 0) return state;
     return emit(state, { type: "DON_SET_ACTIVE", instanceIds: donActivated, controller: playerId, cause: signalCause })
 }
 
@@ -98,15 +99,21 @@ export function donReturn(state: GameState, playerId: PlayerId, donIds: CardInst
  * Attaches one or more DON to a target. It is the responsibility of the caller to check that the DON being attached are valid.
  * @param state - Game state
  * @param playerId - Player performing DON attachment
- * @param donIds - One or more DON to be attached to the target
  * @param targetId - The target to attach one or more DON to
+ * @param donIds - One or more DON to be attached to the target
  * @param signalCause - The cause for DON attachment
  * @return Game state with the specified DON attached to the target
  */
-export function donAttach(state: GameState, playerId: PlayerId, donIds: CardInstanceId[], targetId: CardInstanceId, signalCause: SignalCause): GameState {
+export function donAttach(state: GameState, playerId: PlayerId, targetId: CardInstanceId, donIds: CardInstanceId[], fromDonZone: Zone, signalCause: SignalCause): GameState {
     for (const donId of donIds) {
         const don = state.instances[donId];
+        if (don.class !== "DON") throw new InvalidActionError(`Cannot attach non-DON instance ${donId} as a DON`);
+        if (fromDonZone !== "DON_ACTIVE" && fromDonZone !== "DON_RESTED") throw new InvalidActionError(`Invalid fromDonZone ${fromDonZone} for attaching DON ${donId}, expected DON_ACTIVE or DON_RESTED`);
+        if (fromDonZone === "DON_ACTIVE" && don.currentZone !== "DON_ACTIVE") throw new InvalidActionError(`Attempting to attach DON ${donId} from ${don.currentZone}, expected DON_ACTIVE`);
+        if (fromDonZone === "DON_RESTED" && don.currentZone !== "DON_RESTED") throw new InvalidActionError(`Attempting to attach DON ${donId} from ${don.currentZone}, expected DON_RESTED`);
+
         const targetCard = state.instances[targetId];
+        if (targetCard.class !== "LEADER" && targetCard.class !== "CHARACTER") throw new InvalidActionError(`Cannot attach DON to instance ${targetId} of class ${targetCard.class}, expected LEADER or CHARACTER`);
         if (don.controller !== targetCard.controller) throw new InvalidActionError(`${donId} cannot be attached to ${targetId} as they are controlled by different players`);
         state = attachDon(state, donId, targetId);
     }
@@ -117,12 +124,12 @@ export function donAttach(state: GameState, playerId: PlayerId, donIds: CardInst
  * Detaches one or more DON from a target.
  * @param state - Game state
  * @param playerId - Player performing DON detachment
- * @param donIds - One or more DON to be detached
  * @param originId - The card to detach the DON from
+ * @param donIds - One or more DON to be detached
  * @param signalCause - The cause for DON detachment
- * @return Game state with the specified DON attached to the target
+ * @return Game state with the specified DON detached from the target
  */
-export function donDetach(state: GameState, playerId: PlayerId, donIds: CardInstanceId[], originId: CardInstanceId, signalCause: SignalCause): GameState {
+export function donDetach(state: GameState, playerId: PlayerId, originId: CardInstanceId, donIds: CardInstanceId[], signalCause: SignalCause): GameState {
     const originCard = state.instances[originId];
     if (!originCard) throw new InvalidActionError(`Origin card ${originId} was not found`);
     if (!(originCard.class === "LEADER" || originCard.class === "CHARACTER")) throw new InvalidActionError(`Attempting to detach DON from invalid DON attachment origin ${originId}`); 

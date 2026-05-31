@@ -1,8 +1,10 @@
 import { produce } from 'immer';
 import { GameState } from '../types/state';
-import { CardInstanceId, PlayerId, Zone, StackPosition } from '../types/primitives';
+import { CardInstanceId, PlayerId, Zone, StackPosition, Phase } from '../types/primitives';
 import { CHARACTERS_MAX, LEADER_MAX, STAGE_MAX } from './rules';
 import { DonInstance } from '../types/card';
+
+// Zone Management
 
 /**
  * Helper function to get the zone array for the provided player
@@ -197,6 +199,8 @@ export function replaceCardAtZoneIndex(state: GameState, instanceId: CardInstanc
 }
 
 
+// Card State Management
+
 /**
  * Set card as active
  * @param state - Game state
@@ -228,6 +232,9 @@ export function setRested(state: GameState, instanceId: CardInstanceId): GameSta
         card.isRested = true;
     });
 }
+
+
+// DON!! Management
 
 /**
  * Attaches a DON!! card to a character or leader. The DON!! is removed from its current zone,
@@ -300,7 +307,7 @@ export function detachDon(state: GameState, donId: CardInstanceId, destination: 
  * @param targetId - Instance ID of the character or leader to attach the DON!! to
  * @returns Game state with the DON!! removed from its zone and attached to the target
  */
-export function donReattach(state: GameState, donId: CardInstanceId, targetId: CardInstanceId): GameState {
+export function reattachDon(state: GameState, donId: CardInstanceId, targetId: CardInstanceId): GameState {
     const don = state.instances[donId];
     if (!don) throw new Error(`Cannot find DON!! instance ${donId}`);
     if (don.class !== "DON") throw new Error(`Instance ${donId} is not a DON!! card`);
@@ -324,4 +331,20 @@ export function donReattach(state: GameState, donId: CardInstanceId, targetId: C
         (draft.instances[donId] as DonInstance).attachedTo = targetId;
         (draft.instances[targetId] as { attachedDon: CardInstanceId[] }).attachedDon.push(donId);
     });
+}
+
+
+// Phase Management
+
+export function setPhase(state: GameState, phase: Phase): GameState {
+    return produce(state, draft => { draft.phase = phase; });
+}
+
+export function changeActivePlayer(state: GameState): GameState {
+    const currentPlayerIndex = state.turnOrder.indexOf(state.activePlayerId);
+    if (currentPlayerIndex === -1) {
+        throw new Error(`Active player ${state.activePlayerId} not found in turn order`);
+    }
+    const nextPlayerIndex = (currentPlayerIndex + 1) % state.turnOrder.length;
+    return produce(state, draft => { draft.activePlayerId = state.turnOrder[nextPlayerIndex]; });
 }

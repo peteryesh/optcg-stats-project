@@ -1,9 +1,9 @@
 import { castImmutable, produce } from 'immer';
-import { Action, GameSignal, GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card } from "../../types";
-import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex } from "../mechanics";
+import { Action, GameSignal, GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card, Phase } from "../../types";
+import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex, setPhase } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
-import { donRest } from './don';
+import { donRest, donDetach } from './don';
 import { CHARACTERS_MAX, STAGE_MAX } from '../rules';
 
 /**
@@ -23,7 +23,7 @@ export function cardsDraw(state: GameState, playerId: PlayerId, count: number, s
         state = moveCard(state, topCard, "HAND", "TOP");
     }
     if (cardsDrawn.length === 0) return state;
-    return emit(state, { type: "CARDS_DRAWN", instanceIds: cardsDrawn, controller: playerId, cause: signalCause });
+    return emit(state, { type: "CARDS_SENT_TO_HAND", instanceIds: cardsDrawn, fromZone: "DECK", controller: playerId, cause: signalCause });
 }
 
 /**
@@ -34,7 +34,7 @@ export function cardsDraw(state: GameState, playerId: PlayerId, count: number, s
  * @param signalCause - Cause of discard action
  * @returns Game state with the cards specified discarded from the player's hand
  */
-export function cardsDiscard(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], signalCause: SignalCause): GameState {
+export function cardsTrashFromHand(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], signalCause: SignalCause): GameState {
     for (const instanceId of instanceIds) {
         const playerHand = getZoneArray(state, playerId, "HAND");
         if (!(playerHand.includes(instanceId))){
@@ -42,7 +42,7 @@ export function cardsDiscard(state: GameState, playerId: PlayerId, instanceIds: 
         }
         state = moveCard(state, instanceId, "TRASH", "TOP");
     }
-    return emit(state, { type: "CARDS_DISCARDED", instanceIds: instanceIds, controller: playerId, cause: signalCause });
+    return emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: instanceIds, fromZone: "HAND", controller: playerId, cause: signalCause });
 }
 
 /**
@@ -90,6 +90,8 @@ export function cardsSetRested(state: GameState, playerId: PlayerId, instanceIds
     }
     return emit(state, { type: "CARDS_RESTED", instanceIds: instanceIds, controller: playerId, cause: signalCause });
 }
+
+// Play Operations
 
 /**
  * Plays a card, either from hand as a player action or from a zone by some effect. It is the responsibility of the caller to specify the play cause.
@@ -144,7 +146,7 @@ export function playCharacter(state: GameState, playerId: PlayerId, instanceId: 
         if (!characterZone.includes(replacedId)) throw new InvalidActionError(`Attempting to replace ${replacedId}, but it is not part of the character zone`);
         if (characterZone.length < CHARACTERS_MAX) throw new InvalidActionError(`Attempting to replace character ${replacedId} while the character zone is not full`);
         const replacedCharacterIndex = characterZone.indexOf(replacedId);
-        state = moveCard(state, replacedId, "TRASH", "TOP");
+        state = removeCardFromField(state, playerId, replacedId, "TRASH", "TOP", { kind: "RULE" });
         state = removeFromZone(state, instanceId);
         state = insertCardAtZoneIndex(state, instanceId, "CHARACTERS", replacedCharacterIndex);
     }
@@ -168,7 +170,7 @@ export function playStage(state: GameState, playerId: PlayerId, instanceId: Card
         if (!stageZone.includes(replacedId)) throw new InvalidActionError(`Attempting to replace ${replacedId}, but it is not part of the stage zone`);
         if (stageZone.length < STAGE_MAX) throw new InvalidActionError(`Attempting to replace stage ${replacedId} while the stage zone is not full`);
         const replacedStageIndex = stageZone.indexOf(replacedId);
-        state = moveCard(state, replacedId, "TRASH", "TOP");
+        state = removeCardFromField(state, playerId, replacedId, "TRASH", "TOP", { kind: "RULE" });
         state = removeFromZone(state, instanceId);
         state = insertCardAtZoneIndex(state, instanceId, "STAGE", replacedStageIndex);
     }
@@ -185,7 +187,56 @@ export function playEvent(state: GameState, playerId: PlayerId, instanceId: Card
     
     const originZone = event.currentZone;
     if (!originZone) throw new InvalidActionError(`${instanceId} has no origin zone`);
+    if (originZone === "TRASH") throw new InvalidActionError(`${instanceId} cannot be played from trash with playEvent function`);
 
     state = moveCard(state, instanceId, "TRASH", "TOP");
+    state = emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: [instanceId], fromZone: originZone, controller: playerId, cause: signalCause });
     return emit(state, { type: "EVENT_PLAYED", instanceId: instanceId, controller: playerId, fromZone: originZone, toZone: "TRASH", cause: signalCause });
+}
+
+// Event play from trash emits event played but with no zone movement (change later if a ruling specifies that the card should be moved back to trash after play, but I doubt it would count as a completely separate re-entrance to trash)
+export function playEventFromTrash(state: GameState, playerId: PlayerId, instanceId: CardInstanceId, signalCause: PlayCause): GameState {
+    const event = state.instances[instanceId];
+    if (!event) throw new InvalidActionError(`${instanceId} not found in the state's instances`);
+    if (event.class !== "EVENT") throw new InvalidActionError(`${instanceId} is not an event card instance`);
+    
+    const originZone = event.currentZone;
+    if (originZone !== "TRASH") throw new InvalidActionError(`${instanceId} cannot be played from ${originZone}`);
+
+    return emit(state, { type: "EVENT_PLAYED", instanceId: instanceId, controller: playerId, fromZone: originZone, toZone: "TRASH", cause: signalCause });
+}
+
+
+// Removal Operations
+
+export function removeCardFromField(state: GameState, playerId: PlayerId, instanceId: CardInstanceId, toZone: Zone, position: StackPosition, signalCause: SignalCause): GameState {
+    const card = state.instances[instanceId];
+    if (!card) throw new InvalidActionError(`${instanceId} not found in card instances`);
+    if (!(card.class === "CHARACTER" || card.class === "STAGE")) throw new InvalidActionError(`Only characters and stages can be removed from the field, but ${instanceId} is being removed`);
+    
+    const fromZone = card.currentZone;
+    if (!fromZone) throw new InvalidActionError(`${instanceId} does not have a current zone`);
+    if (!(fromZone === "CHARACTERS" || fromZone === "STAGE")) throw new InvalidActionError(`Cards can only be removed from the field from characters or stage, but ${instanceId} is being removed from ${fromZone}`);
+    
+    // Detach any attached DON before removing the card from the field
+    if (card.attachedDon.length > 0) {
+        state = donDetach(state, playerId, instanceId, card.attachedDon, { kind: "RULE" });
+    }
+
+    switch (toZone) {
+        case "TRASH":
+            state = moveCard(state, instanceId, "TRASH", position);
+            return emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: [instanceId], fromZone: fromZone, controller: playerId, cause: signalCause });
+        case "HAND":
+            state = moveCard(state, instanceId, "HAND", position);
+            return emit(state, { type: "CARDS_SENT_TO_HAND", instanceIds: [instanceId], fromZone: fromZone, controller: playerId, cause: signalCause });
+        case "DECK":
+            state = moveCard(state, instanceId, "DECK", position);
+            return emit(state, { type: "CARDS_SENT_TO_DECK", instanceIds: [instanceId], fromZone: fromZone, position: position, controller: playerId, cause: signalCause });
+        case "LIFE":
+            state = moveCard(state, instanceId, "LIFE", position);
+            return emit(state, { type: "CARDS_SENT_TO_LIFE", instanceIds: [instanceId], fromZone: fromZone, position: position, controller: playerId, cause: signalCause });
+        default:
+            throw new InvalidActionError(`Invalid removal destination ${toZone} for ${instanceId}`);
+    }
 }

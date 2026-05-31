@@ -1,5 +1,5 @@
 import { CardFilter } from './filter';
-import type { CardId, CardInstanceId, Attribute, CardClass, Color, PlayerId, Zone, EndReason, StackPosition, RevealedTo } from './primitives';
+import type { CardId, CardInstanceId, Attribute, CardClass, Color, PlayerId, Zone, EndReason, StackPosition, RevealedTo, Phase } from './primitives';
 
 // ============================================================
 // Shared Types
@@ -7,12 +7,6 @@ import type { CardId, CardInstanceId, Attribute, CardClass, Color, PlayerId, Zon
 export type PlayCause =
     | { kind: "PLAYER" }
     | { kind: "EFFECT"; sourceId: CardInstanceId }
-    | { kind: "RULE" };
-
-export type RemovalCause =
-    | { kind: "BATTLE"; sourceId: CardInstanceId }
-    | { kind: "EFFECT"; sourceId: CardInstanceId }
-    | { kind: "OVERFLOW" }
     | { kind: "RULE" };
 
 export type DamageCause =
@@ -32,20 +26,18 @@ export type SignalCause =
 // ============================================================
 
 export type GameSignal =
-    // Hand & Deck
-    | { type: "CARDS_DRAWN"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause}
-    | { type: "CARDS_DISCARDED"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
-    // | { type: "CARD_RETURNED_TO_HAND"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; cause: SignalCause }
-    // | { type: "CARD_MILLED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
-    // | { type: "CARD_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; position: StackPosition; cause: SignalCause }
+    // Card Movement
+    | { type: "CARDS_SENT_TO_TRASH"; instanceIds: CardInstanceId[]; fromZone: Zone; controller: PlayerId; cause: SignalCause }
+    | { type: "CARDS_SENT_TO_HAND"; instanceIds: CardInstanceId[]; fromZone: Zone; controller: PlayerId; cause: SignalCause }
+    | { type: "CARDS_SENT_TO_DECK"; instanceIds: CardInstanceId[]; fromZone: Zone; position: StackPosition; controller: PlayerId; cause: SignalCause }
+    | { type: "CARDS_SENT_TO_LIFE"; instanceIds: CardInstanceId[]; fromZone: Zone; position: StackPosition; controller: PlayerId; cause: SignalCause }
     // | { type: "DECK_SHUFFLED"; controller: PlayerId; cause: SignalCause }
 
     | { type: "CARDS_SET_ACTIVE"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause}
     | { type: "CARDS_RESTED"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause}
 
     // DON!!
-    | { type: "ADDED_ACTIVE_DON"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
-    | { type: "ADDED_RESTED_DON"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
+    | { type: "DON_ADDED"; instanceIds: CardInstanceId[]; rested: boolean; controller: PlayerId; cause: SignalCause }
     | { type: "DON_RESTED"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
     | { type: "DON_SET_ACTIVE"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
     | { type: "DON_RETURNED"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause }
@@ -55,28 +47,32 @@ export type GameSignal =
     // Life & Damage
     | { type: "DAMAGE_DEALT"; instanceId: CardInstanceId; controller: PlayerId; cause: DamageCause }
     | { type: "LIFE_DAMAGED"; instanceId: CardInstanceId; controller: PlayerId; cause: DamageCause }
-    | { type: "LIFE_REMOVED"; instanceId: CardInstanceId; controller: PlayerId; lifePosition: StackPosition; destination: Zone, destinationPosition: StackPosition, cause: SignalCause }
-    | { type: "LIFE_ADDED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; position: StackPosition; cause: SignalCause }
     // | { type: "LIFE_REVEALED"; instanceId: CardInstanceId; controller: PlayerId; position: StackPosition; revealedTo: RevealedTo; cause: SignalCause }
     // | { type: "LIFE_FLIPPED"; instanceId: CardInstanceId; controller: PlayerId; position: StackPosition; cause: SignalCause }
     // | { type: "LIFE_REORDERED"; controller: PlayerId; cause: SignalCause }
     // | { type: "LIFE_REVEALED_AS_TRIGGER"; instanceId: CardInstanceId; controller: PlayerId; position: StackPosition }
 
     // Card Plays
-    | { type: "CARD_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause}
     | { type: "CHARACTER_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause; replaced?: CardInstanceId }
     | { type: "STAGE_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause; replaced?: CardInstanceId }
     | { type: "EVENT_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause; }
+    // | { type: "CARD_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause}
+
+    // Phase Changes
+    | { type: "PHASE_CHANGED"; prevPhase: Phase; nextPhase: Phase; cause: SignalCause }
     
+
+
+
     // Card Removal from Field
-    | { type: "CHARACTER_KOD"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause }
-    | { type: "CHARACTER_TRASHED"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause }
-    | { type: "CHARACTER_BOUNCED"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause }
-    | { type: "CHARACTER_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause; position: StackPosition }
-    | { type: "STAGE_KOD"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause }
-    | { type: "STAGE_TRASHED"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause }
-    | { type: "STAGE_BOUNCED"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause }
-    | { type: "STAGE_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; cause: RemovalCause; position: StackPosition }
+    | { type: "CHARACTER_KOD"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    | { type: "CHARACTER_TRASHED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    | { type: "CHARACTER_BOUNCED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    | { type: "CHARACTER_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause; position: StackPosition }
+    | { type: "STAGE_KOD"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    | { type: "STAGE_TRASHED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    | { type: "STAGE_BOUNCED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    | { type: "STAGE_SENT_TO_DECK"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause; position: StackPosition }
 
     
     // Rest State
@@ -86,6 +82,7 @@ export type GameSignal =
     | { type: "LEADER_SET_ACTIVE"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     | { type: "STAGE_RESTED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     | { type: "STAGE_SET_ACTIVE"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    
     // Combat
     | { type: "ATTACK_DECLARED"; attackerId: CardInstanceId; defenderId: CardInstanceId; controller: PlayerId }
     | { type: "BLOCKER_DECLARED"; blockerId: CardInstanceId; attackerId: CardInstanceId; controller: PlayerId }
@@ -141,19 +138,6 @@ export type GameSignal =
     | { type: "POWER_THRESHOLD_CROSSED"; instanceId: CardInstanceId; controller: PlayerId; previous: number; current: number };
 
 export type SignalType = GameSignal["type"];
-
-type SignalCategory =
-    | "CARD_PLAYED"
-    | "CARD_LEFT_FIELD"
-    | "CARD_TRASHED"
-    | "CARD_RETURNED"
-    | "REST_STATE_CHANGED"
-    | "CARD_RESTED"
-    | "CARD_SET_ACTIVE"
-    | "DON_CHANGED"
-    | "LIFE_CHANGED"
-    | "TURN_BOUNDARY"
-    | "BATTLE_BOUNDARY";
 
 export type Listener = {
     listenerId: string;
