@@ -4,9 +4,7 @@ import type { CardDef, DeckList } from "../types/card";
 import type { EffectSequence } from "../types/effect";
 import { GameSeeds, CardId, PlayerId } from "../types/primitives";
 import { instantiatePlayerBoard } from "./instantiation";
-import { nextInt, shuffle } from "../rng/rng";
-import { OPENING_HAND_SIZE } from "./rules";
-import { getZoneArray, moveCard } from "./mechanics";
+import { nextInt } from "../rng/rng";
 
 const STATE_VERSION = 1;
 
@@ -60,7 +58,7 @@ export function createEmptyGameState(gameId: string, playerIds: PlayerId[], seed
         playerZones: emptyPlayerZones(playerIds),
 
         turnOrder: playerIds,
-        turnNumber: 0,
+        turn: 0,
         activePlayerId: playerIds[0],
         phase: "SETUP",
         cardsPlayedThisTurn: [],

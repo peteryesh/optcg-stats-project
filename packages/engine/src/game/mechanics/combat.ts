@@ -39,10 +39,3 @@ export function logCurrentBattleForTurn(state: GameState): GameState {
         draft.battlesThisTurn.push(draft.currentBattle!);
     });
 }
-
-export function resetBattleStateForTurn(state: GameState): GameState {
-    return produce(state, draft => {
-        draft.battlesThisTurn = [];
-        draft.currentBattle = null;
-    });
-}

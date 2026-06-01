@@ -1,8 +1,5 @@
 import { produce } from 'immer';
 import { GameState } from '../../types/state';
-import { setPhase } from '../mechanics';
-import { emit } from '../emitter';
-import { InvalidActionError } from '../../errors';
 
 export function setNextActivePlayer(state: GameState): GameState {
     if (state.phase === "START_GAME") {
@@ -20,5 +17,35 @@ export function setNextActivePlayer(state: GameState): GameState {
     const nextActivePlayerId = state.turnOrder[nextIndex];
     return produce(state, draft => {
         draft.activePlayerId = nextActivePlayerId;
+    });
+}
+
+export function incrementTurn(state: GameState): GameState {
+    return produce(state, draft => {
+        draft.turn += 1;
+    });
+}
+
+export function resetBattleStateForTurn(state: GameState): GameState {
+    return produce(state, draft => {
+        draft.battlesThisTurn = [];
+        draft.currentBattle = null;
+    });
+}
+
+export function resetCardsPlayedThisTurn(state: GameState): GameState {
+    return produce(state, draft => {
+        draft.cardsPlayedThisTurn = [];
+    });
+}
+
+export function resetEffectsUsedThisTurn(state: GameState): GameState {
+    return produce(state, draft => {
+        for (const instanceId in draft.instances) {
+            const instance = draft.instances[instanceId];
+            if (instance.class !== "DON" && instance.effectsUsedThisTurn) {
+                instance.effectsUsedThisTurn = {};
+            }
+        }
     });
 }

@@ -85,5 +85,4 @@ export function applyNextPhase(state: GameState, action: Extract<GameAction, { t
         default:
             throw new InvalidActionError(`Cannot directly call pass state from phase ${state.phase}`);
     }
-    return state; // remove
 }

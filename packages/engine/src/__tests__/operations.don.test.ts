@@ -6,6 +6,7 @@ import {
     donReturn,
     donAttach,
     donDetach,
+    donRefresh,
 } from "../game/operations/don";
 import { attachDon, moveCard } from "../game/mechanics";
 import { assertInvariants } from "./invariants";
@@ -355,5 +356,61 @@ describe("donDetach", () => {
         state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
         state = donDetach(state, P1, "p1-CARD-0" as CardInstanceId, ["p1-DON-0" as CardInstanceId], { kind: "RULE" });
         assertInvariants(state);
+    });
+});
+
+// ============================================================
+// donRefresh
+// ============================================================
+
+describe("donRefresh", () => {
+    it("moves all rested DON to donActive", () => {
+        let state = setupTestGame();
+        state = donAdd(state, P1, 3, true, { kind: "RULE" }); // 3 rested
+        const next = donRefresh(state, P1);
+        expect(next.playerZones[P1].donRested).toHaveLength(0);
+        expect(next.playerZones[P1].donActive).toHaveLength(3);
+    });
+
+    it("returns state unchanged when no DON are rested or attached", () => {
+        const state = setupTestGame();
+        const next = donRefresh(state, P1);
+        expect(next.playerZones[P1].donRested).toHaveLength(0);
+        expect(next.playerZones[P1].donActive).toHaveLength(0);
+    });
+
+    it("detaches attached DON and then refreshes them to donActive", () => {
+        let state = setupTestGame();
+        state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
+        const next = donRefresh(state, P1);
+        // DON-0 was attached -> detached to DON_RESTED -> moved to DON_ACTIVE
+        expect(next.playerZones[P1].donActive).toContain("p1-DON-0");
+        expect((next.instances["p1-DON-0" as CardInstanceId] as any).attachedTo).toBeNull();
+        expect((next.instances["p1-CARD-0" as CardInstanceId] as any).attachedDon).toHaveLength(0);
+    });
+
+    it("detaches multiple DON from the same card and refreshes all", () => {
+        let state = setupTestGame();
+        state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
+        state = attachDon(state, "p1-DON-1" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
+        const next = donRefresh(state, P1);
+        expect(next.playerZones[P1].donActive).toContain("p1-DON-0");
+        expect(next.playerZones[P1].donActive).toContain("p1-DON-1");
+    });
+
+    it("does not affect the other player's DON", () => {
+        let state = setupTestGame();
+        state = donAdd(state, P1, 2, true, { kind: "RULE" });
+        state = donAdd(state, P2, 3, true, { kind: "RULE" });
+        const next = donRefresh(state, P1);
+        expect(next.playerZones[P2].donRested).toHaveLength(3);
+        expect(next.playerZones[P2].donActive).toHaveLength(0);
+    });
+
+    it("passes invariants", () => {
+        let state = setupTestGame();
+        state = donAdd(state, P1, 4, true, { kind: "RULE" });
+        state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
+        assertInvariants(donRefresh(state, P1));
     });
 });

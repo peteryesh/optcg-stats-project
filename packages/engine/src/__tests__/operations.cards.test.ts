@@ -4,6 +4,9 @@ import {
     cardsTrashFromHand,
     cardsSetActive,
     cardsSetRested,
+    cardsRefresh,
+    cardsAddToHand,
+    cardsToDeckFromHand,
     playCard,
     playCharacter,
     playStage,
@@ -712,5 +715,163 @@ describe("removeCardFromField", () => {
         state = moveCard(state, "p1-CARD-0" as CardInstanceId, "CHARACTERS", "BOTTOM");
         const next = removeCardFromField(state, P1, "p1-CARD-0" as CardInstanceId, "TRASH", "TOP", { kind: "RULE" });
         assertInvariants(next);
+    });
+});
+
+// ============================================================
+// cardsAddToHand
+// ============================================================
+
+describe("cardsAddToHand", () => {
+    it("moves card from DECK zone to HAND", () => {
+        const state = setupTestGame();
+        const next = cardsAddToHand(state, P1, ["p1-CARD-0" as CardInstanceId], "DECK", { kind: "RULE" });
+        expect(next.playerZones[P1].hand).toContain("p1-CARD-0");
+        expect(next.playerZones[P1].deck).not.toContain("p1-CARD-0");
+    });
+
+    it("moves multiple cards from DECK to HAND", () => {
+        const state = setupTestGame();
+        const next = cardsAddToHand(
+            state, P1,
+            ["p1-CARD-0" as CardInstanceId, "p1-CARD-1" as CardInstanceId],
+            "DECK",
+            { kind: "RULE" }
+        );
+        expect(next.playerZones[P1].hand).toHaveLength(2);
+        expect(next.playerZones[P1].deck).toHaveLength(48);
+    });
+
+    it("sets currentZone to HAND on each moved card", () => {
+        const state = setupTestGame();
+        const next = cardsAddToHand(state, P1, ["p1-CARD-0" as CardInstanceId], "DECK", { kind: "RULE" });
+        expect(next.instances["p1-CARD-0" as CardInstanceId].currentZone).toBe("HAND");
+    });
+
+    it("throws InvalidActionError if card is not in the expected fromZone", () => {
+        const state = setupTestGame(); // p1-CARD-0 is in DECK, not HAND
+        expect(() =>
+            cardsAddToHand(state, P1, ["p1-CARD-0" as CardInstanceId], "HAND", { kind: "RULE" })
+        ).toThrow(InvalidActionError);
+    });
+
+    it("does not affect other player", () => {
+        const state = setupTestGame();
+        const next = cardsAddToHand(state, P1, ["p1-CARD-0" as CardInstanceId], "DECK", { kind: "RULE" });
+        expect(next.playerZones[P2].hand).toHaveLength(0);
+    });
+
+    it("passes invariants", () => {
+        const state = setupTestGame();
+        const next = cardsAddToHand(state, P1, ["p1-CARD-0" as CardInstanceId], "DECK", { kind: "RULE" });
+        assertInvariants(next);
+    });
+});
+
+// ============================================================
+// cardsToDeckFromHand
+// ============================================================
+
+describe("cardsToDeckFromHand", () => {
+    it("moves card from HAND to DECK at TOP", () => {
+        let state = setupTestGame();
+        state = cardsDraw(state, P1, 1, { kind: "RULE" });
+        const handCard = state.playerZones[P1].hand[0];
+        const next = cardsToDeckFromHand(state, P1, [handCard], "TOP", { kind: "RULE" });
+        expect(next.playerZones[P1].deck[0]).toBe(handCard);
+        expect(next.playerZones[P1].hand).not.toContain(handCard);
+    });
+
+    it("moves card from HAND to DECK at BOTTOM", () => {
+        let state = setupTestGame();
+        state = cardsDraw(state, P1, 1, { kind: "RULE" });
+        const handCard = state.playerZones[P1].hand[0];
+        const next = cardsToDeckFromHand(state, P1, [handCard], "BOTTOM", { kind: "RULE" });
+        expect(next.playerZones[P1].deck.at(-1)).toBe(handCard);
+    });
+
+    it("returns multiple cards from HAND to DECK", () => {
+        let state = setupTestGame();
+        state = cardsDraw(state, P1, 3, { kind: "RULE" });
+        const hand = [...state.playerZones[P1].hand];
+        const next = cardsToDeckFromHand(state, P1, hand, "TOP", { kind: "RULE" });
+        expect(next.playerZones[P1].hand).toHaveLength(0);
+        expect(next.playerZones[P1].deck).toHaveLength(50);
+    });
+
+    it("sets currentZone to DECK on each returned card", () => {
+        let state = setupTestGame();
+        state = cardsDraw(state, P1, 1, { kind: "RULE" });
+        const handCard = state.playerZones[P1].hand[0];
+        const next = cardsToDeckFromHand(state, P1, [handCard], "TOP", { kind: "RULE" });
+        expect(next.instances[handCard].currentZone).toBe("DECK");
+    });
+
+    it("throws InvalidActionError if card is not in HAND", () => {
+        const state = setupTestGame(); // p1-CARD-0 is in DECK, not HAND
+        expect(() =>
+            cardsToDeckFromHand(state, P1, ["p1-CARD-0" as CardInstanceId], "TOP", { kind: "RULE" })
+        ).toThrow(InvalidActionError);
+    });
+
+    it("does not affect other player", () => {
+        let state = setupTestGame();
+        state = cardsDraw(state, P1, 1, { kind: "RULE" });
+        const handCard = state.playerZones[P1].hand[0];
+        const next = cardsToDeckFromHand(state, P1, [handCard], "TOP", { kind: "RULE" });
+        expect(next.playerZones[P2].deck).toHaveLength(50);
+    });
+
+    it("passes invariants", () => {
+        let state = setupTestGame();
+        state = cardsDraw(state, P1, 3, { kind: "RULE" });
+        const hand = [...state.playerZones[P1].hand];
+        assertInvariants(cardsToDeckFromHand(state, P1, hand, "TOP", { kind: "RULE" }));
+    });
+});
+
+// ============================================================
+// cardsRefresh
+// ============================================================
+
+describe("cardsRefresh", () => {
+    it("sets all rested CHARACTERS to active", () => {
+        let state = setupTestGame();
+        state = moveCard(state, "p1-CARD-0" as CardInstanceId, "CHARACTERS", "BOTTOM");
+        state = moveCard(state, "p1-CARD-1" as CardInstanceId, "CHARACTERS", "BOTTOM");
+        state = setRested(state, "p1-CARD-0" as CardInstanceId);
+        state = setRested(state, "p1-CARD-1" as CardInstanceId);
+        const next = cardsRefresh(state, P1);
+        expect(next.instances["p1-CARD-0" as CardInstanceId].isRested).toBe(false);
+        expect(next.instances["p1-CARD-1" as CardInstanceId].isRested).toBe(false);
+    });
+
+    it("sets rested LEADER to active", () => {
+        let state = setupTestGame();
+        state = setRested(state, "p1-LEADER" as CardInstanceId);
+        const next = cardsRefresh(state, P1);
+        expect(next.instances["p1-LEADER" as CardInstanceId].isRested).toBe(false);
+    });
+
+    it("sets rested STAGE to active", () => {
+        let state = makeStateWithCardAtTop(MOCK_STAGE_ID);
+        const stageId = "p1-CARD-0" as CardInstanceId;
+        state = moveCard(state, stageId, "STAGE", "TOP");
+        state = setRested(state, stageId);
+        const next = cardsRefresh(state, P1);
+        expect(next.instances[stageId].isRested).toBe(false);
+    });
+
+    it("does not affect the other player's cards", () => {
+        let state = setupTestGame();
+        state = setRested(state, "p2-LEADER" as CardInstanceId);
+        const next = cardsRefresh(state, P1);
+        expect(next.instances["p2-LEADER" as CardInstanceId].isRested).toBe(true);
+    });
+
+    it("passes invariants", () => {
+        let state = setupTestGame();
+        state = setRested(state, "p1-LEADER" as CardInstanceId);
+        assertInvariants(cardsRefresh(state, P1));
     });
 });

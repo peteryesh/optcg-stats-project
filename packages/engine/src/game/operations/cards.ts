@@ -1,3 +1,4 @@
+
 import { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card, Phase } from "../../types";
 import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex, setPhase, setCardPlayedThisTurn } from "../mechanics";
 import { emit } from "../emitter";
@@ -114,6 +115,11 @@ export function cardsSetRested(state: GameState, playerId: PlayerId, instanceIds
     return emit(state, { type: "CARDS_RESTED", instanceIds: instanceIds, controller: playerId, cause: signalCause });
 }
 
+export function cardsRefresh(state: GameState, playerId: PlayerId): GameState {
+    // STATUS EFFECT: frozen cards should not be refreshed, check here or in cardsSetActive
+    const activeCardIds = getZoneArray(state, playerId, "CHARACTERS").concat(getZoneArray(state, playerId, "LEADER")).concat(getZoneArray(state, playerId, "STAGE"));
+    return cardsSetActive(state, playerId, activeCardIds, { kind: "RULE" });
+}
 // Play Operations
 
 /**
@@ -265,3 +271,4 @@ export function removeCardFromField(state: GameState, playerId: PlayerId, instan
             throw new InvalidActionError(`Invalid removal destination ${toZone} for ${instanceId}`);
     }
 }
+

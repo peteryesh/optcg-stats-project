@@ -9,31 +9,15 @@ import { OPENING_HAND_SIZE } from '../rules';
 import { enterStartGamePhase, cardsDraw, cardsToDeckFromHand, enterStartOfTurnPhase, lifeAdd } from '../operations';
 import { processEffects } from '../effects';
 
-// state = shuffleDeck(state, playerId);
-//         for (let i = 0; i < OPENING_HAND_SIZE; i++) {
-//             const deckZone = getZoneArray(state, playerId, "DECK");
-//             const cardId = deckZone[0];
-//             if (!cardId) break;
-//             // for setup, we do not want to emit signals for these card moves
-//             // change this is there is a leader that causes the initial phase 
-//             state = moveCard(state, cardId, "HAND", "TOP");
-//         }
-
-// Coin flip is decided by initGame and already exists by the time we enter start game phase
-// Decide turn order
-// Start game (enter start game phase, emit game start signal, etc)
-// Apply start of game actions (in order of coin flip winner, regardless of choosing first or second, not sure for more than 2)
-// Start turn for the player who goes first (enter start of turn phase, emit phase changed signal, etc)
-
-export function applyChooseFirstPlayer(state: GameState, action: Extract<GameAction, { type: "CHOOSE_TURN_ORDER" }>): GameState {
-    const { playerId, choice } = action; // playerId picks, choice is the playerId of the player to go first
-    if (state.setup.coinFlipWinner !== playerId) {
-        throw new InvalidActionError(`Player ${playerId} cannot choose turn order because they did not win the coin flip`);
+export function applyChooseFirstPlayer(state: GameState, action: Extract<GameAction, { type: "CHOOSE_FIRST_PLAYER" }>): GameState {
+    const { deciderId, choice } = action; // deciderId picks, choice is the playerId of the player to go first
+    if (state.setup.coinFlipWinner !== deciderId) {
+        throw new InvalidActionError(`Player ${deciderId} cannot choose turn order because they did not win the coin flip`);
     }
     const defaultTurnOrder = state.turnOrder;
     const firstPlayerIndex = defaultTurnOrder.indexOf(choice);
     if (firstPlayerIndex === -1) {
-        throw new InvalidActionError(`Player ${playerId} cannot choose player ${choice} to go first because they are not in the game`);
+        throw new InvalidActionError(`Player ${deciderId} cannot choose player ${choice} to go first because they are not in the game`);
     }
     const chosenTurnOrder = [...defaultTurnOrder.slice(firstPlayerIndex), ...defaultTurnOrder.slice(0, firstPlayerIndex)];
     state = produce(state, draft => {
@@ -65,7 +49,20 @@ export function applyKeepHand(state: GameState, action: Extract<GameAction, { ty
         // Set keep choice, hand is kept, set life cards, ready to play
         draft.setup.mulligan[playerId] = "KEEP";
     });
+    // Set life cards
     state = setPlayerLife(state, playerId);
+    
+    // Check for other players still pending on mulligan choice, if not, start the game
+    let playersReady = true;
+    for (const pid of state.turnOrder) {
+        if (state.setup.mulligan[pid] === "PENDING") {
+            playersReady = false;
+        }
+    }
+    // Last player to mulligan starts the game, player assigned first is set in start of turn phase
+    if (playersReady) {
+        state = enterStartOfTurnPhase(state);
+    }
     return state;
 }
 
@@ -74,14 +71,13 @@ export function applyMulligan(state: GameState, action: Extract<GameAction, { ty
     if (state.setup.mulligan[playerId] !== "PENDING") {
         throw new InvalidActionError(`Player ${playerId} cannot choose to mulligan because they have already made their mulligan choice`);
     }
-    // Set mulligan choice, reset hand and deck
+    // Set mulligan choice
     state = produce(state, draft => {
         draft.setup.mulligan[playerId] = "MULLIGAN";
-        const handZone = getZoneArray(state, playerId, "HAND");
-        const deckZone = getZoneArray(state, playerId, "DECK");
-        state.playerZones[playerId].hand = [];
-        state.playerZones[playerId].deck = [...handZone, ...deckZone];
     });
+
+    // Reset hand and deck
+    state = cardsToDeckFromHand(state, playerId, state.playerZones[playerId].hand, "TOP", { kind: "RULE" });
     
     // Reshuffle and draw new hand
     state = shuffleDeck(state, playerId);
@@ -92,8 +88,8 @@ export function applyMulligan(state: GameState, action: Extract<GameAction, { ty
 
     // Check for other players still pending on mulligan choice, if not, start the game
     let playersReady = true;
-    for (const playerId of state.turnOrder) {
-        if (state.setup.mulligan[playerId] === "PENDING") {
+    for (const pid of state.turnOrder) {
+        if (state.setup.mulligan[pid] === "PENDING") {
             playersReady = false;
         }
     }
@@ -111,7 +107,7 @@ export function shuffleDeck(state: GameState, playerId: PlayerId): GameState {
     const [shuffledDeck, postShuffleCursor] = shuffle(playerZones.deck, playerSeed, rngCursor);
     return produce(state, draft => {
         draft.rngCursors.players[playerId] = postShuffleCursor;
-        playerZones.deck = shuffledDeck;
+        draft.playerZones[playerId].deck = shuffledDeck;
     });
 }
 
@@ -123,6 +119,7 @@ export function setPlayerLife(state: GameState, playerId: PlayerId): GameState {
     if (leader.class !== "LEADER") throw new InvalidActionError(`Card ${leaderId} is not a leader for player ${playerId}`);
     const leaderDef = state.definitions[leader.cardId];
     if (!leaderDef) throw new InvalidActionError(`No leader definition found for player ${playerId}`);
+    if (!leaderDef.life) throw new InvalidActionError(`Leader ${leader.cardId} does not have a life value for player ${playerId}`);
     const lifeCount = leaderDef.life;
     const lifeCards = getZoneArray(state, playerId, "DECK").slice(0, lifeCount);
     return lifeAdd(state, playerId, lifeCards, "DECK", "TOP", { kind: "RULE" });

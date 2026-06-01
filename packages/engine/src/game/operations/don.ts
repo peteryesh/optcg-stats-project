@@ -1,4 +1,4 @@
-import { GameState, PlayerId, SignalCause, CardInstanceId, DonInstance, StackPosition, Zone } from "../../types";
+import { GameState, PlayerId, SignalCause, CardInstanceId, DonInstance, StackPosition, Zone, CardInstance } from "../../types";
 import { moveCard, getZoneArray, attachDon, detachDon } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
@@ -138,4 +138,33 @@ export function donDetach(state: GameState, playerId: PlayerId, originId: CardIn
         state = detachDon(state, donId, "DON_RESTED");
     }
     return emit(state, { type: "DON_DETACHED", instanceIds: donIds, originId: originId, controller: playerId, cause: signalCause })
+}
+
+// Consider status effects that cause DON to not be refreshed
+export function donRefresh(state: GameState, playerId: PlayerId): GameState {
+    const attachedDonInstances = getAllAttachedDonInstances(state, playerId);
+    const seen = new Set<CardInstanceId>();
+    for (const donInstance of attachedDonInstances) {
+        if (donInstance.attachedTo && !seen.has(donInstance.attachedTo)) {
+            seen.add(donInstance.attachedTo);
+            const originCard = state.instances[donInstance.attachedTo];
+            if (originCard.class !== "LEADER" && originCard.class !== "CHARACTER") throw new InvalidActionError(`Invalid DON attachment origin ${donInstance.attachedTo} for attached DON ${donInstance.instanceId}`);
+            if (playerId !== originCard.controller) throw new InvalidActionError(`Cannot refresh attached DON ${donInstance.instanceId} for player ${playerId} as it is attached to a card controlled by a different player`);
+            state = donDetach(state, originCard.controller, originCard.instanceId, originCard.attachedDon, { kind: "RULE" });
+        }
+    }
+    const donToRefresh = getZoneArray(state, playerId, "DON_RESTED");
+    if (donToRefresh.length === 0) return state;
+    let refreshedDon = [];
+    for (const donId of donToRefresh) {
+        // STATUS EFFECT: if don is frozen, do not refresh it
+        state = moveCard(state, donId, "DON_ACTIVE", "TOP");
+        refreshedDon.push(donId);
+    }
+    return emit(state, { type: "DON_SET_ACTIVE", instanceIds: refreshedDon, controller: playerId, cause: { kind: "RULE" } });
+    
+}
+
+function getAllAttachedDonInstances(state: GameState, playerId: PlayerId): DonInstance[] {
+    return Object.values(state.instances).filter(instance => instance.class === "DON" && instance.controller === playerId && instance.attachedTo !== null).map(instance => instance) as DonInstance[];
 }

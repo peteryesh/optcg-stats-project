@@ -101,7 +101,7 @@ export interface GameState {
 
     // Turn and Phase
     turnOrder: PlayerId[];  // player order
-    turnNumber: number;
+    turn: number;
     activePlayerId: PlayerId;
     phase: Phase;
     cardsPlayedThisTurn: CardInstanceId[]; // used for tracking same-turn played effects and eligible attackers

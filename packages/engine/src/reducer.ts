@@ -31,14 +31,12 @@ export function reducer(state: GameState, action: GameAction): GameState {
     });
 
     switch (action.type) {
-        case 'CHOOSE_TURN_ORDER':
+        case 'CHOOSE_FIRST_PLAYER':
             return applyChooseFirstPlayer(state, action);
         case 'KEEP_HAND':
             return applyKeepHand(state, action);
         case 'MULLIGAN':
             return applyMulligan(state, action);
-        case 'NEXT_PHASE':
-            return applyNextPhase(state, action);
         case 'PLAY_CARD':
             return applyPlayCard(state, action);
         case 'ATTACH_DON':
