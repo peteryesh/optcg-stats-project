@@ -76,7 +76,7 @@ export type GameConfig = {
 export type SetupState = {
     coinFlipWinner: PlayerId; // player who gets to call CHOOSE_TURN_ORDER
     // null = not yet decided, false = kept hand, true = chose to mulligan
-    mulligan: Record<PlayerId, boolean | null>;
+    mulligan: Record<PlayerId, "PENDING" | "KEEP" | "MULLIGAN">;
 };
 
 ///----------------------------------------------------------------

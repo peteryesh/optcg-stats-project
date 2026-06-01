@@ -1,14 +1,12 @@
 import { produce } from "immer";
-import type {
-    GameConfig,
-    GameState,
-    PlayerZones,
-    PlayerEffectQueues,
-} from "../types/state";
+import type { GameConfig, GameState, PlayerZones } from "../types/state";
 import type { CardDef, DeckList } from "../types/card";
+import type { EffectSequence } from "../types/effect";
 import { GameSeeds, CardId, PlayerId } from "../types/primitives";
 import { instantiatePlayerBoard } from "./instantiation";
-import { nextInt } from "../rng/splitmix64";
+import { nextInt, shuffle } from "../rng/rng";
+import { OPENING_HAND_SIZE } from "./rules";
+import { getZoneArray, moveCard } from "./mechanics";
 
 const STATE_VERSION = 1;
 
@@ -53,7 +51,7 @@ export function createEmptyGameState(gameId: string, playerIds: PlayerId[], seed
 
         setup: {
             coinFlipWinner,
-            mulligan: Object.fromEntries(playerIds.map(id => [id, null]))
+            mulligan: Object.fromEntries(playerIds.map(id => [id, "PENDING"]))
         },
 
         definitions: {},
@@ -67,11 +65,11 @@ export function createEmptyGameState(gameId: string, playerIds: PlayerId[], seed
         phase: "SETUP",
         cardsPlayedThisTurn: [],
 
-        battlePhase: null,
+        currentBattle: null,
         battlesThisTurn: [],
 
         currentEffect: null,
-        effectQueues: setupEffectQueue(playerIds),
+        pendingEffects: emptyPendingEffects(playerIds),
         pendingDecision: null,
 
         listeners: [],
@@ -105,9 +103,6 @@ export function emptyPlayerZones(playerIds: PlayerId[]): Record<PlayerId, Player
     return zones;
 }
 
-export function setupEffectQueue(playerIds: PlayerId[]): Record<PlayerId, PlayerEffectQueues[]> {
-    return playerIds.reduce((acc, id) => ({
-        ...acc,
-        [id]: []
-    }), {} as Record<PlayerId, PlayerEffectQueues[]>);
+export function emptyPendingEffects(playerIds: PlayerId[]): Record<PlayerId, EffectSequence[]> {
+    return Object.fromEntries(playerIds.map(id => [id, []]));
 }

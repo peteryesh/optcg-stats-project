@@ -57,6 +57,17 @@ export function cardsTrashFromHand(state: GameState, playerId: PlayerId, instanc
     return emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: instanceIds, fromZone: "HAND", controller: playerId, cause: signalCause });
 }
 
+export function cardsToDeckFromHand(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], position: StackPosition, signalCause: SignalCause): GameState {
+    for (const instanceId of instanceIds) {
+        const playerHand = getZoneArray(state, playerId, "HAND");
+        if (!(playerHand.includes(instanceId))){
+            throw new InvalidActionError(`${instanceId} not found in hand of player ${playerId}`);
+        }
+        state = moveCard(state, instanceId, "DECK", position);
+    }
+    return emit(state, { type: "CARDS_SENT_TO_DECK", instanceIds: instanceIds, fromZone: "HAND", position: position, controller: playerId, cause: signalCause });
+}
+
 /**
  * Sets a list of cards as active. It is the responsibility of the caller to collect the cards to be set as active.
  * @param state - Game state

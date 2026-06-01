@@ -27,6 +27,7 @@ export type EffectSequence = {
     controllerAtQueueTime: PlayerId;
     steps: EffectStep[];
     resolved: Record<string, CardInstanceId | CardInstanceId[] | boolean | number>;
+    optional: boolean;
 };
 
 export type EffectStep =

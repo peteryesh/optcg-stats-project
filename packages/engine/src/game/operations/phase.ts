@@ -4,14 +4,25 @@ import type { Phase, PlayerId } from '../../types/primitives';
 import { setPhase } from '../mechanics';
 import { emit } from '../emitter';
 import { InvalidActionError } from '../../errors';
+import { setNextActivePlayer } from '../mechanics/turn';
 
 // Main turn phases
+export function enterStartGamePhase(state: GameState): GameState {
+    const prevPhase = state.phase;
+    if (prevPhase !== "SETUP") {
+        throw new InvalidActionError(`Cannot enter START_GAME from ${state.phase}`);
+    }
+    const nextPhase: Phase = "START_GAME";
+    state = setPhase(state, nextPhase);
+    return emit(state, { type: "PHASE_CHANGED", prevPhase, nextPhase, cause: { kind: "RULE" } });
+}
 
 export function enterStartOfTurnPhase(state: GameState): GameState {
     const prevPhase = state.phase;
-    if (prevPhase !== "END_OF_TURN" && prevPhase !== "SETUP") {
+    if (prevPhase !== "END_OF_TURN" && prevPhase !== "START_GAME") {
         throw new InvalidActionError(`Cannot enter START_OF_TURN from ${state.phase}`);
     }
+    state = setNextActivePlayer(state);
     const nextPhase: Phase = "START_OF_TURN";
     state = setPhase(state, nextPhase);
     return emit(state, { type: "PHASE_CHANGED", prevPhase, nextPhase, cause: { kind: "RULE" } });
@@ -89,9 +100,6 @@ export function enterOnOpponentAttackPhase(state: GameState): GameState {
 
 export function enterBlockerPhase(state: GameState): GameState {
     const prevPhase = state.phase;
-    if (prevPhase !== "ON_OPPONENT_ATTACK") {
-        throw new InvalidActionError(`Cannot enter BLOCKER from ${state.phase}`);
-    }
     const nextPhase: Phase = "BLOCKER";
     state = setPhase(state, nextPhase);
     return emit(state, { type: "PHASE_CHANGED", prevPhase, nextPhase, cause: { kind: "RULE" } });
@@ -99,9 +107,6 @@ export function enterBlockerPhase(state: GameState): GameState {
 
 export function enterCounterPhase(state: GameState): GameState {
     const prevPhase = state.phase;
-    if (prevPhase !== "BLOCKER") {
-        throw new InvalidActionError(`Cannot enter COUNTER from ${state.phase}`);
-    }
     const nextPhase: Phase = "COUNTER";
     state = setPhase(state, nextPhase);
     return emit(state, { type: "PHASE_CHANGED", prevPhase, nextPhase, cause: { kind: "RULE" } });
@@ -109,9 +114,6 @@ export function enterCounterPhase(state: GameState): GameState {
 
 export function enterBattleResolutionPhase(state: GameState): GameState {
     const prevPhase = state.phase;
-    if (prevPhase !== "COUNTER") {
-        throw new InvalidActionError(`Cannot enter BATTLE_RESOLUTION from ${state.phase}`);
-    }
     const nextPhase: Phase = "BATTLE_RESOLUTION";
     state = setPhase(state, nextPhase);
     return emit(state, { type: "PHASE_CHANGED", prevPhase, nextPhase, cause: { kind: "RULE" } });

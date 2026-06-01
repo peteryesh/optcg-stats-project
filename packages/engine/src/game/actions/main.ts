@@ -1,9 +1,7 @@
 import type { GameState } from '../../types/state';
 import type { GameAction } from '../../types/action';
-import type { PlayerId } from '../../types/primitives';
-import type { CharacterInstance, LeaderInstance, StageInstance, EventInstance } from '../../types/card';
 import { InvalidActionError } from '../../errors';
-import { playCard, donAttach, declareAttack, declareBlocker, playCounter, enterWhenAttackingPhase, enterEndOfTurnPhase, enterOnOpponentAttackPhase, enterCounterPhase, enterBattleResolutionPhase, enterBlockerPhase, enterRefreshPhase, enterMainPhase, resolveBattle } from '../operations';
+import { playCard, donAttach, declareAttack, declareBlocker, playCounter, enterWhenAttackingPhase, enterEndOfTurnPhase, enterOnOpponentAttackPhase, enterCounterPhase, enterBattleResolutionPhase, enterBlockerPhase, enterRefreshPhase, enterMainPhase, resolveBattle, enterStartOfTurnPhase } from '../operations';
 import { processEffects } from '../effects';
 
 // Play card from hand
@@ -27,7 +25,11 @@ export function applyDeclareAttack(state: GameState, action: Extract<GameAction,
     state = enterWhenAttackingPhase(state);
     state = processEffects(state);
     if (state.pendingDecision !== null) return state;
-    return enterOnOpponentAttackPhase(state);
+
+    state = enterOnOpponentAttackPhase(state);
+    state = processEffects(state);
+    if (state.pendingDecision !== null) return state;
+    return enterBlockerPhase(state);
 }
 
 export function applyDeclareBlocker(state: GameState, action: Extract<GameAction, { type: "DECLARE_BLOCKER" }>): GameState {
@@ -70,7 +72,10 @@ export function applyNextPhase(state: GameState, action: Extract<GameAction, { t
             // draw phase will then auto advance to main phase
             return enterRefreshPhase(state);
         case "MAIN":
-            return enterEndOfTurnPhase(state);
+            state = enterEndOfTurnPhase(state);
+            state = processEffects(state);
+            if (state.pendingDecision !== null) return state;
+            return enterStartOfTurnPhase(state);
         case "ON_OPPONENT_ATTACK":
             state = processEffects(state);
             if (state.pendingDecision !== null) return state;

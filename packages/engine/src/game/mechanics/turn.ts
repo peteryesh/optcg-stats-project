@@ -1,0 +1,24 @@
+import { produce } from 'immer';
+import { GameState } from '../../types/state';
+import { setPhase } from '../mechanics';
+import { emit } from '../emitter';
+import { InvalidActionError } from '../../errors';
+
+export function setNextActivePlayer(state: GameState): GameState {
+    if (state.phase === "START_GAME") {
+        // In the case of starting the game, we want to set the active player to the first player in the turn order, but not emit a signal about it since it's just setting up initial state
+        return produce(state, draft => {
+            draft.activePlayerId = draft.turnOrder[0];
+        });
+    }
+    const currentPlayerId = state.activePlayerId;
+    const currentIndex = state.turnOrder.indexOf(currentPlayerId);
+    if (currentIndex === -1) {
+        throw new Error(`Current active player ${currentPlayerId} not found in turn order`);
+    }
+    const nextIndex = (currentIndex + 1) % state.turnOrder.length;
+    const nextActivePlayerId = state.turnOrder[nextIndex];
+    return produce(state, draft => {
+        draft.activePlayerId = nextActivePlayerId;
+    });
+}
