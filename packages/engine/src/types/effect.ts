@@ -4,16 +4,21 @@ import type { CardFilter } from './filter';
 
 export type ActiveEffect = null;
 export type ReactiveEffect = null;
-export type StatusEffect = null;
 export type ReplacementEffect = null;
 
-export type CardEffect =
+export type SequencedEffect =
     | ActiveEffect
     | ReactiveEffect
-    | StatusEffect
     | ReplacementEffect;
 
-export type CardModifier = null;
+// StatusEffects are passive modifiers — they sit on the statusEffects array, are checked during
+// calculations, and are cleaned up on a signal or phase change. They do not produce sequences.
+export type StatusEffect = {
+    sourceInstanceId: CardInstanceId;
+    modification: Modification;
+    duration: EffectDuration;
+    condition: CardFilter | null;
+};
 
 export type EffectSequence = {
     sequenceId: string;
@@ -24,19 +29,29 @@ export type EffectSequence = {
     resolved: Record<string, CardInstanceId | CardInstanceId[] | boolean | number>;
 };
 
-export type EffectStep = {
+export type EffectStep =
+    | StandardStep
+    | ConditionStep;
+
+// A step that performs an action or requests player input.
+type StandardStep = {
     type: EffectStepType;
     resolution: EffectResolution;
-    condition: CardFilter | null;
-    effectCost: EffectCost | null;
     target: CardFilter | null;
     effect: EffectOperation | null;
     min: number;
     max: number;
-    origin: CardInstanceId;
     from: Zone | null;
     to: Zone | null;
     duration: EffectDuration | null;
+};
+
+// A branching step. The advance function splices onTrue into the queue if check passes,
+// or skips it entirely if check fails. Always resolves automatically.
+type ConditionStep = {
+    type: "CONDITION";
+    check: CardFilter;
+    onTrue: EffectStep[];
 };
 
 export type EffectResolution =
@@ -60,15 +75,14 @@ export type EffectStepType =
     | "ADD_LIFE"
     | "TRASH_LIFE"
     | "APPLY_MODIFIER"
-    | "GRANT_KEYWORD"
-    | "CONDITION";
+    | "GRANT_KEYWORD";
 
 export type EffectActivationType =
     | { kind: "ON_PLAY" }
     | { kind: "ON_KO" }
     | { kind: "WHEN_ATTACKING" }
     | { kind: "ON_OPPONENT_ATTACK" }
-    | { kind: "LIFE_TRIGGER" }        // the actual OPTCG [Trigger] keyword
+    | { kind: "LIFE_TRIGGER" }
     | { kind: "ACTIVATED" }
     | { kind: "CONTINUOUS" };
 
@@ -109,41 +123,42 @@ export type EffectOperation =
     | { kind: "TRASH_LIFE"; count: number; position: StackPosition }
 
     // Look zone
-    | { kind: "ADD_TO_LOOK"; count: number; fromZone: Zone }
+    | { kind: "ADD_TO_LOOK"; count: number; fromZone: Zone };
 
-    // Branching — stubbed until condition system built
-    | { kind: "CONDITION" };
+export type EffectCost =
+    | { kind: "REST_CARD" }
+    | { kind: "RETURN_DON"; count: number }
+    | { kind: "DISCARD"; count: number; filter: CardFilter }
+    | { kind: "KO"; count: number; filter: CardFilter };
 
-type EffectCost =
-    | { kind: "REST_THIS" }
-    | { kind: "TRASH_DON"; count: number }
-    | { kind: "DISCARD"; count: number; filter: CardFilter };
-
-type EffectDuration =
-    | { kind: "WHILE_SOURCE_IN_PLAY" }
-    | { kind: "END_OF_TURN" }
-    | { kind: "END_OF_OPPONENT_TURN" }
+export type EffectDuration =
     | { kind: "PERMANENT" }
+    | { kind: "WHILE_SOURCE_IN_PLAY" }
     | { kind: "UNTIL_SIGNAL"; signalType: SignalType };
 
-
 // Continuous Effects
-type PowerModification =
+export type PowerModification =
     | { kind: "BASE_POWER_OVERRIDE"; value: number }
-    | { kind: "POWER_ADD"; amount: number };
+    | { kind: "POWER_CHANGE"; amount: number };
 
-type CostModification =
+export type CostModification =
     | { kind: "BASE_COST_OVERRIDE"; value: number }
-    | { kind: "COST_ADD"; amount: number };
+    | { kind: "COST_CHANGE"; amount: number };
 
-type KeywordModification =
+export type KeywordModification =
     | { kind: "GRANT_KEYWORD"; keyword: Keyword }
-    | { kind: "REMOVE_KEYWORD"; keyword: Keyword };
+    | { kind: "REMOVE_KEYWORD"; keyword: Keyword }
+    | { kind: "INNATE" }
 
-type Modification =
+export type ActionRestriction =
+    | { kind: "CANNOT_ATTACK" }
+    | { kind: "CANNOT_BLOCK" }
+
+export type Modification =
     | PowerModification
     | CostModification
-    | KeywordModification;
+    | KeywordModification
+    | ActionRestriction;
 
 // export type ContinuousEffect = {
 //     effectId: string;
@@ -151,8 +166,8 @@ type Modification =
 //     affects: CardFilter;
 //     modification: Modification;
 //     duration: EffectDuration;
-//     appliedAt: number;              // rngCursor position for ordering
-//     condition: CardFilter | null;   // null = always applies
+//     appliedAt: number;
+//     condition: CardFilter | null;
 // };
 
 // Replacement Effects
@@ -165,7 +180,6 @@ type Modification =
 //     | "SEND_TO_DECK"
 //     | "LEAVE_FIELD";
 
-// rework this to include hooks
 // export type ReplacementEffect = {
 //     replacementId: string;
 //     sourceInstanceId: CardInstanceId;
@@ -177,14 +191,6 @@ type Modification =
 //     condition: CardFilter | null;
 // };
 
-// Effect Suppressions
-// type SuppressionScope =
-//     | "ALL_ABILITIES"
-//     | "ON_PLAY"
-//     | "ON_KO"
-//     | "WHEN_ATTACKING"
-//     | "ACTIVATED";
-
 // export type AbilitySuppression = {
 //     suppressionId: string;
 //     sourceInstanceId: CardInstanceId;
@@ -192,17 +198,5 @@ type Modification =
 //     scope: SuppressionScope;
 //     duration: EffectDuration;
 //     appliedAt: number;
+//     condition: CardFilter | null;
 // };
-
-// we want ActivatedEffect, PassiveEffect, ReplacementEffect
-// PassiveEffect are checked via emit, as they are waiting for some game event
-// ReplacementEffect are checked via hooks, which are waiting for something that is about to happen to replace it if it applies
-// ActivatedEffects are immediately applied, and are instant. They do not wait inside the effect queue, they are enqueued immediately
-// Ability suppressions may be more of a type of replacement effect, like "instead of that, do nothing"
-// Ability suppressions are different though, they need to take away effects and reapply them when the suppression ends
-
-// For now, just emit signals on actions and operations
-// First, implement ActivatedEffects, Modifiers, and Triggers (which are activated)
-// Then, PassiveEffects will be checked on the activeEffects array by the emit function
-// Then, add ReplacementEffects and ReplacementHooks to be watched in anticipation of state changes
-// Then, add SuppressionEffects that suppress other effects before they fire

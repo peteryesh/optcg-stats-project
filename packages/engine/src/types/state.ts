@@ -3,12 +3,10 @@ import type { GameSignal, SignalType, Listener } from './signal';
 import type { CardFilter } from './filter';
 import type { Card, CardDef, CardInstance } from './card';
 import type { GameAction } from './action';
-import { EffectSequence, CardEffect, CardModifier, StatusEffect } from './effect';
+import { EffectSequence, SequencedEffect, StatusEffect } from './effect';
 import { ActionRecord } from './record';
 
-type PendingEffects = Record<PlayerId, EffectSequence[]>;
-
-type PendingDecision =
+export type PendingDecision =
     | {
         type: "NEXT_EFFECT";
         playerId: PlayerId;
@@ -81,11 +79,6 @@ export type SetupState = {
     mulligan: Record<PlayerId, boolean | null>;
 };
 
-export type PlayerEffectQueues = {
-    effectQueue: EffectSequence[];
-    simultaneousEffects: EffectSequence[]; // a staging area for effects before they are enqueued, made to handle simultaneous effects and user decides order of resolution
-}
-
 ///----------------------------------------------------------------
 /// Game State
 ///----------------------------------------------------------------
@@ -119,13 +112,13 @@ export interface GameState {
 
     // Effects
     currentEffect: EffectSequence | null;  // the currently resolving effect, if any
-    effectQueues: Record<PlayerId, PlayerEffectQueues[]>;
+    pendingEffects: Record<PlayerId, EffectSequence[]>;
 
     pendingDecision: PendingDecision | null;
     
     // Listener arrays that cards add their effects to in response to game signals and hooks
-    listeners: CardEffect[];
-    activatableEffects: CardEffect[]; // need to refactor this to accept Passive, Replacement, and Suppression effects
+    listeners: SequencedEffect[];
+    activatableEffects: SequencedEffect[]; // need to refactor this to accept Passive, Replacement, and Suppression effects
     statusEffects: StatusEffect[]; // temporary modifications to cards on the board, public and cleaned up on signal or phase change
     
     // History

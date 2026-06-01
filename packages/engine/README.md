@@ -70,6 +70,26 @@ Effects
     - ReplacementEffect
         - Functions the same as in the official rules
         - Listens to ReplacementHooks (name tbd) that take place before game events take place
+Starting from when a card ability activates:
+
+Effect system
+1. Staging — When an operation emits a signal, the emitter checks listeners and adds matching EffectSequence objects to the triggering player's pendingEffects[playerId] array.
+
+2. processEffects — Called after any operation returns. If currentEffect is already running, it does nothing. Otherwise it checks each player's staging zone in order (active player first):
+
+0 effects: skip to next player
+1 effect: auto-promote — call promoteEffect then advanceCurrentEffect
+2+ effects: set NEXT_EFFECT pendingDecision and return — player must choose the order
+3. promoteChosenEffect — Called when the player resolves a NEXT_EFFECT decision. Moves the chosen sequence from pendingEffects into currentEffect, then calls advanceCurrentEffect.
+
+4. advanceCurrentEffect — The execution loop. Walks currentEffect.steps from the front:
+
+- ConditionStep: evaluates check against state. If true, splices onTrue steps into the front of the queue. If false, discards them. Either way, the condition step is consumed and the loop continues.
+- StandardStep AUTO: calls executeStep, removes the step, continues the loop.
+- StandardStep PLAYER: calls pendingDecisionForStep to build the right PendingDecision shape, sets it on state, and returns — execution pauses here.
+5. Step resolution — The player submits an action (CHOOSE_TARGETS, CHOOSE_FROM_HAND, etc.). That action handler records the choice in currentEffect.resolved[outputKey], then calls advanceCurrentEffect again to continue from where it paused.
+
+6. Sequence complete — When steps is empty, currentEffect is cleared and processEffects is called again to pick up anything that accumulated in staging during execution.
 
 Signals and Hooks
 - GameSignals are always emitted after some state change and are named using past tense terms
@@ -106,3 +126,9 @@ Life and Damage
     - This is relevant for [Double Attack], which officially states "This card deals 2 damage"
     - Base text is confusing and should read "this card deals 2 damage to the user's life cards"
     - Life is still required to be marked as damaged on two separate instances for triggers to activate while still being distinct from life being taken without damage, which bypasses triggers
+
+Yes, that is a defending player action. I would restrict "batch actions" to just these two scenarios. 
+
+Alternatively, maybe "START_OF_TURN" should be explicit and the draw/draw don signals can be done within that context so instead of "batching" we could auto advance these phases like how phase changed for when attacking is logged under different action consequences (one for just attack declaration, one for player decision and continuation to next phase).
+
+For battle itself, it might be all right to have branching paths. The flow could be like this: player has many "on opponent attack" effects. Opponent attacks. Player does not want to activate any of them and instead counter immediately. On the frontend, it would look like they click "no effect", "no blocker", then play a counter card. However, on the engine, they do not actually advance the state until they play a binding action that prevents them from going back. This way, they could change their mind on the frontend (go to counter step, if no binding action is played, can go back and activate effects). Thus, playing the counter card while in perhaps a more general unofficial "defending phase", would prevent the user from going back to the blocker phase or the "on opponent attack" phase, and the engine would jump them forward. If they click "quick resolve attack," the engine could jump them forward to attack resolution as well. This would allow for the best flexibility and UX for the players in my opinion.
