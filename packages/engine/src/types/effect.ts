@@ -6,6 +6,9 @@ export type ActiveEffect = null;
 export type ReactiveEffect = null;
 export type ReplacementEffect = null;
 
+export type EffectId = string;
+export type SequenceId = string;
+
 export type SequencedEffect =
     | ActiveEffect
     | ReactiveEffect
@@ -14,6 +17,7 @@ export type SequencedEffect =
 // StatusEffects are passive modifiers — they sit on the statusEffects array, are checked during
 // calculations, and are cleaned up on a signal or phase change. They do not produce sequences.
 export type StatusEffect = {
+    effectId: EffectId;
     sourceInstanceId: CardInstanceId;
     modification: Modification;
     duration: EffectDuration;
@@ -21,13 +25,13 @@ export type StatusEffect = {
 };
 
 export type EffectSequence = {
-    sequenceId: string;
+    effectId: EffectId;
+    sequenceId: SequenceId;
     sourceInstanceId: CardInstanceId;
     activatingSignal: GameSignal | null;
     controllerAtQueueTime: PlayerId;
     steps: EffectStep[];
     resolved: Record<string, CardInstanceId | CardInstanceId[] | boolean | number>;
-    optional: boolean;
 };
 
 export type EffectStep =
@@ -92,8 +96,14 @@ export type EffectDefinition = {
     activation: EffectActivationType;
     condition: CardFilter | null;
     effectCost: EffectCost | null;
+    optional: boolean;
+    oncePerTurn: boolean;
     sequence: EffectStep[];
 };
+
+export type StatusEffectDefinition = {
+    effectId: string;
+}
 
 export type EffectOperation =
     // Zone movement

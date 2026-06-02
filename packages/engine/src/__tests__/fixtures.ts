@@ -29,7 +29,6 @@ export const mockDefs: Record<CardId, CardDef> = {
         attributes: [],
         aliases: [],
         restrictions: [],
-        effects: [],
     },
     [MOCK_CHAR_ID]: {
         id: MOCK_CHAR_ID,
@@ -43,7 +42,6 @@ export const mockDefs: Record<CardId, CardDef> = {
         attributes: [],
         aliases: [],
         restrictions: [],
-        effects: [],
     },
     [MOCK_EVENT_ID]: {
         id: MOCK_EVENT_ID,
@@ -55,7 +53,6 @@ export const mockDefs: Record<CardId, CardDef> = {
         attributes: [],
         aliases: [],
         restrictions: [],
-        effects: [],
     },
     [MOCK_STAGE_ID]: {
         id: MOCK_STAGE_ID,
@@ -67,7 +64,6 @@ export const mockDefs: Record<CardId, CardDef> = {
         attributes: [],
         aliases: [],
         restrictions: [],
-        effects: [],
     },
 };
 

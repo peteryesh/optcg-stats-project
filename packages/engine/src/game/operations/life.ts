@@ -1,12 +1,12 @@
 import { produce } from 'immer';
 import { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone } from "../../types";
-import { moveCard, getZoneArray, attachDon, detachDon } from "../mechanics";
+import { moveCard, getZoneArray, attachDon, detachDon, getCardInstance } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
 
 export function lifeAdd(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], fromZone: Zone, position: StackPosition, signalCause: SignalCause): GameState {
     for (const instanceId of instanceIds) {
-        const zone = state.instances[instanceId].currentZone;
+        const zone = getCardInstance(state, instanceId).currentZone;
         if (!zone) throw new InvalidActionError(`${instanceId} has no current zone`);
         if (zone !== fromZone) throw new InvalidActionError(`Cannot add ${instanceId} to life from ${zone}, expected ${fromZone}`);
         state = moveCard(state, instanceId, "LIFE", position);
@@ -49,7 +49,7 @@ export function dealDamage(state: GameState, playerId: PlayerId, cause: DamageCa
     if (!leaderId) throw new InvalidActionError(`No leader id found`);
 
     if (getZoneArray(state, playerId, "LIFE").length === 0) {
-        const winner = state.instances[cause.sourceId].controller;
+        const winner = getCardInstance(state, cause.sourceId).controller;
         state = produce(state, draft => {
             draft.winner = winner;
             draft.endReason = "KNOCKOUT";

@@ -1,5 +1,6 @@
 import { produce } from 'immer';
 import { GameState } from '../../types/state';
+import { getCardInstance } from './helpers';
 
 export function setNextActivePlayer(state: GameState): GameState {
     if (state.phase === "START_GAME") {
@@ -42,7 +43,7 @@ export function resetCardsPlayedThisTurn(state: GameState): GameState {
 export function resetEffectsUsedThisTurn(state: GameState): GameState {
     return produce(state, draft => {
         for (const instanceId in draft.instances) {
-            const instance = draft.instances[instanceId];
+            const instance = getCardInstance(draft, instanceId);
             if (instance.class !== "DON" && instance.effectsUsedThisTurn) {
                 instance.effectsUsedThisTurn = {};
             }

@@ -8,6 +8,7 @@ import { InvalidActionError } from '../../errors';
 import { OPENING_HAND_SIZE } from '../rules';
 import { enterStartGamePhase, cardsDraw, cardsToDeckFromHand, enterStartOfTurnPhase, lifeAdd } from '../operations';
 import { processEffects } from '../effects';
+import { getCardInstance, getCardDef } from '../mechanics';
 
 export function applyChooseFirstPlayer(state: GameState, action: Extract<GameAction, { type: "CHOOSE_FIRST_PLAYER" }>): GameState {
     const { deciderId, choice } = action; // deciderId picks, choice is the playerId of the player to go first
@@ -114,12 +115,9 @@ export function shuffleDeck(state: GameState, playerId: PlayerId): GameState {
 export function setPlayerLife(state: GameState, playerId: PlayerId): GameState {
     const leaderId = getZoneArray(state, playerId, "LEADER")[0];
     if (!leaderId) throw new InvalidActionError(`No leader id found for player ${playerId}`);
-    const leader = state.instances[leaderId];
-    if (!leader) throw new InvalidActionError(`No leader instance found for player ${playerId}`);
-    if (leader.class !== "LEADER") throw new InvalidActionError(`Card ${leaderId} is not a leader for player ${playerId}`);
-    const leaderDef = state.definitions[leader.cardId];
-    if (!leaderDef) throw new InvalidActionError(`No leader definition found for player ${playerId}`);
-    if (!leaderDef.life) throw new InvalidActionError(`Leader ${leader.cardId} does not have a life value for player ${playerId}`);
+    const leaderDef = getCardDef(state, leaderId);
+    if (leaderDef.class !== "LEADER") throw new InvalidActionError(`Card ${leaderId} is not a leader for player ${playerId}`);
+    if (!leaderDef.life) throw new InvalidActionError(`Leader ${leaderDef.id} does not have a life value for player ${playerId}`);
     const lifeCount = leaderDef.life;
     const lifeCards = getZoneArray(state, playerId, "DECK").slice(0, lifeCount);
     return lifeAdd(state, playerId, lifeCards, "DECK", "TOP", { kind: "RULE" });

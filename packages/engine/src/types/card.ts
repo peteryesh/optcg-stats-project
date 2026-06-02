@@ -1,5 +1,5 @@
 import type { CardId, CardInstanceId, Attribute, CardClass, Color, PlayerId, Zone } from './primitives';
-import { EffectDefinition } from './effect';
+import { EffectDefinition, EffectId, EffectSequence, StatusEffectDefinition } from './effect';
 
 export interface Card {
     id: CardId;
@@ -36,7 +36,8 @@ export interface CardDef {
     attributes: Attribute[];
     aliases: string[];
     restrictions: object[];
-    effects: EffectDefinition[];   // added later, not in database currently
+    effectDefs?: Record<EffectId, EffectDefinition>;   // added later, not in database currently
+    statusEffectDefs?: StatusEffectDefinition[];
 }
 
 export type DeckList = {
@@ -58,7 +59,7 @@ export interface LeaderInstance extends BaseCardInstance {
     cardId: CardId;
     class: "LEADER";
     attachedDon: CardInstanceId[];
-    effectsUsedThisTurn: Record<string, boolean>;
+    effectsUsedThisTurn: Record<EffectId, boolean>;
 }
 
 // Character — can attack, have DON!! attached, use effects
@@ -67,7 +68,7 @@ export interface CharacterInstance extends BaseCardInstance {
     class: "CHARACTER";
     attachedDon: CardInstanceId[];
     playedOnTurns: number[];
-    effectsUsedThisTurn: Record<string, boolean>;
+    effectsUsedThisTurn: Record<EffectId, boolean>;
 }
 
 // Stage — enters play, can be bounced, no DON!!
@@ -76,14 +77,14 @@ export interface StageInstance extends BaseCardInstance {
     class: "STAGE";
     attachedDon: CardInstanceId[];
     playedOnTurns: number[];
-    effectsUsedThisTurn: Record<string, boolean>;
+    effectsUsedThisTurn: Record<EffectId, boolean>;
 }
 
 export interface EventInstance extends BaseCardInstance {
     cardId: CardId;
     class: "EVENT";
     playedOnTurns: number[];
-    effectsUsedThisTurn: Record<string, boolean>;
+    effectsUsedThisTurn: Record<EffectId, boolean>;
 }
 
 // DON!! — attaches to characters/leader, tracks attachment
@@ -92,6 +93,7 @@ export interface DonInstance extends BaseCardInstance {
     class: "DON";
     isRested: boolean;
     attachedTo: CardInstanceId | null;
+    donValue: number;
 }
 
 export type CardInstance =

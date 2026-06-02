@@ -1,5 +1,8 @@
 OPTCG VEGA ENGINE
 
+Question: should a click be a declaration?
+- This is the main UI/UX question
+
 Actions
 - Actions are required to resolve effects that appear in the effect queue while it holds the context
 - Action should peek at next step before popping it off the queue and consuming it
@@ -90,6 +93,8 @@ Effect system
 5. Step resolution — The player submits an action (CHOOSE_TARGETS, CHOOSE_FROM_HAND, etc.). That action handler records the choice in currentEffect.resolved[outputKey], then calls advanceCurrentEffect again to continue from where it paused.
 
 6. Sequence complete — When steps is empty, currentEffect is cleared and processEffects is called again to pick up anything that accumulated in staging during execution.
+
+- EffectSequence does not live on definitions, it is constructed from card def and pushed to state at runtime
 
 Signals and Hooks
 - GameSignals are always emitted after some state change and are named using past tense terms

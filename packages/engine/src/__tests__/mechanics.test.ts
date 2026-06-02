@@ -153,7 +153,7 @@ describe("removeFromZone", () => {
     it("throws for unknown instance", () => {
         const state = setupTestGame();
         expect(() => removeFromZone(state, "p1-CARD-999" as CardInstanceId))
-            .toThrow("Cannot move unknown instance");
+            .toThrow("not found");
     });
 
     it("throws when removing a LEADER", () => {
@@ -208,7 +208,7 @@ describe("addToZone", () => {
     it("throws for unknown instance", () => {
         const state = setupTestGame();
         expect(() => addToZone(state, "p1-CARD-999" as CardInstanceId, "HAND", "TOP"))
-            .toThrow("Cannot move unknown instance");
+            .toThrow("not found");
     });
 
     it("CHARACTERS zone rejects non-CHARACTER cards", () => {
@@ -487,7 +487,7 @@ describe("setActive", () => {
     it("throws for unknown instance", () => {
         const state = setupTestGame();
         expect(() => setActive(state, "p1-CARD-999" as CardInstanceId))
-            .toThrow("Cannot find card instance");
+            .toThrow("not found");
     });
 });
 
@@ -512,7 +512,7 @@ describe("setRested", () => {
     it("throws for unknown instance", () => {
         const state = setupTestGame();
         expect(() => setRested(state, "p1-CARD-999" as CardInstanceId))
-            .toThrow("Cannot find card instance");
+            .toThrow("not found");
     });
 });
 

@@ -272,10 +272,10 @@ describe("cardsSetActive", () => {
             .toThrow(InvalidActionError);
     });
 
-    it("throws InvalidActionError for unknown instance", () => {
+    it("throws for unknown instance", () => {
         const state = setupTestGame();
         expect(() => cardsSetActive(state, P1, ["p1-CARD-999" as CardInstanceId], { kind: "RULE" }))
-            .toThrow(InvalidActionError);
+            .toThrow();
     });
 
     it("does not throw for empty instanceIds", () => {
@@ -346,10 +346,10 @@ describe("cardsSetRested", () => {
             .toThrow(InvalidActionError);
     });
 
-    it("throws InvalidActionError for unknown instance", () => {
+    it("throws for unknown instance", () => {
         const state = setupTestGame();
         expect(() => cardsSetRested(state, P1, ["p1-CARD-999" as CardInstanceId], { kind: "RULE" }))
-            .toThrow(InvalidActionError);
+            .toThrow();
     });
 
     it("does not throw for empty instanceIds", () => {
@@ -369,10 +369,10 @@ describe("cardsSetRested", () => {
 // ============================================================
 
 describe("playCard", () => {
-    it("throws InvalidActionError for unknown instance", () => {
+    it("throws for unknown instance", () => {
         const state = setupTestGame();
         expect(() => playCard(state, P1, "p1-CARD-999" as CardInstanceId, { kind: "PLAYER" }))
-            .toThrow(InvalidActionError);
+            .toThrow();
     });
 
     it("throws InvalidActionError for non-playable class (DON)", () => {

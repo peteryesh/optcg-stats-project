@@ -3,7 +3,7 @@ import { GameState } from '../../types/state';
 import { CardInstanceId, PlayerId, Zone, StackPosition, Phase } from '../../types/primitives';
 import { CHARACTERS_MAX, LEADER_MAX, STAGE_MAX } from '../rules';
 import { DonInstance } from '../../types/card';
-import { getZoneArray } from './helpers';
+import { getZoneArray, getCardInstance } from './helpers';
 
 /**
  * Function to move a player's card from one zone to another
@@ -28,10 +28,7 @@ export function moveCard(state: GameState, instanceId: CardInstanceId, targetZon
  * @returns Game state with the card instance id removed from the instance's current zone, and the instance's current zone set to null
  */
 export function removeFromZone(state: GameState, instanceId: CardInstanceId): GameState {
-    const instance = state.instances[instanceId];
-    if (!instance) {
-        throw new Error(`Cannot move unknown instance ${instanceId}`);
-    }
+    const instance = getCardInstance(state, instanceId);
 
     if (instance.class === "LEADER") {
         throw new Error (`Attempting to remove leader card from the leader area: ${instance.instanceId}`);
@@ -46,7 +43,7 @@ export function removeFromZone(state: GameState, instanceId: CardInstanceId): Ga
         }
 
         originZoneArray.splice(index, 1);
-        draft.instances[instance.instanceId].currentZone = null;
+        getCardInstance(draft, instance.instanceId).currentZone = null;
     });
 }
  
@@ -61,10 +58,7 @@ export function removeFromZone(state: GameState, instanceId: CardInstanceId): Ga
  * @returns Game state with the card instance id added to the target zone, and the instance's current zone set to the target zone
  */
 export function addToZone(state: GameState, instanceId: CardInstanceId, targetZone: Zone, position: StackPosition): GameState {
-    const instance = state.instances[instanceId];
-    if (!instance) {
-        throw new Error(`Cannot move unknown instance ${instanceId}`);
-    }
+    const instance = getCardInstance(state, instanceId);
     if (instance.currentZone !== null) {
         throw new Error(`Attempting to add ${instanceId} to new zone when previous zone has not been cleared`);
     }
@@ -92,14 +86,13 @@ export function addToZone(state: GameState, instanceId: CardInstanceId, targetZo
         else {
             throw new Error(`Position (top or bottom of stack) was not provided`);
         }
-
-        draft.instances[instance.instanceId].currentZone = targetZone;
+        getCardInstance(draft, instance.instanceId).currentZone = targetZone;
 
         if (instance.class === "DON") {
             if (targetZone === "DON_RESTED") {
-                (draft.instances[instance.instanceId] as DonInstance).isRested = true;
+                (getCardInstance(draft, instance.instanceId) as DonInstance).isRested = true;
             } else if (targetZone === "DON_ACTIVE") {
-                (draft.instances[instance.instanceId] as DonInstance).isRested = false;
+                (getCardInstance(draft, instance.instanceId) as DonInstance).isRested = false;
             }
         }
     });
@@ -114,10 +107,7 @@ export function addToZone(state: GameState, instanceId: CardInstanceId, targetZo
  * @returns The state with the card inserted at the index and all other items shifted accordingly.
  */
 export function insertCardAtZoneIndex(state: GameState, instanceId: CardInstanceId, targetZone: Zone, index: number): GameState {
-    const instance = state.instances[instanceId];
-    if (!instance) {
-        throw new Error(`Cannot move unknown instance ${instanceId}`);
-    }
+    const instance = getCardInstance(state, instanceId);
     if (instance.currentZone !== null) {
         throw new Error(`Attempting to add ${instanceId} to new zone when previous zone has not been cleared`);
     }
@@ -139,13 +129,12 @@ export function insertCardAtZoneIndex(state: GameState, instanceId: CardInstance
 
         if (index < 0 || index > targetZoneArray.length) throw new Error(`Index ${index} is out of bounds for zone ${targetZone} with length ${targetZoneArray.length}`);
         targetZoneArray.splice(index, 0, instance.instanceId);
-        draft.instances[instance.instanceId].currentZone = targetZone;
+        getCardInstance(draft, instance.instanceId).currentZone = targetZone;
     });
 }
 
 export function replaceCardAtZoneIndex(state: GameState, instanceId: CardInstanceId, targetZone: Zone, index: number): GameState {
-    const instance = state.instances[instanceId];
-    if (!instance) throw new Error(`Cannot move unknown instance ${instanceId}`);
+    const instance = getCardInstance(state, instanceId);
     if (instance.currentZone !== null) throw new Error(`Attempting to add ${instanceId} to new zone when previous zone has not been cleared`);
     if (targetZone !== "CHARACTERS" && targetZone !== "LIFE" && targetZone !== "STAGE") {
         throw new Error(`replaceCardAtZoneIndex only applies to CHARACTERS, LIFE, and STAGE zones`);
@@ -161,10 +150,10 @@ export function replaceCardAtZoneIndex(state: GameState, instanceId: CardInstanc
         const replacedId = targetZoneArray[index];
         const trashZone = getZoneArray(draft, instance.controller, "TRASH");
         trashZone.unshift(replacedId);
-        draft.instances[replacedId].currentZone = "TRASH";
+        getCardInstance(draft, replacedId).currentZone = "TRASH";
 
         targetZoneArray[index] = instance.instanceId;
-        draft.instances[instance.instanceId].currentZone = targetZone;
+        getCardInstance(draft, instance.instanceId).currentZone = targetZone;
     });
 }
 
@@ -177,13 +166,11 @@ export function replaceCardAtZoneIndex(state: GameState, instanceId: CardInstanc
  * @returns Game state with the DON!! removed from its zone and attached to the target
  */
 export function attachDon(state: GameState, donId: CardInstanceId, targetId: CardInstanceId): GameState {
-    const don = state.instances[donId];
-    if (!don) throw new Error(`Cannot find DON!! instance ${donId}`);
+    const don = getCardInstance(state, donId);
     if (don.class !== "DON") throw new Error(`Instance ${donId} is not a DON!! card`);
     if (don.attachedTo !== null) throw new Error(`DON!! ${donId} is already attached to ${don.attachedTo}`);
 
-    const target = state.instances[targetId];
-    if (!target) throw new Error(`Cannot find target instance ${targetId}`);
+    const target = getCardInstance(state, targetId);
     if (target.class === "STAGE") throw new Error(`Attaching DON!! to a stage card is not yet implemented`);
     if (target.class !== "CHARACTER" && target.class !== "LEADER") {
         throw new Error(`Cannot attach DON!! to a ${target.class} card: ${targetId}`);
@@ -194,8 +181,8 @@ export function attachDon(state: GameState, donId: CardInstanceId, targetId: Car
 
     // Record attachment on both instances
     return produce(state, draft => {
-        (draft.instances[donId] as DonInstance).attachedTo = targetId;
-        (draft.instances[targetId] as { attachedDon: CardInstanceId[] }).attachedDon.push(donId);
+        (getCardInstance(draft, donId) as DonInstance).attachedTo = targetId;
+        (getCardInstance(draft, targetId) as { attachedDon: CardInstanceId[] }).attachedDon.push(donId);
     });
 }
 
@@ -208,8 +195,7 @@ export function attachDon(state: GameState, donId: CardInstanceId, targetId: Car
  * @returns Game state with the DON!! detached from its target and moved to DON_RESTED
  */
 export function detachDon(state: GameState, donId: CardInstanceId, destination: Zone): GameState {
-    const don = state.instances[donId];
-    if (!don) throw new Error(`Cannot find DON!! instance ${donId}`);
+    const don = getCardInstance(state, donId);
     if (don.class !== "DON") throw new Error(`Instance ${donId} is not a DON!! card`);
     if (don.attachedTo === null) throw new Error(`DON!! ${donId} is not attached to any card`);
 
@@ -218,14 +204,14 @@ export function detachDon(state: GameState, donId: CardInstanceId, destination: 
     // Clear attachment relationship on both instances
     // currentZone remains null — addToZone requires this to proceed
     state = produce(state, draft => {
-        const target = draft.instances[targetId];
-        if (!target || !("attachedDon" in target)) {
+        const target = getCardInstance(draft, targetId);
+        if (!("attachedDon" in target)) {
             throw new Error(`DON!! ${donId} references unknown or invalid attachment target ${targetId}`);
         }
         const idx = target.attachedDon.indexOf(donId);
         if (idx === -1) throw new Error(`DON!! ${donId} not found in attachedDon of ${targetId}`);
         target.attachedDon.splice(idx, 1);
-        (draft.instances[donId] as DonInstance).attachedTo = null;
+        (getCardInstance(draft, donId) as DonInstance).attachedTo = null;
     });
 
     return addToZone(state, donId, destination, "TOP"); // currentZone already null, will be updated by addToZone
@@ -240,8 +226,7 @@ export function detachDon(state: GameState, donId: CardInstanceId, destination: 
  * @returns Game state with the DON!! removed from its zone and attached to the target
  */
 export function reattachDon(state: GameState, donId: CardInstanceId, targetId: CardInstanceId): GameState {
-    const don = state.instances[donId];
-    if (!don) throw new Error(`Cannot find DON!! instance ${donId}`);
+    const don = getCardInstance(state, donId);
     if (don.class !== "DON") throw new Error(`Instance ${donId} is not a DON!! card`);
 
     // Record attachment on target card instance and the don instance, record detachment on origin card instance
@@ -249,19 +234,19 @@ export function reattachDon(state: GameState, donId: CardInstanceId, targetId: C
         const originId = don.attachedTo;
         if (originId === null) throw new Error(`Don is not attached and cannot be used for reattachment`);
 
-        const origin = draft.instances[originId];
-        if (!origin || !("attachedDon" in origin)) throw new Error(`Don attachment origin ${originId} not found or is invalid don attachment target`);
+        const origin = getCardInstance(draft, originId);
+        if (!("attachedDon" in origin)) throw new Error(`Don attachment origin ${originId} not found or is invalid don attachment target`);
 
-        const target = draft.instances[targetId];
-        if (!target || !("attachedDon" in target)) throw new Error(`DON!! ${donId} references unknown or invalid attachment target ${targetId}`);
+        const target = getCardInstance(draft, targetId);
+        if (!("attachedDon" in target)) throw new Error(`DON!! ${donId} references unknown or invalid attachment target ${targetId}`);
         if (target.class === "STAGE") throw new Error(`Attaching DON!! to a stage card is not yet implemented`);
 
         const idx = origin.attachedDon.indexOf(donId);
         if (idx === -1) throw new Error(`DON!! ${donId} not found in attachedDon of ${originId}`);
         origin.attachedDon.splice(idx, 1);
 
-        (draft.instances[donId] as DonInstance).attachedTo = targetId;
-        (draft.instances[targetId] as { attachedDon: CardInstanceId[] }).attachedDon.push(donId);
+        (getCardInstance(draft, donId) as DonInstance).attachedTo = targetId;
+        (getCardInstance(draft, targetId) as { attachedDon: CardInstanceId[] }).attachedDon.push(donId);
     });
 }
 

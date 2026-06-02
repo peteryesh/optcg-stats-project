@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
     createEmptyGameState,
     emptyPlayerZones,
-    setupEffectQueue,
+    emptyPendingEffects,
     initGame,
 } from "../game/init";
 import {
@@ -108,10 +108,10 @@ describe("createEmptyGameState", () => {
         expect(state.statusEffects).toHaveLength(0);
     });
 
-    it("initializes effect queues as empty per player", () => {
+    it("initializes pending effects as empty per player", () => {
         const state = makeEmptyState();
         for (const id of PLAYERS) {
-            expect(state.effectQueues[id]).toHaveLength(0);
+            expect(state.pendingEffects[id]).toHaveLength(0);
         }
     });
 
@@ -127,7 +127,7 @@ describe("createEmptyGameState", () => {
         expect(state.turnOrder).toEqual(ids);
         expect(Object.keys(state.playerZones)).toHaveLength(4);
         expect(Object.keys(state.rngCursors.players)).toHaveLength(4);
-        expect(Object.keys(state.effectQueues)).toHaveLength(4);
+        expect(Object.keys(state.pendingEffects)).toHaveLength(4);
     });
 
     it("passes invariants", () => {
@@ -182,32 +182,32 @@ describe("emptyPlayerZones", () => {
 });
 
 // ============================================================
-// setupEffectQueue
+// emptyPendingEffects
 // ============================================================
 
-describe("setupEffectQueue", () => {
+describe("emptyPendingEffects", () => {
     it("returns a key for each player", () => {
-        const queue = setupEffectQueue(PLAYERS);
-        expect(Object.keys(queue)).toEqual(PLAYERS);
+        const effects = emptyPendingEffects(PLAYERS);
+        expect(Object.keys(effects)).toEqual(PLAYERS);
     });
 
     it("each player queue starts empty", () => {
-        const queue = setupEffectQueue(PLAYERS);
+        const effects = emptyPendingEffects(PLAYERS);
         for (const id of PLAYERS) {
-            expect(queue[id]).toEqual([]);
+            expect(effects[id]).toEqual([]);
         }
     });
 
     it("works for a single player", () => {
-        const queue = setupEffectQueue([P1]);
-        expect(Object.keys(queue)).toHaveLength(1);
-        expect(queue[P1]).toEqual([]);
+        const effects = emptyPendingEffects([P1]);
+        expect(Object.keys(effects)).toHaveLength(1);
+        expect(effects[P1]).toEqual([]);
     });
 
     it("works for 4 players", () => {
         const ids: PlayerId[] = ["p1", "p2", "p3", "p4"];
-        const queue = setupEffectQueue(ids);
-        expect(Object.keys(queue)).toHaveLength(4);
+        const effects = emptyPendingEffects(ids);
+        expect(Object.keys(effects)).toHaveLength(4);
     });
 });
 
@@ -271,6 +271,7 @@ describe("createInstance", () => {
         expect(inst.controller).toBe(P1);
         if (inst.class === "DON") {
             expect(inst.attachedTo).toBeNull();
+            expect(inst.donValue).toBe(1000);
         }
     });
 

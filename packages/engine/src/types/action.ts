@@ -1,4 +1,5 @@
 import { DeckList } from "./card";
+import { EffectId, SequenceId } from "./effect";
 import { CardId, CardInstanceId, PlayerId, FrameId } from "./primitives";
 
 export type GameAction =
@@ -12,9 +13,9 @@ export type GameAction =
 
     // Main Phase
     | { type: "PLAY_CARD"; playerId: PlayerId; instanceId: CardInstanceId; }
-    | { type: "ACTIVATE_EFFECT"; playerId: PlayerId; instanceId: CardInstanceId; abilityId: string }
     | { type: "ATTACH_DON"; playerId: PlayerId; donIds: CardInstanceId[]; targetId: CardInstanceId }
-
+    | { type: "ACTIVATE_EFFECT"; playerId: PlayerId; instanceId: CardInstanceId; effectId: EffectId }
+    
     // Combat
     | { type: "DECLARE_ATTACK"; playerId: PlayerId; attackerId: CardInstanceId; defenderId: CardInstanceId }
     | { type: "DECLARE_BLOCKER"; playerId: PlayerId; blockerId: CardInstanceId }
@@ -22,9 +23,5 @@ export type GameAction =
     | { type: "COMPLETE_BATTLE"; playerId: PlayerId }
 
     // Decision Resolutions
-    | { type: "CHOOSE_NEXT_EFFECT"; playerId: PlayerId; frameId: FrameId }
+    | { type: "CHOOSE_NEXT_EFFECT"; playerId: PlayerId; sequenceId: SequenceId }
     | { type: "CHOOSE_TARGETS"; playerId: PlayerId; instanceIds: CardInstanceId[] }
-    | { type: "CHOOSE_FROM_HAND"; playerId: PlayerId; instanceIds: CardInstanceId[] }
-    | { type: "CHOOSE_FROM_LOOK"; playerId: PlayerId; instanceIds: CardInstanceId[] }
-    | { type: "CONFIRM"; playerId: PlayerId }
-    | { type: "DECLINE"; playerId: PlayerId };

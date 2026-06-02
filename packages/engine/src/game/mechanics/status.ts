@@ -3,7 +3,7 @@ import { GameState } from '../../types/state';
 import { CardInstanceId, PlayerId, Zone, StackPosition, Phase } from '../../types/primitives';
 import { CHARACTERS_MAX, LEADER_MAX, STAGE_MAX } from '../rules';
 import { DonInstance } from '../../types/card';
-import { getZoneArray } from './helpers';
+import { getCardInstance, getZoneArray } from './helpers';
 
 /**
  * Set card as active
@@ -15,8 +15,7 @@ import { getZoneArray } from './helpers';
  */
 export function setActive(state: GameState, instanceId: CardInstanceId): GameState {
     return produce(state, draft => {
-        const card = draft.instances[instanceId];
-        if (!card) throw new Error(`Cannot find card instance ${instanceId}`);
+        const card = getCardInstance(draft, instanceId);
         card.isRested = false;
     });
 }
@@ -31,7 +30,7 @@ export function setActive(state: GameState, instanceId: CardInstanceId): GameSta
  */
 export function setRested(state: GameState, instanceId: CardInstanceId): GameState {
     return produce(state, draft => {
-        const card = draft.instances[instanceId];
+        const card = getCardInstance(draft, instanceId);
         if (!card) throw new Error(`Cannot find card instance ${instanceId}`);
         card.isRested = true;
     });

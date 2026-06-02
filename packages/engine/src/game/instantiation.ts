@@ -118,7 +118,8 @@ export function createInstance(instanceId: CardInstanceId, cardClass: CardClass,
                 ...baseInstance,
                 class: "DON",
                 isRested: false,
-                attachedTo: null
+                attachedTo: null,
+                donValue: 1000
             } as DonInstance;
         default:
             throw new Error(`Unknown card class ${cardClass} for instance ${instanceId}`);

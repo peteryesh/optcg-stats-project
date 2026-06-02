@@ -357,6 +357,8 @@ describe("resolveBattle", () => {
 
     it("CHARACTER HIT: detaches any DON attached to the defender", () => {
         let state = makeStateForCharVsChar();
+        // P1 is active, so P2's attached DON gives no power bonus.
+        // Attacker (P1, 4000) >= defender (P2, 4000 + 0 DON) → HIT, DON detached.
         state = attachDon(state, "p2-DON-0" as CardInstanceId, "p2-CARD-0" as CardInstanceId);
         const next = resolveBattle(state);
         expect(next.playerZones[P2].donRested).toContain("p2-DON-0");

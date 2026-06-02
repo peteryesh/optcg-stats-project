@@ -7,12 +7,13 @@ import { calculatePower, calculateCounter } from '../calculations';
 import { dealDamage } from './life';
 import { logCurrentBattleForTurn, removeCurrentBattle, updateCurrentBattle } from '../mechanics/combat';
 import { enterBattleResolutionPhase } from './phase';
+import { getCardInstance } from "../mechanics";
 
 export function declareAttack(state: GameState, playerId: PlayerId, attackerId: CardInstanceId, defenderId: CardInstanceId): GameState {
     if (state.currentBattle) throw new InvalidActionError(`Attempting to declare an attack when a battle is taking place`);
     state = updateCurrentBattle(state, {attackerId: attackerId, defenderId: defenderId, counter: 0});
-    const attacker = state.instances[attackerId];
-    const defender = state.instances[defenderId];
+    const attacker = getCardInstance(state, attackerId);
+    const defender = getCardInstance(state, defenderId);
     if (attacker.controller !== playerId) throw new InvalidActionError(`Player ${playerId} does not control attacker ${attackerId}`);
     if (defender.controller === playerId) throw new InvalidActionError(`Player ${playerId} cannot control defender ${defenderId} in battle`);
     // STATUS EFFECT: If the card has a status that does not allow it to attack or rest, it cannot attack
@@ -35,7 +36,7 @@ export function declareBlocker(state: GameState, playerId: PlayerId, blockerId: 
     if (!battle) throw new InvalidActionError(`No current battle exists`);
     const prevDefenderId = battle.defenderId;
     if (!prevDefenderId) throw new InvalidActionError(`No previous defender, battle is corrupt`);
-    const blocker = state.instances[blockerId];
+    const blocker = getCardInstance(state, blockerId);
     state = updateCurrentBattle(state, {...battle, defenderId: blockerId});
     if (blocker.controller !== playerId) throw new InvalidActionError(`Player ${playerId} does not control new target ${blockerId}`);
     // STATUS EFFECT: cannot block, cannot rest
@@ -50,7 +51,7 @@ export function redirectAttack(state: GameState, playerId: PlayerId, newTargetId
     if (!battle) throw new InvalidActionError(`No current battle exists`);
     const prevDefenderId = battle.defenderId;
     if (!prevDefenderId) throw new InvalidActionError(`No previous defender, battle is corrupt`);
-    const newTarget = state.instances[newTargetId];
+    const newTarget = getCardInstance(state, newTargetId);
     state = updateCurrentBattle(state, {...battle, defenderId: newTargetId});
     if (newTarget.controller !== playerId) throw new InvalidActionError(`Player ${playerId} does not control new target ${newTargetId}`);
     if (newTarget.currentZone !== "CHARACTERS" && newTarget.currentZone !== "LEADER") throw new InvalidActionError(`New target ${newTargetId} is not in the CHARACTERS zone`);
@@ -60,7 +61,7 @@ export function redirectAttack(state: GameState, playerId: PlayerId, newTargetId
 export function playCounter(state: GameState, playerId: PlayerId, counterCardId: CardInstanceId): GameState {
     const derivedCounter = calculateCounter(state, counterCardId); // incomplete, need to update calculateCounter
     if (derivedCounter <= 0) throw new InvalidActionError(`Card ${counterCardId} has no counter value and cannot be played as a counter`);
-    const counterCard = state.instances[counterCardId];
+    const counterCard = getCardInstance(state, counterCardId);
     if (counterCard.controller !== playerId) throw new InvalidActionError(`${counterCardId} is not owned by the defending player`);
     const battle = state.currentBattle;
     if (!battle) throw new InvalidActionError(`No current battle found, battle is corrupt`);
@@ -73,10 +74,8 @@ export function resolveBattle(state: GameState): GameState {
     state = logCurrentBattleForTurn(state);
     const battle = state.currentBattle;
     if (!battle) throw new InvalidActionError(`No current battle exists`);
-    const attacker = state.instances[battle.attackerId];
-    const defender = state.instances[battle.defenderId];
-    if (!attacker) throw new InvalidActionError(`Not a valid attacker, current battle is corrupt`);
-    if (!defender) throw new InvalidActionError(`Not a valid defender, current battle is corrupt`);
+    const attacker = getCardInstance(state, battle.attackerId);
+    const defender = getCardInstance(state, battle.defenderId);
     if (attacker.class !== "LEADER" && attacker.class !== "CHARACTER") throw new InvalidActionError(`Not a valid attacker, current battle is corrupt`);
     if (defender.class !== "LEADER" && defender.class !== "CHARACTER") throw new InvalidActionError(`Not a valid defender, current battle is corrupt`);
     state = removeCurrentBattle(state);

@@ -57,26 +57,15 @@ describe("updateCurrentBattle", () => {
         expect(state.currentBattle).toBeNull();
     });
 
-    it("throws if attacker is not in state.instances", () => {
+    it("records unknown instance IDs without validation (existence checked at resolution)", () => {
         const state = setupTestGame();
-        expect(() =>
-            updateCurrentBattle(state, {
-                attackerId: "p1-UNKNOWN" as CardInstanceId,
-                defenderId: "p2-LEADER" as CardInstanceId,
-                counter: 0,
-            })
-        ).toThrow();
-    });
-
-    it("throws if defender is not in state.instances", () => {
-        const state = makeStateWithBattleReady();
-        expect(() =>
-            updateCurrentBattle(state, {
-                attackerId: "p1-CARD-0" as CardInstanceId,
-                defenderId: "p2-UNKNOWN" as CardInstanceId,
-                counter: 0,
-            })
-        ).toThrow();
+        const next = updateCurrentBattle(state, {
+            attackerId: "p1-UNKNOWN" as CardInstanceId,
+            defenderId: "p2-UNKNOWN" as CardInstanceId,
+            counter: 0,
+        });
+        expect(next.currentBattle?.attackerId).toBe("p1-UNKNOWN");
+        expect(next.currentBattle?.defenderId).toBe("p2-UNKNOWN");
     });
 });
 

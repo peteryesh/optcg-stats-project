@@ -135,6 +135,7 @@ export function enterCounterPhase(state: GameState): GameState {
 
 export function enterBattleResolutionPhase(state: GameState): GameState {
     const prevPhase = state.phase;
+    if (prevPhase !== "BLOCKER" && prevPhase !== "COUNTER") throw new InvalidActionError(`Cannot resolve battle from phase ${prevPhase}`);
     const nextPhase: Phase = "BATTLE_RESOLUTION";
     state = setPhase(state, nextPhase);
     return emit(state, { type: "PHASE_CHANGED", prevPhase, nextPhase, cause: { kind: "RULE" } });

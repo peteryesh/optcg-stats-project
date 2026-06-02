@@ -1,4 +1,4 @@
-import type { GameState, PlayerId, Zone, CardInstanceId } from "../../types";
+import type { GameState, PlayerId, Zone, CardInstance, CardInstanceId, CardDef } from "../../types";
 
 /**
  * Helper function to get the zone array for the provided player
@@ -27,4 +27,18 @@ export function getZoneArray(state: GameState, playerId: PlayerId, zone: Zone | 
         case null:          throw new Error(`Null zone provided, no zone to return`);
         default:            throw new Error(`Provided zone was not an accepted zone value`);
     }
+}
+
+export function getCardInstance(state: GameState, instanceId: CardInstanceId): CardInstance {
+    const card = state.instances[instanceId];
+    if (!card) throw new Error(`Card instance ${instanceId} not found`);
+    return card;
+}
+
+export function getCardDef(state: GameState, instanceId: CardInstanceId): CardDef {
+    const card = getCardInstance(state, instanceId);
+    if (card.class === "DON") throw new Error(`Cannot get DON card definition`);
+    const cardDef = state.definitions[card.cardId];
+    if (!cardDef) throw new Error(`Card definition for instance ${instanceId} not found`);
+    return cardDef;
 }

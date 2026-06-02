@@ -1,6 +1,6 @@
 
 import { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card, Phase } from "../../types";
-import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex, setPhase, setCardPlayedThisTurn } from "../mechanics";
+import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex, setPhase, setCardPlayedThisTurn, getCardInstance } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
 import { donRest, donDetach } from './don';
@@ -29,8 +29,7 @@ export function cardsDraw(state: GameState, playerId: PlayerId, count: number, s
 
 export function cardsAddToHand(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], fromZone: Zone, signalCause: SignalCause): GameState {
     for (const instanceId of instanceIds) {
-        const cardInstance = state.instances[instanceId];
-        if (!cardInstance) throw new InvalidActionError(`Card instance ${instanceId} not found on the state`);
+        const cardInstance = getCardInstance(state, instanceId);
         if (cardInstance.currentZone !== fromZone) {
             throw new InvalidActionError(`Card instance ${instanceId} is not in the expected zone ${fromZone}`);
         }
@@ -79,8 +78,7 @@ export function cardsToDeckFromHand(state: GameState, playerId: PlayerId, instan
  */
 export function cardsSetActive(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], signalCause: SignalCause): GameState {
     for (const instanceId of instanceIds) {
-        const card = state.instances[instanceId];
-        if (!card) throw new InvalidActionError(`${instanceId} not found in card instances`);
+        const card = getCardInstance(state, instanceId);
         if (card.class === "DON") {
             throw new InvalidActionError(`Wrong function used to set DON!! as active`);
         } 
@@ -102,8 +100,7 @@ export function cardsSetActive(state: GameState, playerId: PlayerId, instanceIds
  */
 export function cardsSetRested(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], signalCause: SignalCause): GameState {
     for (const instanceId of instanceIds) {
-        const card = state.instances[instanceId];
-        if (!card) throw new InvalidActionError(`${instanceId} not found in card instances`);
+        const card = getCardInstance(state, instanceId);
         if (card.class === "DON") {
             throw new InvalidActionError(`Wrong function used to set DON!! as rested`);
         } 
@@ -132,8 +129,7 @@ export function cardsRefresh(state: GameState, playerId: PlayerId): GameState {
  * @return State with the card played to the appropriate zone
  */
 export function playCard(state: GameState, playerId: PlayerId, instanceId: CardInstanceId, signalCause: PlayCause, replacedId?: CardInstanceId): GameState {
-    const cardInstance = state.instances[instanceId];
-    if (!cardInstance) throw new InvalidActionError(`Card instance ${instanceId} not found on the state`);
+    const cardInstance = getCardInstance(state, instanceId);
     if (!(cardInstance.class === "CHARACTER" || cardInstance.class === "STAGE" || cardInstance.class === "EVENT")) {
         throw new InvalidActionError(`${instanceId} is not a playable instance`);
     }
@@ -165,14 +161,13 @@ export function playCard(state: GameState, playerId: PlayerId, instanceId: CardI
 
 export function playCharacter(state: GameState, playerId: PlayerId, instanceId: CardInstanceId, signalCause: PlayCause, replacedId?: CardInstanceId): GameState {
     const characterZone = getZoneArray(state, playerId, "CHARACTERS");
-    const character = state.instances[instanceId];
+    const character = getCardInstance(state, instanceId);
     const originZone = character.currentZone;
     if (character.class !== "CHARACTER") throw new InvalidActionError(`${instanceId} is not a character instance`);
     if (!originZone) throw new InvalidActionError(`${instanceId} does not have a current zone`);
     if (!replacedId && characterZone.length >= CHARACTERS_MAX) throw new InvalidActionError(`Attempting to play character to full character zone and no card id to replace`);
     if (replacedId) {
-        const replacedCharacter = state.instances[replacedId];
-        if (!replacedCharacter) throw new InvalidActionError(`${replacedId} is not found on the state`);
+        const replacedCharacter = getCardInstance(state, replacedId);
         if (replacedCharacter.currentZone !== "CHARACTERS") throw new InvalidActionError(`Attempting to replace ${replacedId} in the character zone, but its current zone is not characters`);
         if (!characterZone.includes(replacedId)) throw new InvalidActionError(`Attempting to replace ${replacedId}, but it is not part of the character zone`);
         if (characterZone.length < CHARACTERS_MAX) throw new InvalidActionError(`Attempting to replace character ${replacedId} while the character zone is not full`);
@@ -189,13 +184,13 @@ export function playCharacter(state: GameState, playerId: PlayerId, instanceId: 
 
 export function playStage(state: GameState, playerId: PlayerId, instanceId: CardInstanceId, signalCause: PlayCause, replacedId?: CardInstanceId): GameState {
     const stageZone = getZoneArray(state, playerId, "STAGE");
-    const stage = state.instances[instanceId];
+    const stage = getCardInstance(state, instanceId);
     const originZone = stage.currentZone;
     if (stage.class !== "STAGE") throw new InvalidActionError(`${instanceId} is not a stage instance`);
     if (!originZone) throw new InvalidActionError(`${instanceId} does not have a current zone`);
     if (!replacedId && stageZone.length >= STAGE_MAX) throw new InvalidActionError(`Attempting to play stage to full stage zone and no card id to replace`);
     if (replacedId) {
-        const replacedStage = state.instances[replacedId];
+        const replacedStage = getCardInstance(state, replacedId);
         if (!replacedStage) throw new InvalidActionError(`${replacedId} is not found on the state`);
         if (replacedStage.currentZone !== "STAGE") throw new InvalidActionError(`Attempting to replace ${replacedId} in the stage zone, but its current zone is not stage`);
         if (!stageZone.includes(replacedId)) throw new InvalidActionError(`Attempting to replace ${replacedId}, but it is not part of the stage zone`);
@@ -212,8 +207,7 @@ export function playStage(state: GameState, playerId: PlayerId, instanceId: Card
 }
 
 export function playEvent(state: GameState, playerId: PlayerId, instanceId: CardInstanceId, signalCause: PlayCause) {
-    const event = state.instances[instanceId];
-    if (!event) throw new InvalidActionError(`${instanceId} not found in the state's instances`);
+    const event = getCardInstance(state, instanceId);
     if (event.class !== "EVENT") throw new InvalidActionError(`${instanceId} is not an event card instance`);
     
     const originZone = event.currentZone;
@@ -227,8 +221,7 @@ export function playEvent(state: GameState, playerId: PlayerId, instanceId: Card
 
 // Event play from trash emits event played but with no zone movement (change later if a ruling specifies that the card should be moved back to trash after play, but I doubt it would count as a completely separate re-entrance to trash)
 export function playEventFromTrash(state: GameState, playerId: PlayerId, instanceId: CardInstanceId, signalCause: PlayCause): GameState {
-    const event = state.instances[instanceId];
-    if (!event) throw new InvalidActionError(`${instanceId} not found in the state's instances`);
+    const event = getCardInstance(state, instanceId);
     if (event.class !== "EVENT") throw new InvalidActionError(`${instanceId} is not an event card instance`);
     
     const originZone = event.currentZone;
@@ -241,8 +234,7 @@ export function playEventFromTrash(state: GameState, playerId: PlayerId, instanc
 // Removal Operations
 
 export function removeCardFromField(state: GameState, playerId: PlayerId, instanceId: CardInstanceId, toZone: Zone, position: StackPosition, signalCause: SignalCause): GameState {
-    const card = state.instances[instanceId];
-    if (!card) throw new InvalidActionError(`${instanceId} not found in card instances`);
+    const card = getCardInstance(state, instanceId);
     if (!(card.class === "CHARACTER" || card.class === "STAGE")) throw new InvalidActionError(`Only characters and stages can be removed from the field, but ${instanceId} is being removed`);
     
     const fromZone = card.currentZone;

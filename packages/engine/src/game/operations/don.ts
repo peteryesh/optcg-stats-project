@@ -2,6 +2,7 @@ import { GameState, PlayerId, SignalCause, CardInstanceId, DonInstance, StackPos
 import { moveCard, getZoneArray, attachDon, detachDon } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
+import { getCardInstance } from "../mechanics";
 
 /**
  * Adds one or more DON to a player's active or rested DON cards.
@@ -83,7 +84,7 @@ export function donSetActive(state: GameState, playerId: PlayerId, count: number
  */
 export function donReturn(state: GameState, playerId: PlayerId, donIds: CardInstanceId[], signalCause: SignalCause): GameState {
     for (const donId of donIds) {
-        const don = state.instances[donId];
+        const don = getCardInstance(state, donId);
         if (don.class !== "DON") throw new InvalidActionError(`Cannot return non-DON instance ${donId} to DON deck`);
         if (don.attachedTo !== null) {
             state = detachDon(state, donId, "DON_DECK");
@@ -106,13 +107,13 @@ export function donReturn(state: GameState, playerId: PlayerId, donIds: CardInst
  */
 export function donAttach(state: GameState, playerId: PlayerId, donIds: CardInstanceId[], targetId: CardInstanceId, fromDonZone: Zone, signalCause: SignalCause): GameState {
     for (const donId of donIds) {
-        const don = state.instances[donId];
+        const don = getCardInstance(state, donId);
         if (don.class !== "DON") throw new InvalidActionError(`Cannot attach non-DON instance ${donId} as a DON`);
         if (fromDonZone !== "DON_ACTIVE" && fromDonZone !== "DON_RESTED") throw new InvalidActionError(`Invalid fromDonZone ${fromDonZone} for attaching DON ${donId}, expected DON_ACTIVE or DON_RESTED`);
         if (fromDonZone === "DON_ACTIVE" && don.currentZone !== "DON_ACTIVE") throw new InvalidActionError(`Attempting to attach DON ${donId} from ${don.currentZone}, expected DON_ACTIVE`);
         if (fromDonZone === "DON_RESTED" && don.currentZone !== "DON_RESTED") throw new InvalidActionError(`Attempting to attach DON ${donId} from ${don.currentZone}, expected DON_RESTED`);
 
-        const targetCard = state.instances[targetId];
+        const targetCard = getCardInstance(state, targetId);
         if (targetCard.class !== "LEADER" && targetCard.class !== "CHARACTER") throw new InvalidActionError(`Cannot attach DON to instance ${targetId} of class ${targetCard.class}, expected LEADER or CHARACTER`);
         if (don.controller !== targetCard.controller) throw new InvalidActionError(`${donId} cannot be attached to ${targetId} as they are controlled by different players`);
         state = attachDon(state, donId, targetId);
@@ -130,8 +131,7 @@ export function donAttach(state: GameState, playerId: PlayerId, donIds: CardInst
  * @return Game state with the specified DON detached from the target
  */
 export function donDetach(state: GameState, playerId: PlayerId, originId: CardInstanceId, donIds: CardInstanceId[], signalCause: SignalCause): GameState {
-    const originCard = state.instances[originId];
-    if (!originCard) throw new InvalidActionError(`Origin card ${originId} was not found`);
+    const originCard = getCardInstance(state, originId);
     if (!(originCard.class === "LEADER" || originCard.class === "CHARACTER")) throw new InvalidActionError(`Attempting to detach DON from invalid DON attachment origin ${originId}`); 
     for (const donId of donIds) {
         if (!(originCard.attachedDon.includes(donId))) throw new InvalidActionError(`DON ${donId} is not attached to the origin card ${originId}`)
@@ -147,7 +147,7 @@ export function donRefresh(state: GameState, playerId: PlayerId): GameState {
     for (const donInstance of attachedDonInstances) {
         if (donInstance.attachedTo && !seen.has(donInstance.attachedTo)) {
             seen.add(donInstance.attachedTo);
-            const originCard = state.instances[donInstance.attachedTo];
+            const originCard = getCardInstance(state, donInstance.attachedTo);
             if (originCard.class !== "LEADER" && originCard.class !== "CHARACTER") throw new InvalidActionError(`Invalid DON attachment origin ${donInstance.attachedTo} for attached DON ${donInstance.instanceId}`);
             if (playerId !== originCard.controller) throw new InvalidActionError(`Cannot refresh attached DON ${donInstance.instanceId} for player ${playerId} as it is attached to a card controlled by a different player`);
             state = donDetach(state, originCard.controller, originCard.instanceId, originCard.attachedDon, { kind: "RULE" });

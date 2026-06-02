@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { produce } from "immer";
 import { calculatePower, calculateCost, calculateCounter } from "../game/calculations";
 import {
     setupTestGame,
@@ -11,6 +12,7 @@ import {
     MOCK_CHAR_ID,
 } from "./fixtures";
 import { initGame } from "../game/init";
+import { attachDon } from "../game/mechanics";
 import type { PlayerId, CardInstanceId } from "../types";
 
 const P1 = "p1" as PlayerId;
@@ -71,6 +73,48 @@ describe("calculatePower", () => {
     it("throws for an unknown instance", () => {
         const state = setupTestGame();
         expect(() => calculatePower(state, "p1-UNKNOWN" as CardInstanceId)).toThrow();
+    });
+
+    it("adds 1000 power per attached DON on the active player's turn", () => {
+        let state = setupTestGame(); // P1 is active
+        state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
+        expect(calculatePower(state, "p1-CARD-0" as CardInstanceId)).toBe(5000);
+    });
+
+    it("adds power for multiple attached DON on the active player's turn", () => {
+        let state = setupTestGame(); // P1 is active
+        state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
+        state = attachDon(state, "p1-DON-1" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
+        expect(calculatePower(state, "p1-CARD-0" as CardInstanceId)).toBe(6000);
+    });
+
+    it("adds DON power to the LEADER on the active player's turn", () => {
+        let state = setupTestGame(); // P1 is active
+        state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-LEADER" as CardInstanceId);
+        expect(calculatePower(state, "p1-LEADER" as CardInstanceId)).toBe(6000);
+    });
+
+    it("does not add DON power on the opponent's turn", () => {
+        let state = setupTestGame(); // P1 is active
+        state = attachDon(state, "p2-DON-0" as CardInstanceId, "p2-CARD-0" as CardInstanceId);
+        // P2 is not the active player, so attached DON gives no bonus
+        expect(calculatePower(state, "p2-CARD-0" as CardInstanceId)).toBe(4000);
+    });
+
+    it("does not add DON power to the opponent's LEADER", () => {
+        let state = setupTestGame(); // P1 is active
+        state = attachDon(state, "p2-DON-0" as CardInstanceId, "p2-LEADER" as CardInstanceId);
+        expect(calculatePower(state, "p2-LEADER" as CardInstanceId)).toBe(5000);
+    });
+
+    it("DON bonus swaps with the active player — P2 gets bonus on P2's turn", () => {
+        let state = setupTestGame();
+        state = produce(state, draft => { draft.activePlayerId = "p2"; });
+        state = attachDon(state, "p2-DON-0" as CardInstanceId, "p2-CARD-0" as CardInstanceId);
+        expect(calculatePower(state, "p2-CARD-0" as CardInstanceId)).toBe(5000);
+        // P1 is now the non-active player — no DON bonus
+        state = attachDon(state, "p1-DON-0" as CardInstanceId, "p1-CARD-0" as CardInstanceId);
+        expect(calculatePower(state, "p1-CARD-0" as CardInstanceId)).toBe(4000);
     });
 });
 

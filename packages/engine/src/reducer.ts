@@ -54,12 +54,8 @@ export function reducer(state: GameState, action: GameAction): GameState {
         case 'NEXT_PHASE':
             return applyNextPhase(state, action);
         case 'CHOOSE_NEXT_EFFECT':
-            return promoteChosenEffect(state, action.playerId, action.frameId);
+            return promoteChosenEffect(state, action.playerId, action.sequenceId);
         case 'CHOOSE_TARGETS':
-        case 'CHOOSE_FROM_HAND':
-        case 'CHOOSE_FROM_LOOK':
-        case 'CONFIRM':
-        case 'DECLINE':
             throw new InvalidActionError(`${action.type} is not yet implemented`);
     }
     return state; // add a function that will check for state based actions like deck out

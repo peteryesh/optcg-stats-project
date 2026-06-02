@@ -54,6 +54,17 @@ type RngCursors = {
     players: Record<PlayerId, bigint>;
 };
 
+export type GameConfig = {
+    players: Record<PlayerId, PlayerConfig>;
+    teamConfig: TeamConfig;
+    winCondition: WinCondition;
+};
+
+type PlayerConfig = {
+    playerId: PlayerId;
+    isActive: boolean;                            // false = auto-pass
+};
+
 type TeamConfig =
     | { kind: "FREE_FOR_ALL" }                    // every player for themselves
     | { kind: "TEAMS"; teams: PlayerId[][] };      // e.g. [["p1","p3"], ["p2","p4"]]
@@ -62,16 +73,6 @@ type WinCondition =
     | { kind: "LAST_STANDING" }                   // last player with life wins
     | { kind: "TEAM" }                            // team-based, derived from TeamConfig
 
-type PlayerConfig = {
-    playerId: PlayerId;
-    isActive: boolean;                            // false = auto-pass
-};
-
-export type GameConfig = {
-    players: Record<PlayerId, PlayerConfig>;
-    teamConfig: TeamConfig;
-    winCondition: WinCondition;
-};
 
 export type SetupState = {
     coinFlipWinner: PlayerId; // player who gets to call CHOOSE_TURN_ORDER
