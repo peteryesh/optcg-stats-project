@@ -18,6 +18,7 @@ export function DeckBuilderPage() {
     const isLoading = useDatabaseStore((s) => s.isLoading);
 
     const getDeck = useDeckStore((s) => s.getDeck);
+    const getAllDecks = useDeckStore((s) => s.getAllDecks);
     const saveDeck = useDeckStore((s) => s.saveDeck);
     const deleteDeck = useDeckStore((s) => s.deleteDeck);
 
@@ -34,11 +35,19 @@ export function DeckBuilderPage() {
 
     function canAddCard(cardIds: CardId[], cardId: CardId): boolean {
         // Add checks against max deck limit, max copies allowed, etc.
+        if (database && database[cardId].class === "LEADER" && leaderCardId !== null) {
+            console.log("Cannot set a new leader without removing the old one first");
+            return false;
+        }
         return true;
     }
 
     const handleAddCard = (cardId: CardId) => {
-        if (canAddCard(cardIds, cardId)) {
+        if (!canAddCard(cardIds, cardId)) return;
+        if (database && database[cardId].class === "LEADER") {
+            setLeaderCardId(cardId);
+        } 
+        else {
             setCardIds([...cardIds, cardId]);
             setHasChanges(true);
         }
@@ -79,7 +88,7 @@ export function DeckBuilderPage() {
         }
     }
 
-    const handleDiscard = () => {
+    const handleDiscardChanges = () => {
         if (id) {
             const deck = getDeck(id);
             if (deck) {
@@ -102,9 +111,19 @@ export function DeckBuilderPage() {
         }
     };
 
+    const handleGetAllDecks = () => {
+        console.log(getAllDecks())
+    }
+
     const handleLogDeck = () => {
         console.log(grouped);
     }
+
+    const leaderDef = useMemo(() => {
+        if (isLoading || !database || !leaderCardId) return null;
+
+        return database[leaderCardId];
+    }, [leaderCardId, database])
 
     const grouped = useMemo(() => {
         const counts = new Map<CardId, number>();
@@ -160,11 +179,14 @@ export function DeckBuilderPage() {
                     <button onClick={handleSave} disabled={!hasChanges}>
                         {id ? 'Save Changes' : 'Save Deck'}
                     </button>
-                    <button onClick={handleDiscard} disabled={!hasChanges}>
+                    <button onClick={handleDiscardChanges} disabled={!hasChanges}>
                         Discard Changes
                     </button>
                     {id && <button onClick={handleDelete}>Delete Deck</button>}
+                    
                     <button onClick={handleLogDeck}>Log Deck</button>
+                    <button onClick={handleGetAllDecks}>Get All Decks</button>
+                    
                 </div>
             </header>
             <div className="h-full w-full flex row">
@@ -172,7 +194,7 @@ export function DeckBuilderPage() {
                     <CardGrid cards={Object.values(database)} onCardClick={handleAddCard} />
                 </div>
                 <div className='h-full w-3/4 bg-green-500 overflow-y-auto'>
-                    <DeckEditor deckCards={grouped} onCardClick={handleRemoveCard}/>
+                    <DeckEditor leader={leaderDef} deckCards={grouped} onCardClick={handleRemoveCard}/>
                 </div>
             </div>
         </div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
 import { CardImage } from './components/CardImage.tsx';
-import { PlayerArea } from './components/Board/PlayerArea/PlayerArea.tsx';
+import { GameBoard } from './components/Board/GameBoard.tsx';
 import { useGameStore } from './stores/gameStore';
 import { useDatabaseStore } from './stores/databaseStore';
 
@@ -37,6 +37,7 @@ function App() {
                         <Route path="/decks" element={<DeckBuilderPage />} />
                         <Route path="/decks/new" element={<DeckBuilderPage />} />
                         <Route path="/decks/:id" element={<DeckBuilderPage />} />
+                        <Route path="/practice" element={<GameBoard/>}/>
                     </Routes>
                 </main>
             </div>

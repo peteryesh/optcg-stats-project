@@ -18,6 +18,7 @@ interface DeckStore {
   saveDeck: (deck: Omit<Deck, 'createdAt' | 'updatedAt'> & { id?: string }) => string;
   deleteDeck: (id: string) => void;
   getDeck: (id: string) => Deck | null;
+  getAllDecks: () => Record<string, Deck> | null;
 }
 
 export const useDeckStore = create<DeckStore>()(
@@ -59,6 +60,7 @@ export const useDeckStore = create<DeckStore>()(
       },
 
       getDeck: (id) => get().decks[id] ?? null,
+      getAllDecks: () => get().decks ?? {}
     }),
     {
       name: 'optcg-decks',

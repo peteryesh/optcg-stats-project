@@ -1,19 +1,20 @@
-import type { CardId, CardDef } from '@optcg/engine';
+import type { CardId, Card } from '@optcg/engine';
 import { CardThumbnail } from './CardThumbnail';
 import styles from './DeckEditor.module.css';
 
 interface DeckEditorProps {
+    leader: Card | null;
     deckCards: {
         cardId: CardId;
         count: number;
-        card: CardDef;
+        card: Card;
     }[]
 
     // Deck Editor Functions
     onCardClick: (cardId: CardId) => void;
 }
 
-export function DeckEditor({ deckCards, onCardClick }: DeckEditorProps) {
+export function DeckEditor({ leader, deckCards, onCardClick }: DeckEditorProps) {
 
     function calculateOffset(count: number, index: number) {
         let cardOffset = 8;
@@ -42,6 +43,7 @@ export function DeckEditor({ deckCards, onCardClick }: DeckEditorProps) {
     }
 
     return <div className='grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] p-4 gap-4 static'>
+        <CardThumbnail card={leader} quality='thumb'/>
         {deckCards.map((cardStack, index) => (
             <div key={index} className={`m-4 ${styles.stack}`}>
                 {Array.from({length: cardStack.count }, (_, i) => (
