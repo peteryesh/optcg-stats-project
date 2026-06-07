@@ -1,4 +1,4 @@
-import { CardInstanceId, GameState } from "../types";
+import type { CardInstanceId, GameState } from "../types";
 import { getCardInstance, getCardDef } from "./mechanics";
 
 // need to put derived value calculation here, which will be 
@@ -11,7 +11,7 @@ export function calculatePower(state: GameState, instanceId: CardInstanceId): nu
     if (cardDef.power === undefined) throw new Error(`No power value found for ${card.cardId}`);
 
     // Derived power = card power + status effects + DON
-    let derivedPower = cardDef.power;
+    let derivedPower = Number(cardDef.power);
 
     // If the player is not active, DON does not give power boost
     if (state.activePlayerId !== card.controller) return derivedPower;
@@ -33,7 +33,7 @@ export function calculateCost(state: GameState, instanceId: CardInstanceId): num
     if (cardDef.cost === undefined) throw new Error(`No cost value found for ${card.cardId}`);
 
     // Derived cost = card power + status effects
-    let derivedCost = cardDef.cost;
+    let derivedCost = Number(cardDef.cost);
     return derivedCost;
 }
 
@@ -45,6 +45,6 @@ export function calculateCounter(state: GameState, instanceId: CardInstanceId): 
     
     // Derived counter = card counter + status effects
     let derivedCounter = 0;
-    if (cardDef.counter !== undefined) derivedCounter = cardDef.counter;
+    if (cardDef.counter !== undefined) derivedCounter = Number(cardDef.counter);
     return derivedCounter;
 }

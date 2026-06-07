@@ -13,7 +13,7 @@ export type GameAction =
 
     // Main Phase
     | { type: "PLAY_CARD"; playerId: PlayerId; instanceId: CardInstanceId; }
-    | { type: "ATTACH_DON"; playerId: PlayerId; donIds: CardInstanceId[]; targetId: CardInstanceId }
+    | { type: "ATTACH_DON"; playerId: PlayerId; targetId: CardInstanceId; count: number }
     | { type: "ACTIVATE_EFFECT"; playerId: PlayerId; instanceId: CardInstanceId; effectId: EffectId }
     
     // Combat

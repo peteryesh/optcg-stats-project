@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import './App.css';
-import { CardImage } from './components/CardImage.tsx';
-import { GameBoard } from './components/Board/GameBoard.tsx';
+import { CardImage } from './components/CardImage';
+import { GameBoard } from './components/Board/GameBoard';
 import { useGameStore } from './stores/gameStore';
 import { useDatabaseStore } from './stores/databaseStore';
 

@@ -28,3 +28,9 @@ export * from './types/effect';
 // // Database
 // export * from './database/loader';
 // export * from './database/filters';
+
+// Runtime
+export { reducer, InvalidActionError } from './reducer';
+export { getLegalActions } from './legal';
+export { validate } from './validators';
+export { initGame } from './game/init';

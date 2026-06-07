@@ -95,13 +95,11 @@ export function mockSeeds(playerIds: PlayerId[]): GameSeeds {
 // ============================================================
 // Mock config
 // ============================================================
-export function mockConfig(playerIds: PlayerId[]): GameConfig {
+export function mockConfig(playerIds: PlayerId[], seeds: GameSeeds): GameConfig {
     return {
-        players: Object.fromEntries(
-            playerIds.map(id => [id, { playerId: id, isActive: true }])
-        ),
-        teamConfig: { kind: "FREE_FOR_ALL" },
-        winCondition: { kind: "LAST_STANDING" },
+        gameId: "test-game",
+        playerIds: playerIds,
+        seeds: mockSeeds(playerIds)
     };
 }
 
@@ -110,10 +108,7 @@ export function mockConfig(playerIds: PlayerId[]): GameConfig {
 // ============================================================
 export function makeEmptyState(playerIds: PlayerId[] = ["p1", "p2"]): GameState {
     return createEmptyGameState(
-        "test-game",
-        playerIds,
-        mockSeeds(playerIds),
-        mockConfig(playerIds),
+        mockConfig(playerIds, mockSeeds(playerIds)),
     );
 }
 
@@ -123,9 +118,8 @@ export function makeEmptyState(playerIds: PlayerId[] = ["p1", "p2"]): GameState 
 export function setupTestGame(playerIds: PlayerId[] = ["p1", "p2"]): GameState {
     return initGame({
         gameId: "test-game",
-        playerIds,
+        playerIds: playerIds,
         seeds: mockSeeds(playerIds),
-        config: mockConfig(playerIds),
         defs: mockDefs,
         decks: Object.fromEntries(playerIds.map(id => [id, mockDecklist()])),
     });

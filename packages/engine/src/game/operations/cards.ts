@@ -1,6 +1,7 @@
 
-import { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card, Phase } from "../../types";
-import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex, setPhase, setCardPlayedThisTurn, getCardInstance } from "../mechanics";
+import type { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card, Phase } from "../../types";
+import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex, setCardPlayedThisTurn, getCardInstance } from "../mechanics";
+import { setPhase } from "../mechanics/turn";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
 import { donRest, donDetach } from './don';

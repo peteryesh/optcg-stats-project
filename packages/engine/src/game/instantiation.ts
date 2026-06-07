@@ -7,8 +7,8 @@ import type {
     CardInstanceId,
     CardClass,
 } from "../types/primitives";
-import { GameState } from "../types/state";
-import {
+import type { GameState } from "../types/state";
+import type {
     DeckList,
     CardInstance,
     LeaderInstance,

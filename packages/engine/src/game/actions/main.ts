@@ -3,6 +3,7 @@ import type { GameAction } from '../../types/action';
 import { InvalidActionError } from '../../errors';
 import { playCard, donAttach, declareAttack, declareBlocker, playCounter, enterWhenAttackingPhase, enterEndOfTurnPhase, enterOnOpponentAttackPhase, enterCounterPhase, enterBattleResolutionPhase, enterBlockerPhase, enterRefreshPhase, enterMainPhase, resolveBattle, enterStartOfTurnPhase } from '../operations';
 import { processEffects } from '../effects';
+import { getZoneArray } from '../mechanics';
 
 // Play card from hand
 export function applyPlayCard(state: GameState, action: Extract<GameAction, { type: "PLAY_CARD" }>): GameState {
@@ -13,7 +14,8 @@ export function applyPlayCard(state: GameState, action: Extract<GameAction, { ty
 // Attach DON
 export function applyAttachDon(state: GameState, action: Extract<GameAction, { type: "ATTACH_DON" }>): GameState {
     // Validate here
-    return donAttach(state, action.playerId, action.donIds, action.targetId, "DON_ACTIVE", { kind: "PLAYER" });
+    const donIds = getZoneArray(state, action.playerId, "DON_ACTIVE").slice(0, action.count);
+    return donAttach(state, action.playerId, donIds, action.targetId, "DON_ACTIVE", { kind: "PLAYER" });
 }
 
 // Declare attack

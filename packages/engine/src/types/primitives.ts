@@ -4,14 +4,6 @@ export type CardInstanceId = string;
 // CardId
 export type CardId = string;
 
-export type Seed = bigint;
-export type Nonce = bigint;
-
-export type GameSeeds = {
-    game: Seed;
-    players: Record<PlayerId, Seed>;
-};
-
 export type CardClass = 'CHARACTER' | 'DON' | 'EVENT' | 'LEADER' | 'STAGE';
 export type Color = 'BLACK' | 'BLUE' | 'GREEN' | 'PURPLE' | 'RED' | 'YELLOW';
 export type Attribute = '?' | 'RANGED' | 'SLASH' | 'SPECIAL' | 'STRIKE' | 'WISDOM';

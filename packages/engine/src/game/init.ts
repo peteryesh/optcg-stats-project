@@ -1,24 +1,30 @@
 import { produce } from "immer";
-import type { GameConfig, GameState, PlayerZones } from "../types/state";
+import type { GameConfig, GameSeeds, GameState, PlayerZones } from "../types/state";
 import type { CardDef, DeckList } from "../types/card";
 import type { EffectSequence } from "../types/effect";
-import { GameSeeds, CardId, PlayerId } from "../types/primitives";
+import { CardId, PlayerId } from "../types/primitives";
 import { instantiatePlayerBoard } from "./instantiation";
 import { nextInt } from "../rng/rng";
+import { generateGameSeeds } from "../rng/seeds";
 
 const STATE_VERSION = 1;
 
 export function initGame(params: {
     gameId: string;
     playerIds: PlayerId[];
-    seeds: GameSeeds;
-    config: GameConfig;
     defs: Record<CardId, CardDef>;
     decks: Record<PlayerId, DeckList>;
+    seeds?: GameSeeds
 }): GameState {
-    const { gameId, playerIds, seeds, config, defs, decks } = params;
+    const { gameId, playerIds, defs, decks, seeds } = params;
 
-    let state = createEmptyGameState(gameId, playerIds, seeds, config);
+    const config = {
+        gameId: gameId,
+        playerIds: playerIds,
+        seeds: seeds ?? generateGameSeeds(playerIds)
+    } as GameConfig;
+
+    let state = createEmptyGameState(config);
 
     state = produce(state, draft => {
         Object.assign(draft.definitions, defs);
@@ -31,17 +37,18 @@ export function initGame(params: {
     return state;
 }
 
-export function createEmptyGameState(gameId: string, playerIds: PlayerId[], seeds: GameSeeds, config: GameConfig): GameState {
+export function createEmptyGameState(config: GameConfig): GameState {
     // Coin flip uses game seed at cursor 0 — deterministic and reproducible from the seed
-    const [postFlipCursor, flipIdx] = nextInt(seeds.game, 0n, playerIds.length);
+    const playerIds = config.playerIds;
+
+    const [postFlipCursor, flipIdx] = nextInt(config.seeds.game, 0n, playerIds.length);
+    console.log(flipIdx)
     const coinFlipWinner = playerIds[flipIdx];
 
     return {
-        gameId,
         version: STATE_VERSION,
 
         config: config,
-        seeds: seeds,
         rngCursors: {
             game: postFlipCursor,
             players: Object.fromEntries(playerIds.map(id => [id, 0n]))
@@ -59,7 +66,7 @@ export function createEmptyGameState(gameId: string, playerIds: PlayerId[], seed
 
         turnOrder: playerIds,
         turn: 0,
-        activePlayerId: playerIds[0],
+        activePlayerId: coinFlipWinner,
         phase: "SETUP",
         cardsPlayedThisTurn: [],
 

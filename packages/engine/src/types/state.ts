@@ -1,8 +1,9 @@
-import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId, GameSeeds, BattleRecord } from './primitives';
+import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId, BattleRecord } from './primitives';
 import type { GameSignal, SignalType, Listener } from './signal';
 import type { CardFilter } from './filter';
 import type { Card, CardDef, CardInstance } from './card';
 import type { GameAction } from './action';
+import type { Seed, Nonce } from '../rng/seeds';
 import { EffectSequence, SequencedEffect, StatusEffect } from './effect';
 import { ActionRecord } from './record';
 
@@ -54,24 +55,27 @@ type RngCursors = {
     players: Record<PlayerId, bigint>;
 };
 
+export type GameSeeds = {
+    game: Seed;
+    players: Record<PlayerId, Seed>;
+};
+
 export type GameConfig = {
-    players: Record<PlayerId, PlayerConfig>;
-    teamConfig: TeamConfig;
-    winCondition: WinCondition;
+    gameId: string;
+    playerIds: PlayerId[];
+    seeds: GameSeeds;
+
+    // teamConfig: TeamConfig;
+    // winCondition: WinCondition;
 };
 
-type PlayerConfig = {
-    playerId: PlayerId;
-    isActive: boolean;                            // false = auto-pass
-};
+// type TeamConfig =
+//     | { kind: "FREE_FOR_ALL" }                    // every player for themselves
+//     | { kind: "TEAMS"; teams: PlayerId[][] };      // e.g. [["p1","p3"], ["p2","p4"]]
 
-type TeamConfig =
-    | { kind: "FREE_FOR_ALL" }                    // every player for themselves
-    | { kind: "TEAMS"; teams: PlayerId[][] };      // e.g. [["p1","p3"], ["p2","p4"]]
-
-type WinCondition =
-    | { kind: "LAST_STANDING" }                   // last player with life wins
-    | { kind: "TEAM" }                            // team-based, derived from TeamConfig
+// type WinCondition =
+//     | { kind: "LAST_STANDING" }                   // last player with life wins
+//     | { kind: "TEAM" }                            // team-based, derived from TeamConfig
 
 
 export type SetupState = {
@@ -85,14 +89,12 @@ export type SetupState = {
 ///----------------------------------------------------------------
 export interface GameState {
     // Game Metadata
-    gameId: string;
     version: number; // not implemented
 
     config: GameConfig;
 
     // Game Settings
     setup: SetupState;
-    seeds: GameSeeds;
     rngCursors: RngCursors;
 
     // The Game Board

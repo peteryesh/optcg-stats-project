@@ -102,7 +102,7 @@ export function applyMulligan(state: GameState, action: Extract<GameAction, { ty
 }
 
 export function shuffleDeck(state: GameState, playerId: PlayerId): GameState {
-    const playerSeed = state.seeds.players[playerId];
+    const playerSeed = state.config.seeds.players[playerId];
     const rngCursor = state.rngCursors.players[playerId];
     const playerZones = state.playerZones[playerId];
     const [shuffledDeck, postShuffleCursor] = shuffle(playerZones.deck, playerSeed, rngCursor);

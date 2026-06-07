@@ -2,7 +2,7 @@ import { GameState } from "./types/state";
 import { GameAction } from "./types/action";
 import { calculateCost, calculateCounter } from "./game/calculations";
 import { CardInstanceId, EffectId, EffectSequence } from "./types";
-import { getCardDef, getCardInstance } from "./game/mechanics";
+import { getCardDef, getCardInstance, getZoneArray } from "./game/mechanics";
 
 // Validator
 // Phase check
@@ -19,15 +19,16 @@ export function validate(state: GameState, action: GameAction): string | null {
             break;
 
         case 'KEEP_HAND':
-            if (!Object.keys(state.config.players).includes(action.playerId)) return `Player ${action.playerId} does not exist in the game`;
+            console.log(Object.values(state.config.playerIds))
+            if (!Object.values(state.config.playerIds).includes(action.playerId)) return `Player ${action.playerId} does not exist in the game`;
             if (state.phase !== "START_GAME") return `Cannot choose to keep hand outside of start game phase`;
             if (state.currentEffect !== null) return `An effect is actively resolving`;
-            if (state.pendingDecision) return `A pending decision prevents game from starting`;
+            if (state.pendingDecision !== null) return `A pending decision prevents game from starting`;
             if (state.setup.mulligan[action.playerId] !== "PENDING") return `Can only call keep hand when mulligan decision is pending`;
             break;
 
         case 'MULLIGAN':
-            if (!Object.keys(state.config.players).includes(action.playerId)) return `Player ${action.playerId} does not exist in the game`;
+            if (!Object.values(state.config.playerIds).includes(action.playerId)) return `Player ${action.playerId} does not exist in the game`;
             if (state.phase !== "START_GAME") return `Cannot choose to mulligan outside of start game phase`;
             if (state.currentEffect !== null) return `An effect is actively resolving`;
             if (state.pendingDecision) return `A pending decision prevents game from starting`;
@@ -70,16 +71,16 @@ export function validate(state: GameState, action: GameAction): string | null {
         case 'ATTACH_DON':
             // Used only for active don attachment as a result of main phase
             // Attaching don by effect will require an explicit call to donAttach as a result of "CHOOSE_TARGET" action
-            if (action.donIds.length === 0) return `No DON given to attach`;
+            if (action.count === 0) return `No DON given to attach`;
             if (state.phase !== "MAIN") return `Cannot attach DON outside of main phase`;
             if (state.currentEffect !== null) return `An effect is actively resolving`;
             if (state.pendingDecision) return `A pending decision prevents battle from being completed`;
             if (state.activePlayerId !== action.playerId) return `${action.playerId} is not the active player and cannot attach DON`;
-            if (state.playerZones[action.playerId].donActive.length < action.donIds.length) return `${action.playerId} is attempting to attach more DON than they have active`;
+            if (state.playerZones[action.playerId].donActive.length < action.count) return `${action.playerId} is attempting to attach more DON than they have active`;
             const target = getCardInstance(state, action.targetId);
             if (target.controller !== state.activePlayerId) return `Attempting to attach an active DON to a target that the active player does not control`;
             if (target.class !== "CHARACTER" && target.class !== "LEADER") return `${action.targetId} is of class ${target.class} and cannot have DON attached to it`; 
-            for (const donId of action.donIds) {
+            for (const donId of getZoneArray(state, action.playerId, "DON_ACTIVE").slice(0, action.count)) {
                 const don = getCardInstance(state, donId);
                 if (!(don.controller === action.playerId)) return `${donId} not controlled by the active player`;
                 if (!(don.currentZone === "DON_ACTIVE")) return `Attempting to actively attach a non-active DON`;

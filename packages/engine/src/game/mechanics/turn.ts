@@ -1,5 +1,6 @@
 import { produce } from 'immer';
 import { GameState } from '../../types/state';
+import { Phase } from '../../types';
 import { getCardInstance } from './helpers';
 
 export function setNextActivePlayer(state: GameState): GameState {
@@ -49,4 +50,19 @@ export function resetEffectsUsedThisTurn(state: GameState): GameState {
             }
         }
     });
+}
+
+// Phase Management
+
+export function setPhase(state: GameState, phase: Phase): GameState {
+    return produce(state, draft => { draft.phase = phase; });
+}
+
+export function changeActivePlayer(state: GameState): GameState {
+    const currentPlayerIndex = state.turnOrder.indexOf(state.activePlayerId);
+    if (currentPlayerIndex === -1) {
+        throw new Error(`Active player ${state.activePlayerId} not found in turn order`);
+    }
+    const nextPlayerIndex = (currentPlayerIndex + 1) % state.turnOrder.length;
+    return produce(state, draft => { draft.activePlayerId = state.turnOrder[nextPlayerIndex]; });
 }

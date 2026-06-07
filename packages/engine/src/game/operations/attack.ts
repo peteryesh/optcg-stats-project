@@ -1,5 +1,5 @@
 import { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card, Phase } from "../../types";
-import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex, setPhase } from "../mechanics";
+import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
 import { cardsSetRested, cardsTrashFromHand, removeCardFromField } from './cards';
@@ -86,15 +86,15 @@ export function resolveBattle(state: GameState): GameState {
         // STATUS EFFECT: if attacker has banish, send life to trash and do not deal damage
         // STATUS EFFECT: if attacker has double attack, deal damage with a count of 2
         if (defender.class === "LEADER") {
-            state = emit(state, { type: "BATTLE_RESOLVED", battle: battle, outcome: "HIT" });
+            state = emit(state, { type: "BATTLE_RESOLVED", battle: battle, attackerPower: attackerPower, defenderPower: defenderPower + battle.counter, outcome: "HIT" });
             return dealDamage(state, defender.controller, { kind: "BATTLE", sourceId: battle.attackerId });
         }
         if (defender.class === "CHARACTER") {
-            state = emit(state, { type: "BATTLE_RESOLVED", battle: battle, outcome: "HIT" });
+            state = emit(state, { type: "BATTLE_RESOLVED", battle: battle, attackerPower: attackerPower, defenderPower: defenderPower + battle.counter, outcome: "HIT" });
             return removeCardFromField(state, defender.controller, battle.defenderId, "TRASH", "TOP", { kind: "BATTLE", sourceId: battle.attackerId });
         }
     }
-    return emit(state, { type: "BATTLE_RESOLVED", battle: battle, outcome: "FAIL" });
+    return emit(state, { type: "BATTLE_RESOLVED", battle: battle, attackerPower: attackerPower, defenderPower: defenderPower + battle.counter, outcome: "FAIL" });
 }
 
 export function resolveWhenAttackingEffects(state: GameState): GameState {

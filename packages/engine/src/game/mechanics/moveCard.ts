@@ -1,8 +1,8 @@
 import { produce } from 'immer';
-import { GameState } from '../../types/state';
-import { CardInstanceId, PlayerId, Zone, StackPosition, Phase } from '../../types/primitives';
+import type { GameState } from '../../types/state';
+import type { CardInstanceId, Zone, StackPosition, Phase } from '../../types/primitives';
 import { CHARACTERS_MAX, LEADER_MAX, STAGE_MAX } from '../rules';
-import { DonInstance } from '../../types/card';
+import type { DonInstance } from '../../types/card';
 import { getZoneArray, getCardInstance } from './helpers';
 
 /**
@@ -248,20 +248,4 @@ export function reattachDon(state: GameState, donId: CardInstanceId, targetId: C
         (getCardInstance(draft, donId) as DonInstance).attachedTo = targetId;
         (getCardInstance(draft, targetId) as { attachedDon: CardInstanceId[] }).attachedDon.push(donId);
     });
-}
-
-
-// Phase Management
-
-export function setPhase(state: GameState, phase: Phase): GameState {
-    return produce(state, draft => { draft.phase = phase; });
-}
-
-export function changeActivePlayer(state: GameState): GameState {
-    const currentPlayerIndex = state.turnOrder.indexOf(state.activePlayerId);
-    if (currentPlayerIndex === -1) {
-        throw new Error(`Active player ${state.activePlayerId} not found in turn order`);
-    }
-    const nextPlayerIndex = (currentPlayerIndex + 1) % state.turnOrder.length;
-    return produce(state, draft => { draft.activePlayerId = state.turnOrder[nextPlayerIndex]; });
 }

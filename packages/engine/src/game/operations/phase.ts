@@ -1,6 +1,6 @@
 import type { GameState } from '../../types/state';
 import type { Phase } from '../../types/primitives';
-import { setPhase } from '../mechanics';
+import { setPhase } from '../mechanics/turn';
 import { emit } from '../emitter';
 import { InvalidActionError } from '../../errors';
 import { donAdd, donRefresh } from './don';

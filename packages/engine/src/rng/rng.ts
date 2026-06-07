@@ -1,23 +1,19 @@
-import type { Nonce, Seed } from '../types/primitives';
 import type { RngSource } from './interface';
-import { effectiveSeed } from './seeds';
+import { effectiveSeed, Seed, Nonce } from './seeds';
 
-
-function next(seed: Seed, cursor: bigint): [bigint, number] {
+function next(seed: Seed, cursor: bigint): [bigint, bigint] {
     const value = splitmix64(seed ^ cursor);
     return [cursor + 1n, value];
 }
 
 export function nextInt(seed: Seed, cursor: bigint, n: number): [bigint, number] {
-    // Rejection sampling — bias free
+    // Rejection sampling — bias free, operates on full 64-bit output
     const limit = BigInt(n);
     const max = (0xFFFFFFFFFFFFFFFFn / limit) * limit;
     let r: bigint;
 
     do {
-        let value: number;
-        [cursor, value] = next(seed, cursor);
-        r = BigInt(Math.floor(value * Number(0xFFFFFFFFFFFFFFFFn)));
+        [cursor, r] = next(seed, cursor);
     } while (r >= max);
 
     return [cursor, Number(r % limit)];
@@ -36,10 +32,9 @@ export function shuffle<T>(items: readonly T[], seed: Seed, cursor: bigint): [T[
     return [arr, cursor];
 }
 
-function splitmix64(s: bigint): number {
+function splitmix64(s: bigint): bigint {
     s = (s + 0x9e3779b97f4a7c15n) & 0xFFFFFFFFFFFFFFFFn;
     s = ((s ^ (s >> 30n)) * 0xbf58476d1ce4e5b9n) & 0xFFFFFFFFFFFFFFFFn;
     s = ((s ^ (s >> 27n)) * 0x94d049bb133111ebn) & 0xFFFFFFFFFFFFFFFFn;
-    s = s ^ (s >> 31n);
-    return Number(s & 0xFFFFFFFFn) / 0x100000000;
+    return s ^ (s >> 31n);
 }

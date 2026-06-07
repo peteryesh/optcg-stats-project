@@ -45,14 +45,12 @@ function buildCandidates(state: GameState, playerId: PlayerId): GameAction[] {
         if (zones.donActive.length > 0) {
             const targets = [...zones.characters, ...zones.leader];
             for (const targetId of targets) {
-                for (let count = 1; count <= zones.donActive.length; count++) {
-                    actions.push({
-                        type: "ATTACH_DON",
-                        playerId,
-                        targetId,
-                        donIds: zones.donActive.slice(0, count),
-                    });
-                }
+                actions.push({
+                    type: "ATTACH_DON",
+                    playerId,
+                    targetId,
+                    count: zones.donActive.length // max available
+                });
             }
         }
 

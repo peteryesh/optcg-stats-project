@@ -64,10 +64,10 @@ export type GameSignal =
 
     // Combat
     | { type: "ATTACK_DECLARED"; attackerId: CardInstanceId; defenderId: CardInstanceId; controller: PlayerId }
+    | { type: "ATTACK_REDIRECTED"; attackerId: CardInstanceId; fromDefenderId: CardInstanceId; toDefenderId: CardInstanceId; cause: SignalCause }
     | { type: "BLOCKER_DECLARED"; blockerId: CardInstanceId; attackerId: CardInstanceId; prevDefenderId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     | { type: "COUNTER_PLAYED"; counterId: CardInstanceId; battle: BattleRecord; controller: PlayerId }
-    | { type: "BATTLE_RESOLVED"; battle: BattleRecord; outcome: "HIT" | "FAIL" }
-    | { type: "ATTACK_REDIRECTED"; attackerId: CardInstanceId; fromDefenderId: CardInstanceId; toDefenderId: CardInstanceId; cause: SignalCause }
+    | { type: "BATTLE_RESOLVED"; battle: BattleRecord; attackerPower: number; defenderPower: number; outcome: "HIT" | "FAIL" }
 
     
     // Game Setup (review this section after finalizing game setup flow)
