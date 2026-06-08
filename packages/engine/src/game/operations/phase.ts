@@ -3,9 +3,10 @@ import type { Phase } from '../../types/primitives';
 import { setPhase } from '../mechanics/turn';
 import { emit } from '../emitter';
 import { InvalidActionError } from '../../errors';
-import { donAdd, donRefresh } from './don';
+import { donAdd, donRefresh } from './zones/don';
 import { setNextActivePlayer, incrementTurn, resetBattleStateForTurn, resetCardsPlayedThisTurn, resetEffectsUsedThisTurn } from '../mechanics/turn';
-import { cardsDraw, cardsRefresh } from './cards';
+import { cardsRefresh } from './cards';
+import { cardsDraw } from './zones/hand';
 import { processEffects } from '../effects';
 
 // Main turn phases

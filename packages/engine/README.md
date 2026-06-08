@@ -1,5 +1,57 @@
 OPTCG VEGA ENGINE
 
+Validation
+- responsible for building the set of possible mechanical actions
+- reads game state to validate which possible mechanical actions are allowed at that moment
+- serves filtered list to client
+- never mutates state
+- never emits signals
+Actions (no read/write)
+- directly interacts with the reducer
+- can call operations
+- client interactions
+- direct player decision
+- never mutates state or emits signals
+Operations (read-only)
+- can call operations, internal operations, mechanics
+- core game rules and engine workflows, describes the purpose of state changes
+- calls mechanics to change state, never mutates state directly
+- must emit a signal describing the resulting state change (either directly or  indirectly through another operation)
+- multiple emits are allowed in an operation if there are transient state changes (each state change requires an emit)
+Domain Operations (read-only)
+- can call mechanics
+- abstracted wrappers for mechanics, never mutates state directly
+- should be reusable across multiple operations
+- domain operations should not call other domain operations
+- only meant to be called by the operations layer
+- must call emit directly describing the resulting state change
+Emit
+- sole handler for signals
+- responsible for iterating through all listeners and enqueueing effects that are activated by the signal
+- never executes operations or resolves effects inline
+Mechanics (read/write)
+- can call mechanics
+- functions that define how state changes
+- primitive functions that mutate state directly
+- should contain no contextual or intentional game logic
+- should enforce structural state validity and state invariants by throwing an error (e.g. no leaders in the leader zone)
+- should never call emit
+
+Signal Contract
+- Signals are transient and only exist during emit resolution
+- Gameplay operations and logic must not use signals outside of emit resolution
+- All levels of the engine should not read the action/signal log at any point, only write at emit
+- Signals are logged in the action that caused the signal to be emitted
+- Any state mutation performed outside of emit resolution must be followed by an emit
+- Mechanics may not emit
+- Internal Operations must emit by calling emit directly (not from another operation)
+- Operations must guarantee that any state mutation they initiate results in at least one emit before returning
+- Signal granularity should track the game's vocabulary, aka what the cards in the game actually react to
+
+State Contract
+- The game state should be fully derivable from the current state and action log on the state
+- Signals are transient and must not be required to interpret the current game state after emit resolution completes.
+
 Question: should a click be a declaration?
 - This is the main UI/UX question
 

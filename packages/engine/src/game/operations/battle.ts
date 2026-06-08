@@ -2,9 +2,10 @@ import { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInsta
 import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
-import { cardsSetRested, cardsTrashFromHand, removeCardsFromField } from './cards';
+import { cardsTrashFromHand } from './zones/trash';
+import { cardsSetRested, removeCardsFromField } from './cards';
 import { calculatePower, calculateCounter } from '../calculations';
-import { dealDamage } from './life';
+import { dealDamage } from './zones/life';
 import { logCurrentBattleForTurn, removeCurrentBattle, updateCurrentBattle } from '../mechanics/combat';
 import { enterBattleResolutionPhase } from './phase';
 import { getCardInstance } from "../mechanics";

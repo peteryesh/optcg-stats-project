@@ -4,62 +4,17 @@ import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCar
 import { setPhase } from "../mechanics/turn";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
-import { donRest, donDetach } from './don';
+import { donRest, donDetach } from './zones/don';
 import { CHARACTERS_MAX, STAGE_MAX } from '../rules';
 import { calculateCost } from '../calculations';
 
 // To Hand
-/**
- * Draws one or more cards to a player's hand.
- * @param state - Game state
- * @param playerId - Player to draw cards for
- * @param count - Number of cards to draw
- * @param signalCause - Reason for drawing cards (game rule or card effect)
- * @returns Game state with cards drawn from the deck and placed into the target player's hand
- */
-export function cardsDraw(state: GameState, playerId: PlayerId, count: number, signalCause: SignalCause): GameState {
-    const cardsDrawn = [];
-    for (let i = 0; i < count; i++) {
-        const topCard = getZoneArray(state, playerId, "DECK")[0];
-        if (!topCard) break;
-        cardsDrawn.push(topCard);
-        state = moveCard(state, topCard, "HAND", "TOP");
-    }
-    if (cardsDrawn.length === 0) return state;
-    return emit(state, { type: "CARDS_SENT_TO_HAND", instanceIds: cardsDrawn, fromZone: "DECK", controller: playerId, cause: signalCause });
-}
 
-export function returnTrashToHand(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], signalCause: SignalCause): GameState {
-    for (const instanceId of instanceIds) {
-        const trash = getZoneArray(state, playerId, "TRASH");
-        if (!(trash.includes(instanceId))){
-            throw new InvalidActionError(`${instanceId} not found in hand of player ${playerId}`);
-        }
-        state = moveCard(state, instanceId, "HAND", "TOP");
-    }
-    return emit(state, { type: "CARDS_SENT_TO_HAND", instanceIds: instanceIds, fromZone: "TRASH", controller: playerId, cause: signalCause });
-}
+
 
 // To Trash
 
-/**
- * Discards one or more cards from a player's hand and moves them to the player's trash
- * @param state - Game state
- * @param playerId - Player to discard cards from
- * @param instanceIds - Array of card ids to discard
- * @param signalCause - Cause of discard action
- * @returns Game state with the cards specified discarded from the player's hand
- */
-export function cardsTrashFromHand(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], signalCause: SignalCause): GameState {
-    for (const instanceId of instanceIds) {
-        const playerHand = getZoneArray(state, playerId, "HAND");
-        if (!(playerHand.includes(instanceId))){
-            throw new InvalidActionError(`${instanceId} not found in hand of player ${playerId}`);
-        }
-        state = moveCard(state, instanceId, "TRASH", "TOP");
-    }
-    return emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: instanceIds, fromZone: "HAND", controller: playerId, cause: signalCause });
-}
+
 
 // To Deck
 
@@ -165,7 +120,7 @@ export function playCard(state: GameState, playerId: PlayerId, instanceId: CardI
         case "EVENT":
             return playEvent(state, playerId, instanceId, signalCause);
         default:
-            throw new InvalidActionError(`${instanceId} not a playable card`)
+            throw new InvalidActionError(`${instanceId} not a playable card`);
     }
 }
 
