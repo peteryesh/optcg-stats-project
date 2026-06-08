@@ -21,6 +21,14 @@ export type SignalCause =
     | { kind: "OVERFLOW" }
     | { kind: "RULE" };
 
+export type RemovalMethod = 
+    | "KO"
+    | "TRASH_CARD"
+    | "BOUNCE_TO_HAND"
+    | "SEND_TO_DECK"
+    | "SEND_TO_LIFE"
+    | "REPLACE"
+
 // ============================================================
 // Signals
 // ============================================================
@@ -57,6 +65,8 @@ export type GameSignal =
     | { type: "STAGE_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause; replaced?: CardInstanceId }
     | { type: "EVENT_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause; }
     // | { type: "CARD_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause}
+
+    | { type: "CARD_REMOVED_FROM_FIELD"; instanceId: CardInstanceId; controller: PlayerId; removalMethod: RemovalMethod; cause: SignalCause }
 
     // Phase Changes
     | { type: "PHASE_CHANGED"; prevPhase: Phase; nextPhase: Phase; cause: SignalCause }

@@ -42,7 +42,6 @@ export function createEmptyGameState(config: GameConfig): GameState {
     const playerIds = config.playerIds;
 
     const [postFlipCursor, flipIdx] = nextInt(config.seeds.game, 0n, playerIds.length);
-    console.log(flipIdx)
     const coinFlipWinner = playerIds[flipIdx];
 
     return {

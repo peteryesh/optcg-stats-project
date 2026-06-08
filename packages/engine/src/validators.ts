@@ -19,7 +19,6 @@ export function validate(state: GameState, action: GameAction): string | null {
             break;
 
         case 'KEEP_HAND':
-            console.log(Object.values(state.config.playerIds))
             if (!Object.values(state.config.playerIds).includes(action.playerId)) return `Player ${action.playerId} does not exist in the game`;
             if (state.phase !== "START_GAME") return `Cannot choose to keep hand outside of start game phase`;
             if (state.currentEffect !== null) return `An effect is actively resolving`;

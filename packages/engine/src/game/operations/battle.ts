@@ -2,7 +2,7 @@ import { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInsta
 import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
-import { cardsSetRested, cardsTrashFromHand, removeCardFromField } from './cards';
+import { cardsSetRested, cardsTrashFromHand, removeCardsFromField } from './cards';
 import { calculatePower, calculateCounter } from '../calculations';
 import { dealDamage } from './life';
 import { logCurrentBattleForTurn, removeCurrentBattle, updateCurrentBattle } from '../mechanics/combat';
@@ -91,7 +91,7 @@ export function resolveBattle(state: GameState): GameState {
         }
         if (defender.class === "CHARACTER") {
             state = emit(state, { type: "BATTLE_RESOLVED", battle: battle, attackerPower: attackerPower, defenderPower: defenderPower + battle.counter, outcome: "HIT" });
-            return removeCardFromField(state, defender.controller, battle.defenderId, "TRASH", "TOP", { kind: "BATTLE", sourceId: battle.attackerId });
+            return removeCardsFromField(state, defender.controller, [battle.defenderId], "KO", "TOP", { kind: "BATTLE", sourceId: battle.attackerId });
         }
     }
     return emit(state, { type: "BATTLE_RESOLVED", battle: battle, attackerPower: attackerPower, defenderPower: defenderPower + battle.counter, outcome: "FAIL" });

@@ -16,7 +16,7 @@ importers:
         specifier: ^4.1.7
         version: 4.1.7(@types/node@24.12.2)(vite@8.0.10(@types/node@24.12.2)(jiti@2.7.0))
 
-  apps/optcg-deck-navigator:
+  apps/sleapy:
     dependencies:
       '@optcg/engine':
         specifier: workspace:*
