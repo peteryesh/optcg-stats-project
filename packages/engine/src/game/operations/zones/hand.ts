@@ -1,11 +1,13 @@
 import { InvalidActionError } from "../../../errors";
-import { GameState, PlayerId, SignalCause, CardInstanceId, Zone } from "../../../types";
+import { GameState, PlayerId, SignalCause, CardInstanceId, Zone, StackPosition } from "../../../types";
 import { emit } from "../../emitter";
 import { getCardInstance, getZoneArray, moveCard } from "../../mechanics";
 
 
 export function _cardsAddToHand(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], fromZone: Zone, signalCause: SignalCause): GameState {
     for (const id of instanceIds) {
+        const zone = getZoneArray(state, playerId, fromZone);
+        if (!zone.includes(id)) throw new InvalidActionError(`${id} not found in zone ${fromZone} of player ${playerId}`);
         const card = getCardInstance(state, id);
         if (card.class === "DON" || card.class === "LEADER") throw new InvalidActionError(`${id} has a card class of ${card.class} cannot be added to hand`);
         state = moveCard(state, id, "HAND", "TOP");
@@ -14,7 +16,8 @@ export function _cardsAddToHand(state: GameState, playerId: PlayerId, instanceId
 }
 
 /**
- * Draws one or more cards to a player's hand.
+ * Draws one or more cards to a player's hand. Order is not important but is maintained for replay purposes.
+ * Note: end result should be top card in hand is most recent card drawn.
  * @param state - Game state
  * @param playerId - Player to draw cards for
  * @param count - Number of cards to draw
@@ -22,24 +25,26 @@ export function _cardsAddToHand(state: GameState, playerId: PlayerId, instanceId
  * @returns Game state with cards drawn from the deck and placed into the target player's hand
  */
 export function cardsDraw(state: GameState, playerId: PlayerId, count: number, signalCause: SignalCause): GameState {
-    const cardsDrawn = [];
+    const cardsToDraw = [];
+    // get all card ids to draw or until there are none left
+    const deck = getZoneArray(state, playerId, "DECK");
     for (let i = 0; i < count; i++) {
-        const topCard = getZoneArray(state, playerId, "DECK")[0];
-        if (!topCard) break;
-        cardsDrawn.push(topCard);
-        state = moveCard(state, topCard, "HAND", "TOP");
+        if (!deck[i]) break;
+        cardsToDraw.push(deck[i]);
     }
-    if (cardsDrawn.length === 0) return state;
-    return emit(state, { type: "CARDS_SENT_TO_HAND", instanceIds: cardsDrawn, fromZone: "DECK", controller: playerId, cause: signalCause });
+    if (cardsToDraw.length === 0) return state;
+    return _cardsAddToHand(state, playerId, cardsToDraw, "DECK", signalCause);
 }
 
 export function sendTrashToHand(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], signalCause: SignalCause): GameState {
-    for (const instanceId of instanceIds) {
-        const trash = getZoneArray(state, playerId, "TRASH");
-        if (!(trash.includes(instanceId))){
-            throw new InvalidActionError(`${instanceId} not found in trash of player ${playerId}`);
-        }
-        state = moveCard(state, instanceId, "HAND", "TOP");
-    }
-    return emit(state, { type: "CARDS_SENT_TO_HAND", instanceIds: instanceIds, fromZone: "TRASH", controller: playerId, cause: signalCause });
+    return _cardsAddToHand(state, playerId, instanceIds, "TRASH", signalCause);
+}
+
+// Meant to send a single card from life to hand (top or bottom)
+export function sendLifeToHand(state: GameState, playerId: PlayerId, lifePosition: StackPosition, signalCause: SignalCause): GameState {
+    const lifeZone = getZoneArray(state, playerId, "LIFE");
+    const lifeCardId = lifePosition === "TOP" ? lifeZone[0] : lifeZone.at(-1);
+    if (!lifeCardId) return state;
+
+    return _cardsAddToHand(state, playerId, [lifeCardId], "LIFE", signalCause);
 }

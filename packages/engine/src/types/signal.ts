@@ -53,7 +53,7 @@ export type GameSignal =
     | { type: "DON_DETACHED"; instanceIds: CardInstanceId[]; originId: CardInstanceId, controller: PlayerId; cause: SignalCause }
 
     // Life & Damage
-    | { type: "DAMAGE_DEALT"; instanceId: CardInstanceId; controller: PlayerId; cause: DamageCause }
+    | { type: "DAMAGE_TAKEN"; instanceId: CardInstanceId; controller: PlayerId; cause: DamageCause }
     | { type: "LIFE_DAMAGED"; instanceId: CardInstanceId; controller: PlayerId; cause: DamageCause }
     // | { type: "LIFE_REVEALED"; instanceId: CardInstanceId; controller: PlayerId; position: StackPosition; revealedTo: RevealedTo; cause: SignalCause }
     // | { type: "LIFE_FLIPPED"; instanceId: CardInstanceId; controller: PlayerId; position: StackPosition; cause: SignalCause }

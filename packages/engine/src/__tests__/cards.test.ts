@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import type { GameState } from "../types/state";
 import {
-    cardsDraw,
-    cardsTrashFromHand,
     cardsToDeckFromHand,
     cardsSetActive,
     cardsSetRested,

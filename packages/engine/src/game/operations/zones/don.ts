@@ -14,6 +14,7 @@ import { getCardInstance } from "../../mechanics";
  * @returns Game state with the DON added to the correct active or rested zone
  */
 export function donAdd(state: GameState, playerId: PlayerId, count: number, rested: boolean, signalCause: SignalCause): GameState {
+    if (count < 0) throw new InvalidActionError(`Cannot request to add a negative amount of don`);
     const donAdded = [];
     for (let i = 0; i < count; i++) {
         const topDon = getZoneArray(state, playerId, "DON_DECK")[0];
@@ -37,6 +38,7 @@ export function donAdd(state: GameState, playerId: PlayerId, count: number, rest
  * @returns Game state with DON moved from active to rested
  */
 export function donRest(state: GameState, playerId: PlayerId, count: number, signalCause: SignalCause): GameState {
+    if (count < 0) throw new InvalidActionError(`Cannot request to rest a negative amount of don`);
     const activeCount = getZoneArray(state, playerId, "DON_ACTIVE").length;
     if (count > activeCount) {
         throw new InvalidActionError(`${count} DON requested to be rested but player ${playerId} only has ${activeCount} active`);
@@ -60,6 +62,7 @@ export function donRest(state: GameState, playerId: PlayerId, count: number, sig
  * @returns Game state with DON moved from rested to active
  */
 export function donSetActive(state: GameState, playerId: PlayerId, count: number, signalCause: SignalCause): GameState {
+    if (count < 0) throw new InvalidActionError(`Cannot request to set active a negative amount of don`);
     const restedCount = getZoneArray(state, playerId, "DON_RESTED").length;
     if (count > restedCount) {
         throw new InvalidActionError(`${count} DON requested to be set as active but player ${playerId} only has ${restedCount} rested`);
