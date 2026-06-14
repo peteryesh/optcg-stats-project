@@ -1,53 +1,22 @@
-import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId, BattleRecord } from './primitives';
+import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId, BattleRecord, MulliganChoice } from './primitives';
 import type { GameSignal, SignalType, Listener } from './signal';
 import type { CardFilter } from './filter';
 import type { Card, CardDef, CardInstance } from './card';
 import type { GameAction } from './action';
 import type { Seed, Nonce } from '../rng/seeds';
-import { EffectSequence, SequencedEffect, StatusEffect } from './effect';
+import { EffectId, EffectSequence, StatusEffect } from './effect';
 import { ActionRecord } from './record';
 
-export type PendingDecision =
-    | {
-        type: "NEXT_EFFECT";
-        playerId: PlayerId;
-    }
-    | {
-        type: "CHOOSE_TARGET";
-        playerId: PlayerId;
-        sourceFrameId: FrameId;
-        validTargets: CardInstanceId[];
-        min: number;
-        max: number;
-    }
-    | {
-        type: "CHOOSE_FROM_HAND";
-        playerId: PlayerId;
-        sourceFrameId: FrameId;
-        count: number;
-        filter: CardFilter;
-        optional: boolean;
-    }
-    | {
-        type: "CHOOSE_FROM_LOOK";
-        playerId: PlayerId;
-        sourceFrameId: FrameId;
-        count: number;
-        filter: CardFilter;
-        optional: boolean;
-    }
-    | {
-        type: "BLOCKER_RESPONSE";
-        playerId: PlayerId;
-        attackerId: CardInstanceId;
-        eligibleBlockers: CardInstanceId[];
-    }
-    | {
-        type: "COUNTER_RESPONSE";
-        playerId: PlayerId;
-        attackerId: CardInstanceId;
-        defenderId: CardInstanceId;
-    };
+export type DecisionPoint =
+    | { type: 'SELECT_FIRST_PLAYER'; player: PlayerId }
+    | { type: 'MULLIGAN'; player: PlayerId }
+    | { type: 'START_TURN'; player: PlayerId }
+    | { type: 'MAIN_ACTION'; player: PlayerId }
+    | { type: 'BLOCKER_SELECTION'; player: PlayerId; battle: BattleRecord }
+    | { type: 'COUNTER_STEP'; player: PlayerId; battle: BattleRecord }
+    | { type: 'TRIGGER'; player: PlayerId; }
+    | { type: 'RESOLVE_ORDER'; player: PlayerId; sequenceId: null }
+    | { type: 'EFFECT_TARGET'; player: PlayerId; effectId: EffectId; constraint: null };
 
 // RNG Cursors
 type RngCursors = {
@@ -80,8 +49,8 @@ export type GameConfig = {
 
 export type SetupState = {
     coinFlipWinner: PlayerId; // player who gets to call CHOOSE_TURN_ORDER
-    // null = not yet decided, false = kept hand, true = chose to mulligan
-    mulligan: Record<PlayerId, "PENDING" | "KEEP" | "MULLIGAN">;
+    firstPlayer: PlayerId | null;
+    mulligan: Record<PlayerId, MulliganChoice>;
 };
 
 ///----------------------------------------------------------------
@@ -91,41 +60,43 @@ export interface GameState {
     // Game Metadata
     version: number; // not implemented
 
-    config: GameConfig;
+    // Game setup
+    config: GameConfig; // Game id, player ids, initial game seeds
+    rngCursors: RngCursors; // Holds shuffle/random info per player
 
-    // Game Settings
-    setup: SetupState;
-    rngCursors: RngCursors;
+    // Pregame setup
+    setup: SetupState; // Holds coin flip result and mulligan decisions
 
-    // The Game Board
+    actionLog: ActionRecord[]; // History of actions and signals
+
+    // Game board
     definitions: Record<CardId, CardDef>; // card definitions, loaded at game start and immutable
     instances: Record<CardInstanceId, CardInstance>; // Card instances for all players
     playerZones: Record<PlayerId, PlayerZones>; // Card zones for each player, keeps the card locations
 
     // Turn and Phase
-    turnOrder: PlayerId[];  // player order
+    turnOrder: PlayerId[];
     turn: number;
-    activePlayerId: PlayerId;
+    turnPlayerId: PlayerId;
     phase: Phase;
-    cardsPlayedThisTurn: CardInstanceId[]; // used for tracking same-turn played effects and eligible attackers
 
-    // Combat State
-    currentBattle: BattleRecord | null;
+    // Turn Tracking
+    cardsPlayedThisTurn: CardInstanceId[]; // used for tracking same-turn played effects and eligible attackers
     battlesThisTurn: BattleRecord[]; // used for tracking multiple attacks with the same character and same-turn attack effects
+    
+    currentBattle: BattleRecord | null;
+
+    // Always needs to be cleared after action and set before state is returned
+    decisionPoint: DecisionPoint | null; // Set when player decision is required to advance game state
 
     // Effects
     currentEffect: EffectSequence | null;  // the currently resolving effect, if any
-    pendingEffects: Record<PlayerId, EffectSequence[]>;
+    pendingEffects: Record<PlayerId, EffectSequence[]>; // rework
 
-    pendingDecision: PendingDecision | null;
-    
     // Listener arrays that cards add their effects to in response to game signals and hooks
     listeners: SequencedEffect[];
     activatableEffects: SequencedEffect[]; // need to refactor this to accept Passive, Replacement, and Suppression effects
     statusEffects: StatusEffect[]; // temporary modifications to cards on the board, public and cleaned up on signal or phase change
-    
-    // History
-    actionLog: ActionRecord[];
 
     // Game Outcome
     winner: PlayerId | null;
@@ -148,6 +119,7 @@ export interface PlayerZones {
     look: CardInstanceId[];   // system zone: temporarily holds cards being looked at or manipulated
     stage: CardInstanceId[];  // only one allowed, but using array for consistency and ease of indexing
     trash: CardInstanceId[];
+    trigger: CardInstanceId[];
 }
 
 

@@ -1,7 +1,7 @@
 import { produce } from 'immer';
 import { GameState } from '../../types/state';
 import { CardInstanceId, PlayerId, Zone, StackPosition, Phase } from '../../types/primitives';
-import { CHARACTERS_MAX, LEADER_MAX, STAGE_MAX } from '../rules';
+import { CHARACTERS_MAX, LEADER_MAX, STAGE_MAX } from '../constants';
 import { DonInstance } from '../../types/card';
 import { getCardInstance, getZoneArray } from './helpers';
 

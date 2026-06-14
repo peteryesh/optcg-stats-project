@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import type { GameState } from "../../types/state";
 import {
-    _cardsAddToHand,
+    _cardsMoveToHand,
     cardsDraw,
     sendLifeToHand,
 } from "../../game/operations/zones/hand";
@@ -16,7 +16,7 @@ beforeEach(() => {
     state = createTestState();
 });
 
-describe("_cardsAddToHand", () => {
+describe("_cardsMoveToHand", () => {
     it("moves the ids from the current zone to the hand", () => {
         const c1 = makeCharacterInstance({ controller: "p1" });
         const c2 = makeCharacterInstance({ controller: "p1" });
@@ -24,7 +24,7 @@ describe("_cardsAddToHand", () => {
             p1: { deck: [c1.instanceId, c2.instanceId] },
         });
 
-        const next = _cardsAddToHand(state, "p1", [c1.instanceId, c2.instanceId], "DECK", { kind: "RULE" });
+        const next = _cardsMoveToHand(state, "p1", [c1.instanceId, c2.instanceId], "DECK", { kind: "RULE" });
 
         // ids removed from origin zone
         // ids added to hand
@@ -40,7 +40,7 @@ describe("_cardsAddToHand", () => {
         });
 
         // throws if id not in source zone
-        expect(() => _cardsAddToHand(state, "p1", [c1.instanceId], "DECK", { kind: "RULE" }))
+        expect(() => _cardsMoveToHand(state, "p1", [c1.instanceId], "DECK", { kind: "RULE" }))
             .toThrow(InvalidActionError);
     });
     it("attempts to move DON to hand", () => {
@@ -50,7 +50,7 @@ describe("_cardsAddToHand", () => {
         });
 
         // throws when DON instance is moved
-        expect(() => _cardsAddToHand(state, "p1", [don.instanceId], "DON_DECK", { kind: "RULE" }))
+        expect(() => _cardsMoveToHand(state, "p1", [don.instanceId], "DON_DECK", { kind: "RULE" }))
             .toThrow(InvalidActionError);
     });
     it("attempts to move LEADER to hand", () => {
@@ -62,7 +62,7 @@ describe("_cardsAddToHand", () => {
         });
 
         // throws when LEADER instance is moved
-        expect(() => _cardsAddToHand(state, "p1", [leader.instanceId], "TRASH", { kind: "RULE" }))
+        expect(() => _cardsMoveToHand(state, "p1", [leader.instanceId], "TRASH", { kind: "RULE" }))
             .toThrow(InvalidActionError);
     });
 });

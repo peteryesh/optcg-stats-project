@@ -2,12 +2,12 @@ import { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInsta
 import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
-import { cardsTrashFromHand } from './zones/trash';
+import { sendHandToTrash } from './zones/trash';
 import { cardsSetRested, removeCardsFromField } from './cards';
 import { calculatePower, calculateCounter } from '../calculations';
 import { takeDamage } from './zones/life';
 import { logCurrentBattleForTurn, removeCurrentBattle, updateCurrentBattle } from '../mechanics/combat';
-import { enterBattleResolutionPhase } from './phase';
+import { enterBattleResolutionPhase, enterCounterPhase } from './phase';
 import { getCardInstance } from "../mechanics";
 
 export function declareAttack(state: GameState, playerId: PlayerId, attackerId: CardInstanceId, defenderId: CardInstanceId): GameState {
@@ -30,6 +30,7 @@ export function declareAttack(state: GameState, playerId: PlayerId, attackerId: 
     if (defender.class === "CHARACTER" && !defender.isRested) throw new InvalidActionError(`${defenderId} is an active character and ${attackerId} does not have the ability to attack active characters`);
     state = cardsSetRested(state, playerId, [attackerId], { kind: "RULE" });
     return emit(state, { type: "ATTACK_DECLARED", attackerId, defenderId, controller: playerId });
+
 }
 
 export function declareBlocker(state: GameState, playerId: PlayerId, blockerId: CardInstanceId): GameState {
@@ -44,7 +45,8 @@ export function declareBlocker(state: GameState, playerId: PlayerId, blockerId: 
     if (blocker.currentZone !== "CHARACTERS") throw new InvalidActionError(`Blocker ${blockerId} is not in the CHARACTERS zone`);
     if (blocker.isRested) throw new InvalidActionError(`${blockerId} is rested and cannot block`);
     state = cardsSetRested(state, playerId, [blockerId], { kind: "RULE" });
-    return emit(state, { type: "BLOCKER_DECLARED", blockerId, attackerId: battle.attackerId, prevDefenderId: prevDefenderId, controller: playerId, cause: { kind: "PLAYER" } });
+    state = emit(state, { type: "BLOCKER_DECLARED", blockerId, attackerId: battle.attackerId, prevDefenderId: prevDefenderId, controller: playerId, cause: { kind: "PLAYER" } });
+    return enterCounterPhase(state);
 }
 
 export function redirectAttack(state: GameState, playerId: PlayerId, newTargetId: CardInstanceId, signalCause: SignalCause): GameState {
@@ -67,7 +69,7 @@ export function playCounter(state: GameState, playerId: PlayerId, counterCardId:
     const battle = state.currentBattle;
     if (!battle) throw new InvalidActionError(`No current battle found, battle is corrupt`);
     state = updateCurrentBattle(state, {...battle, counter: battle.counter + derivedCounter});
-    state = cardsTrashFromHand(state, playerId, [counterCardId], { kind: "PLAYER" });
+    state = sendHandToTrash(state, playerId, [counterCardId], { kind: "PLAYER" });
     return emit(state, { type: "COUNTER_PLAYED", counterId: counterCardId, battle: battle, controller: playerId })
 }
 

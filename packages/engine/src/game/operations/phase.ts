@@ -25,17 +25,9 @@ export function enterStartOfTurnPhase(state: GameState): GameState {
     if (prevPhase !== "END_OF_TURN" && prevPhase !== "START_GAME") {
         throw new InvalidActionError(`Cannot enter START_OF_TURN from ${state.phase}`);
     }
-    // Set next turn state (active player, turn count increment, reset battles and cards played)
-    state = setStartTurnState(state);
     const nextPhase: Phase = "START_OF_TURN";
     state = setPhase(state, nextPhase);
-    state = emit(state, { type: "PHASE_CHANGED", prevPhase, nextPhase, cause: { kind: "RULE" } });
-    
-    // Process start of turn effects
-    // Whether there are effects to process or not, we want to return the state and execute effects from before refresh or draw
-    // TODO - create a custom status effect that applies a strict "cannot attack" even if the card has rush if it is the first turn for the player (turns 1 and 2 typically)
-    state = processEffects(state);
-    return state;
+    return emit(state, { type: "PHASE_CHANGED", prevPhase, nextPhase, cause: { kind: "RULE" } });
 }
 
 export function enterRefreshPhase(state: GameState): GameState {
@@ -47,9 +39,9 @@ export function enterRefreshPhase(state: GameState): GameState {
     state = setPhase(state, nextPhase);
     state = emit(state, { type: "PHASE_CHANGED", prevPhase, nextPhase, cause: { kind: "RULE" } });
     // Set all as active (unrested) during refresh phase
-    state = cardsRefresh(state, state.activePlayerId);
-    state = donRefresh(state, state.activePlayerId);
-    return enterDrawPhase(state);
+    state = cardsRefresh(state, state.turnPlayerId);
+    state = donRefresh(state, state.turnPlayerId);
+    return state;
 }
 
 export function enterDrawPhase(state: GameState): GameState {
@@ -61,13 +53,13 @@ export function enterDrawPhase(state: GameState): GameState {
     state = setPhase(state, nextPhase);
     state = emit(state, { type: "PHASE_CHANGED", prevPhase, nextPhase, cause: { kind: "RULE" } });
     if (state.turn > 1) {
-        state = cardsDraw(state, state.activePlayerId, 1, { kind: "RULE" });
-        state = donAdd(state, state.activePlayerId, 2, false, { kind: "RULE" });
+        state = cardsDraw(state, state.turnPlayerId, 1, { kind: "RULE" });
+        state = donAdd(state, state.turnPlayerId, 2, false, { kind: "RULE" });
     }
     else {
-        state = donAdd(state, state.activePlayerId, 1, false, { kind: "RULE" });
+        state = donAdd(state, state.turnPlayerId, 1, false, { kind: "RULE" });
     }
-    return enterMainPhase(state);
+    return state;
 }
 
 export function enterMainPhase(state: GameState): GameState {
@@ -144,10 +136,6 @@ export function enterBattleResolutionPhase(state: GameState): GameState {
 
 // Phase transition functions
 export function setStartTurnState(state: GameState): GameState {
-    const prevPhase = state.phase;
-    if (prevPhase !== "END_OF_TURN" && prevPhase !== "START_GAME") {
-        throw new InvalidActionError(`Cannot set next turn state from ${state.phase}`);
-    }
     state = setNextActivePlayer(state);
     state = incrementTurn(state);
     state = resetBattleStateForTurn(state);

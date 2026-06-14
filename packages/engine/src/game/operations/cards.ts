@@ -5,18 +5,10 @@ import { setPhase } from "../mechanics/turn";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
 import { donRest, donDetach } from './zones/don';
-import { CHARACTERS_MAX, STAGE_MAX } from '../rules';
+import { CHARACTERS_MAX, STAGE_MAX } from '../constants';
 import { calculateCost } from '../calculations';
 
-// To Hand
-
-
-
-// To Trash
-
-
-
-// To Deck
+// MARKED FOR REMOVAL
 
 export function cardsToDeckFromHand(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], position: StackPosition, signalCause: SignalCause): GameState {
     for (const instanceId of instanceIds) {

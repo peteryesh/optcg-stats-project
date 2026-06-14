@@ -1,11 +1,20 @@
 OPTCG VEGA ENGINE
 
+Player Action -> Validate Action -> Reducer -> Apply -> Operations -> Emit -> Add Listeners -> Clear decisionPoint -> Advance/Step -> Set decisionPoint -> Generate Actions (based on decision type) -> Validate Actions -> Legal Actions -> Player Action
+
+Advance/Step
+
 Validation
 - responsible for building the set of possible mechanical actions
 - reads game state to validate which possible mechanical actions are allowed at that moment
 - serves filtered list to client
 - never mutates state
 - never emits signals
+- The decisionPoint's type on the state routes the correct actions to be generated
+- getLegalActions builds the candidate list of actions
+- validate checks the action type and allows the action to pass it to the legal actions if valid
+- validate is called again in reducer when the player actually submits an action (throws on error)
+
 Actions (no read/write)
 - directly interacts with the reducer
 - can call operations
@@ -118,13 +127,16 @@ Effects
         - Encompasses "permanent" and "auto" effects
         - Effects that activate as a result of a signal and not direct player choice
         - When in play, these effects are added as listeners on the state and activate when one or more specific signals are emitted
+    - ReplacementEffect
+        - Functions the same as in the official rules
+        - Listens to ReplacementHooks (name tbd) that take place before game events take place
     - StatusEffect
         - Effects that apply some sort of status to cards in play or in hand
         - Applies to power/cost modifiers as well as status conditions like freeze, no rest, etc.
         - Always comes with an expiration flag that listens to signals for cleanup
-    - ReplacementEffect
-        - Functions the same as in the official rules
-        - Listens to ReplacementHooks (name tbd) that take place before game events take place
+- Active, Reactive, and Replacement effects all fall under the same signal/enqueue architecture
+- Status effects have their own system, used primarily by the derived state
+    
 Starting from when a card ability activates:
 
 Effect system
@@ -165,7 +177,7 @@ Game State
         - Don are rested and set active based on their location, as well as on the card instance
         - isRested is tracked on DON but is entirely unused
 
-Game Flow
+Game Flow (deprecated)
 - Triggers take place before effects
 - Triggers only activate after life card is taken to hand as a result of life damage
 - Trigger cards are placed in the trash immediately after being activated
@@ -177,7 +189,7 @@ Game Flow
 - Active player resolves effects before any other player can resolve effects, then the resolution goes in turn order
 - Simultaneous effects require player action to resolve the order in which the effects take place
 
-Life and Damage
+Life and Damage (deprecated, needs rewrite)
 - Damage is done as a result of either an effect or by combat with a leader, after which the game state is checked to see if the player that dealt the damage knocked out the opponent
 - The signal DAMAGE_DEALT is separated from the signal LIFE_DAMAGED for this reason, as "dealing damage" will result in a knockout check while "damage taken to life cards" will not
     - This is relevant for [Double Attack], which officially states "This card deals 2 damage"

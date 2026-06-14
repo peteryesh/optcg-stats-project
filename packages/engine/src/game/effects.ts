@@ -1,8 +1,10 @@
 import { produce } from 'immer';
-import type { GameState, PendingDecision } from '../types/state';
+import type { GameState, DecisionPoint } from '../types/state';
 import type { PlayerId } from '../types/primitives';
 import type { EffectSequence, EffectStep } from '../types/effect';
 import type { CardFilter } from '../types/filter';
+
+// REMOVE
 
 // Called after any operation that may have staged new effects.
 // Decides whether to auto-promote, request player ordering, or do nothing.
@@ -10,8 +12,8 @@ export function processEffects(state: GameState): GameState {
     if (state.currentEffect !== null) return state;
 
     const orderedPlayers = [
-        state.activePlayerId,
-        ...state.turnOrder.filter(id => id !== state.activePlayerId),
+        state.turnPlayerId,
+        ...state.turnOrder.filter(id => id !== state.turnPlayerId),
     ];
 
     for (const playerId of orderedPlayers) {
@@ -23,7 +25,7 @@ export function processEffects(state: GameState): GameState {
         }
 
         return produce(state, draft => {
-            draft.pendingDecision = { type: "NEXT_EFFECT", playerId };
+            draft.decisionPoint = { type: "NEXT_EFFECT", playerId };
         });
     }
 
@@ -67,7 +69,7 @@ export function advanceCurrentEffect(state: GameState): GameState {
 
         // PLAYER resolution — pause and wait for input
         return produce(state, draft => {
-            draft.pendingDecision = pendingDecisionForStep(current, step, state);
+            draft.decisionPoint = decisionPointForStep(current, step, state);
         });
     }
 
@@ -100,12 +102,11 @@ function executeStep(state: GameState, _step: EffectStep): GameState {
     return state;
 }
 
-function pendingDecisionForStep(
+function decisionPointForStep(
     _sequence: EffectSequence,
     step: EffectStep,
     _state: GameState,
-): PendingDecision {
-    // TODO: map step type to the correct pendingDecision shape
+): DecisionPoint {
     // _state is needed to compute validTargets from step.target filter
-    throw new Error(`pendingDecisionForStep not yet implemented for step type: ${step.type}`);
+    throw new Error(`decisionPointForStep not yet implemented for step type: ${step.type}`);
 }

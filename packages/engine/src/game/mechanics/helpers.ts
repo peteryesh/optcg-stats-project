@@ -24,6 +24,7 @@ export function getZoneArray(state: GameState, playerId: PlayerId, zone: Zone | 
         case "LOOK":        return playerZones.look;
         case "STAGE":       return playerZones.stage;
         case "TRASH":       return playerZones.trash;
+        case "TRIGGER":     return playerZones.trigger;
         case null:          throw new Error(`Null zone provided, no zone to return`);
         default:            throw new Error(`Provided zone was not an accepted zone value`);
     }

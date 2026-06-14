@@ -4,7 +4,7 @@ import { CardId, CardInstanceId, PlayerId, FrameId } from "./primitives";
 
 export type GameAction =
     // Setup
-    | { type: "CHOOSE_FIRST_PLAYER"; deciderId: PlayerId; choice: PlayerId}
+    | { type: "CHOOSE_FIRST_PLAYER"; playerId: PlayerId; choice: PlayerId}
     | { type: "KEEP_HAND"; playerId: PlayerId }
     | { type: "MULLIGAN"; playerId: PlayerId }
 

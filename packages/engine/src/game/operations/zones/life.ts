@@ -7,18 +7,39 @@ import { sendLifeToHand } from './hand';
 import { setGameEnd } from '../../mechanics/gameEnd';
 
 
-
 export function _cardsMoveToLife(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], fromZone: Zone, position: StackPosition, signalCause: SignalCause): GameState {
     for (const id of instanceIds) {
         const zone = getZoneArray(state, playerId, fromZone);
         if (!zone.includes(id)) throw new InvalidActionError(`${id} not found in zone ${fromZone} of player ${playerId}`);
         const card = getCardInstance(state, id);
-        if (card.class === "DON" || card.class === "LEADER") throw new InvalidActionError(`${id} has a card class of ${card.class} cannot be added to hand`);
+        if (card.class === "DON" || card.class === "LEADER") throw new InvalidActionError(`${id} has a card class of ${card.class} cannot be added to life`);
         state = moveCard(state, id, "LIFE", position);
     }
     return emit(state, { type: "CARDS_SENT_TO_LIFE", instanceIds: instanceIds, fromZone: fromZone, position: position, controller: playerId, cause: signalCause });
 }
 
+export function sendTopDeckToLife(state: GameState, playerId: PlayerId, count: number, position: StackPosition, signalCause: SignalCause): GameState {
+    const topDeck = [];
+    // get all card ids to draw or until there are none left
+    const deck = getZoneArray(state, playerId, "DECK");
+    for (let i = 0; i < count; i++) {
+        if (!deck[i]) break;
+        topDeck.push(deck[i]);
+    }
+    if (topDeck.length === 0) return state;
+    return _cardsMoveToLife(state, playerId, topDeck, "DECK", position, signalCause);
+}
+
+export function sendTrashToLife(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], position: StackPosition, signalCause: SignalCause): GameState {
+    return _cardsMoveToLife(state, playerId, instanceIds, "TRASH", position, signalCause);
+}
+
+export function sendHandToLife(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], position: StackPosition, signalCause: SignalCause): GameState {
+    return _cardsMoveToLife(state, playerId, instanceIds, "HAND", position, signalCause);
+}
+
+
+// move functions away
 export function lifeSentToDeck(state: GameState, playerId: PlayerId, lifePosition: StackPosition, toZonePosition: StackPosition, signalCause: SignalCause): GameState {
     const lifeZone = getZoneArray(state, playerId, "LIFE");
     const lifeCardId = lifePosition === "TOP" ? lifeZone[0] : lifeZone.at(-1);

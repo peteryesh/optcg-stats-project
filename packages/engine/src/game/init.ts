@@ -55,6 +55,7 @@ export function createEmptyGameState(config: GameConfig): GameState {
 
         setup: {
             coinFlipWinner,
+            firstPlayer: null,
             mulligan: Object.fromEntries(playerIds.map(id => [id, "PENDING"]))
         },
 
@@ -65,7 +66,7 @@ export function createEmptyGameState(config: GameConfig): GameState {
 
         turnOrder: playerIds,
         turn: 0,
-        activePlayerId: coinFlipWinner,
+        turnPlayerId: coinFlipWinner,
         phase: "SETUP",
         cardsPlayedThisTurn: [],
 
@@ -74,7 +75,7 @@ export function createEmptyGameState(config: GameConfig): GameState {
 
         currentEffect: null,
         pendingEffects: emptyPendingEffects(playerIds),
-        pendingDecision: null,
+        decisionPoint: { type: "SELECT_FIRST_PLAYER", player: coinFlipWinner},
 
         listeners: [],
         activatableEffects: [],
@@ -102,6 +103,7 @@ export function emptyPlayerZones(playerIds: PlayerId[]): Record<PlayerId, Player
             look: [],
             stage: [],
             trash: [],
+            trigger: [],
         };
     }
     return zones;

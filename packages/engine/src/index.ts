@@ -31,6 +31,6 @@ export * from './types/effect';
 
 // Runtime
 export { reducer, InvalidActionError } from './reducer';
-export { getLegalActions } from './legal';
-export { validate } from './validators';
+export { getLegalActions } from './actionGen';
+export { validate } from './validator';
 export { initGame } from './game/init';

@@ -1,16 +1,23 @@
 import { produce } from 'immer';
 import { GameState } from '../../types/state';
-import { Phase } from '../../types';
+import { MulliganChoice, Phase, PlayerId } from '../../types';
 import { getCardInstance } from './helpers';
+
+// "PENDING" | "KEEP" | "MULLIGAN"
+export function setMulliganChoice(state: GameState, playerId: PlayerId, mulliganChoice: MulliganChoice) {
+    return produce(state, draft => {
+        draft.setup.mulligan[playerId] = mulliganChoice;
+    });
+}
 
 export function setNextActivePlayer(state: GameState): GameState {
     if (state.phase === "START_GAME") {
         // In the case of starting the game, we want to set the active player to the first player in the turn order, but not emit a signal about it since it's just setting up initial state
         return produce(state, draft => {
-            draft.activePlayerId = draft.turnOrder[0];
+            draft.turnPlayerId = draft.turnOrder[0];
         });
     }
-    const currentPlayerId = state.activePlayerId;
+    const currentPlayerId = state.turnPlayerId;
     const currentIndex = state.turnOrder.indexOf(currentPlayerId);
     if (currentIndex === -1) {
         throw new Error(`Current active player ${currentPlayerId} not found in turn order`);
@@ -18,7 +25,7 @@ export function setNextActivePlayer(state: GameState): GameState {
     const nextIndex = (currentIndex + 1) % state.turnOrder.length;
     const nextActivePlayerId = state.turnOrder[nextIndex];
     return produce(state, draft => {
-        draft.activePlayerId = nextActivePlayerId;
+        draft.turnPlayerId = nextActivePlayerId;
     });
 }
 
@@ -59,10 +66,10 @@ export function setPhase(state: GameState, phase: Phase): GameState {
 }
 
 export function changeActivePlayer(state: GameState): GameState {
-    const currentPlayerIndex = state.turnOrder.indexOf(state.activePlayerId);
+    const currentPlayerIndex = state.turnOrder.indexOf(state.turnPlayerId);
     if (currentPlayerIndex === -1) {
-        throw new Error(`Active player ${state.activePlayerId} not found in turn order`);
+        throw new Error(`Active player ${state.turnPlayerId} not found in turn order`);
     }
     const nextPlayerIndex = (currentPlayerIndex + 1) % state.turnOrder.length;
-    return produce(state, draft => { draft.activePlayerId = state.turnOrder[nextPlayerIndex]; });
+    return produce(state, draft => { draft.turnPlayerId = state.turnOrder[nextPlayerIndex]; });
 }

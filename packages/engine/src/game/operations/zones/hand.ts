@@ -4,7 +4,7 @@ import { emit } from "../../emitter";
 import { getCardInstance, getZoneArray, moveCard } from "../../mechanics";
 
 
-export function _cardsAddToHand(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], fromZone: Zone, signalCause: SignalCause): GameState {
+export function _cardsMoveToHand(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], fromZone: Zone, signalCause: SignalCause): GameState {
     for (const id of instanceIds) {
         const zone = getZoneArray(state, playerId, fromZone);
         if (!zone.includes(id)) throw new InvalidActionError(`${id} not found in zone ${fromZone} of player ${playerId}`);
@@ -33,11 +33,11 @@ export function cardsDraw(state: GameState, playerId: PlayerId, count: number, s
         cardsToDraw.push(deck[i]);
     }
     if (cardsToDraw.length === 0) return state;
-    return _cardsAddToHand(state, playerId, cardsToDraw, "DECK", signalCause);
+    return _cardsMoveToHand(state, playerId, cardsToDraw, "DECK", signalCause);
 }
 
 export function sendTrashToHand(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], signalCause: SignalCause): GameState {
-    return _cardsAddToHand(state, playerId, instanceIds, "TRASH", signalCause);
+    return _cardsMoveToHand(state, playerId, instanceIds, "TRASH", signalCause);
 }
 
 // Meant to send a single card from life to hand (top or bottom)
@@ -46,5 +46,5 @@ export function sendLifeToHand(state: GameState, playerId: PlayerId, lifePositio
     const lifeCardId = lifePosition === "TOP" ? lifeZone[0] : lifeZone.at(-1);
     if (!lifeCardId) return state;
 
-    return _cardsAddToHand(state, playerId, [lifeCardId], "LIFE", signalCause);
+    return _cardsMoveToHand(state, playerId, [lifeCardId], "LIFE", signalCause);
 }

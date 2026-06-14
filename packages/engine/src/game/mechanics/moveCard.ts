@@ -1,7 +1,7 @@
 import { produce } from 'immer';
 import type { GameState } from '../../types/state';
 import type { CardInstanceId, Zone, StackPosition, Phase } from '../../types/primitives';
-import { CHARACTERS_MAX, LEADER_MAX, STAGE_MAX } from '../rules';
+import { CHARACTERS_MAX, LEADER_MAX, STAGE_MAX } from '../constants';
 import type { DonInstance } from '../../types/card';
 import { getZoneArray, getCardInstance } from './helpers';
 
@@ -75,6 +75,10 @@ export function addToZone(state: GameState, instanceId: CardInstanceId, targetZo
         if (targetZone === "LEADER") {
             if (instance.class !== "LEADER") throw new Error (`Attempting to move non-leader card to the leader area: ${instance.instanceId}`);
             if (targetZoneArray.length >= LEADER_MAX) throw new Error(`Moving leader to leader area has exceeded the maximum amount of leaders allowed: ${instance.instanceId}`);
+        }
+        if (targetZone === "TRIGGER") {
+            if (instance.class === "LEADER" || instance.class === "DON") throw new Error(`Attempting to move a non-play card to the trigger zone: ${instance.instanceId}`);
+            if (targetZoneArray.length >= 1) throw new Error(`Attempting to move a card to the trigger zone when a card already exists`);
         }
 
         if (position === "TOP") {

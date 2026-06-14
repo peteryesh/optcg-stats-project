@@ -15,6 +15,7 @@ function emptyZones(): PlayerZones {
         look: [],
         stage: [],
         trash: [],
+        trigger: [],
     };
 }
 
@@ -58,6 +59,7 @@ export function createTestState(
         },
         setup: {
             coinFlipWinner: players[0],
+            firstPlayer: players[0],
             mulligan: Object.fromEntries(players.map(id => [id, "PENDING" as const])),
         },
         rngCursors: {
@@ -69,14 +71,14 @@ export function createTestState(
         playerZones,
         turnOrder: players,
         turn: 1,
-        activePlayerId: players[0],
+        turnPlayerId: players[0],
         phase: "MAIN",
         cardsPlayedThisTurn: [],
         currentBattle: null,
         battlesThisTurn: [],
         currentEffect: null,
         pendingEffects: Object.fromEntries(players.map(id => [id, []])),
-        pendingDecision: null,
+        decisionPoint: null,
         listeners: [],
         activatableEffects: [],
         statusEffects: [],

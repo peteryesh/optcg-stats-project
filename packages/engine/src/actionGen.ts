@@ -1,0 +1,115 @@
+// actionGen.ts
+import { DecisionPoint, GameState, GameAction, PlayerId } from './types';
+import { validate } from './validator';
+
+export type ActionGenerator = (state: GameState, dp: DecisionPoint, out: GameAction[]) => void;
+
+export function getLegalActions(state: GameState, requestingPlayer: PlayerId): GameAction[] {
+    if (state.winner !== null) return [];
+    const candidates: GameAction[] = [];
+    let dp = state.decisionPoint;
+    if (!dp) return [];
+    if (dp.type === "MULLIGAN") {
+        dp = { type: "MULLIGAN", player: requestingPlayer };
+    }
+    if (dp.player !== requestingPlayer) return [];
+    actionGeneratorRouter[dp.type].flatMap(gen => gen(state, dp, candidates));
+    return candidates.filter(a => validate(state, a) === null);
+}
+
+const genFirstPlayer: ActionGenerator = (state, dp, out) => {
+    out.push(...state.turnOrder.map(choice => ({
+        type: "CHOOSE_FIRST_PLAYER" as const,
+        playerId: dp.player,
+        choice,
+    })));
+}
+
+const genMulligan: ActionGenerator = (state, dp, out) => {
+    out.push(
+        { type: "KEEP_HAND" as const, playerId: dp.player },
+        { type: "MULLIGAN" as const, playerId: dp.player },
+    );
+}
+
+const genPlayCard: ActionGenerator = (state, dp, out) => {
+    const zones = state.playerZones[dp.player];
+    for (const instanceId of zones.hand) {
+        out.push({ type: "PLAY_CARD", playerId: dp.player, instanceId });
+    }
+}
+
+const genAttachDon: ActionGenerator = (state, dp, out) => {
+    const zones = state.playerZones[dp.player];
+    if (zones.donActive.length === 0) return;
+    const targets = [...zones.characters, ...zones.leader];
+    for (const targetId of targets) {
+        for (let i = 0; i < zones.donActive.length; i++) {
+            out.push({
+                type: "ATTACH_DON",
+                playerId: dp.player,
+                targetId,
+                count: i + 1
+            });
+        }
+    }
+}
+
+const genActivateEffect: ActionGenerator = (state, dp, out) => {
+    return;
+}
+
+const genNextPhase: ActionGenerator = (state, dp, out) => {
+    out.push({ type: "NEXT_PHASE", playerId: dp.player });
+}
+
+const genDeclareAttack: ActionGenerator = (state, dp, out) => {
+    const zones = state.playerZones[dp.player];
+    const attackers = [...zones.characters, ...zones.leader];
+    const opponents = state.turnOrder.filter(id => id !== dp.player);
+    for (const opponentId of opponents) {
+        const oppZones = state.playerZones[opponentId];
+        const defenders = [...oppZones.characters, ...oppZones.leader];
+        for (const attackerId of attackers) {
+            for (const defenderId of defenders) {
+                out.push({ type: "DECLARE_ATTACK", playerId: dp.player, attackerId, defenderId });
+            }
+        }
+    }
+}
+
+const genDeclareBlocker: ActionGenerator = (state, dp, out) => {
+    return;
+}
+
+const genPlayCounter: ActionGenerator = (state, dp, out) => {
+    const zones = state.playerZones[dp.player];
+    for (const counterId of zones.hand) {
+        out.push({ type: "PLAY_COUNTER", playerId: dp.player, counterId });
+    }
+}
+
+const genCompleteBattle: ActionGenerator = (state, dp, out) => {
+    out.push({ type: "COMPLETE_BATTLE", playerId: dp.player })
+}
+
+const genChooseNextEffect: ActionGenerator = (state, dp, out) => {
+    return;
+}
+
+const genChooseTargets: ActionGenerator = (state, dp, out) => {
+    return;
+}
+
+const actionGeneratorRouter: Record<DecisionPoint['type'], ActionGenerator[]> = {
+    SELECT_FIRST_PLAYER: [genFirstPlayer],
+    MULLIGAN: [genMulligan],
+    START_TURN: [genNextPhase],
+    MAIN_ACTION: [genPlayCard, genAttachDon, genActivateEffect, genDeclareAttack, genNextPhase],
+    BLOCKER_SELECTION: [genDeclareBlocker, genNextPhase],
+    COUNTER_STEP: [genPlayCounter, genCompleteBattle],
+    TRIGGER: [],
+    RESOLVE_ORDER: [genChooseNextEffect],
+    EFFECT_TARGET: [genChooseTargets],
+};
+

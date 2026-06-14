@@ -14,7 +14,7 @@ export function calculatePower(state: GameState, instanceId: CardInstanceId): nu
     let derivedPower = Number(cardDef.power);
 
     // If the player is not active, DON does not give power boost
-    if (state.activePlayerId !== card.controller) return derivedPower;
+    if (state.turnPlayerId !== card.controller) return derivedPower;
 
     const donAttached = card.attachedDon;
     for (const donId of donAttached) {

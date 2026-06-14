@@ -9,10 +9,14 @@ export type ReplacementEffect = null;
 export type EffectId = string;
 export type SequenceId = string;
 
-export type SequencedEffect =
-    | ActiveEffect
-    | ReactiveEffect
-    | ReplacementEffect;
+export type ListenerEffect = {
+    effectId: EffectId;
+    sequenceId: SequenceId;
+    sourceInstanceId: CardInstanceId;
+    activator: GameSignal; // Add hook here as well
+    condition: CardFilter | null;
+    
+}
 
 // StatusEffects are passive modifiers — they sit on the statusEffects array, are checked during
 // calculations, and are cleaned up on a signal or phase change. They do not produce sequences.

@@ -139,10 +139,10 @@ export function assertControllerZoneConsistency(state: GameState): void {
 
 // Pending Decision Invariants
 
-// If pendingDecision is not null, either currentEffect is not null or there is a player with a non-empty pendingEffects array
+// If decisionPoint is not null, either currentEffect is not null or there is a player with a non-empty pendingEffects array
 export function assertDecisionContext(state: GameState): void {
-    if (state.pendingDecision === null) return;
+    if (state.decisionPoint === null) return;
     if (state.currentEffect !== null) return;
     if (state.config.playerIds.some(id => state.pendingEffects[id]?.length > 0)) return;
-    throw new Error(`State has a pendingDecision but no currentEffect and no pending effects for any player`);
+    throw new Error(`State has a decisionPoint but no currentEffect and no pending effects for any player`);
 }

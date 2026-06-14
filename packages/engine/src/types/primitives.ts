@@ -23,10 +23,11 @@ export type Zone =
     | 'LIFE'
     | 'LOOK'
     | 'STAGE'
-    | 'TRASH';
+    | 'TRASH'
+    | 'TRIGGER';
 
 // Game Phases
-export type GamePhase = 'SETUP' | 'START_GAME' | 'START_OF_TURN' | 'REFRESH' | 'DRAW' | 'MAIN' | 'DAMAGE' | 'END_OF_TURN' | 'GAME_END';
+export type GamePhase = 'SETUP' | 'START_GAME' | 'START_OF_TURN' | 'REFRESH' | 'DRAW' | 'MAIN' | 'END_OF_TURN' | 'GAME_END';
 export type BattlePhase = 'WHEN_ATTACKING' | 'ON_OPPONENT_ATTACK' | 'BLOCKER' | 'COUNTER' | 'BATTLE_RESOLUTION';
 
 export type Phase = 
@@ -41,6 +42,8 @@ export type BattleRecord = {
 }
 
 export type EndReason = 'KNOCKOUT' | 'DECKOUT' | 'CONCEDE' | 'TIMEOUT' | 'DISCONNECT';
+
+export type MulliganChoice = "PENDING" | "KEEP" | "MULLIGAN";
 
 export type StackPosition = "TOP" | "BOTTOM"
 
