@@ -114,14 +114,14 @@ export function GameBoard() {
 
     const printLegalActions = () => {
         if (!state) return;
-        console.log(getLegalActions(state?.activePlayerId));
-        return `${state.activePlayerId}  ${JSON.stringify(getLegalActions(state?.activePlayerId), null, 2)}`;
+        console.log(getLegalActions(state?.turnPlayerId));
+        return `${state.turnPlayerId}  ${JSON.stringify(getLegalActions(state?.turnPlayerId), null, 2)}`;
     }
 
     const testLegalActionButtons = () => {
         if (!state) return;
         return <div>
-            <p>Active Player: {state?.activePlayerId}</p><p> Phase: {state.phase}</p>
+            <p>Active Player: {state?.turnPlayerId}</p><p> Phase: {state.phase}</p>
             {getLegalActions('p1').map((action, i) => 
                 <button className='bg-green-500 m-1' key={i} onClick={() => dispatch(action)}>
                     {`${JSON.stringify(action, null, 2)}`}
