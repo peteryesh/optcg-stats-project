@@ -11,7 +11,8 @@ import {
     applyDeclareBlocker,
     applyPlayCounter,
     applyCompleteBattle,
-    applyNextPhase 
+    applyNextPhase,
+    applyTriggerActivation
 } from './game/actions/main';
 import { promoteChosenEffect } from './game/effects';
 import { applyChooseFirstPlayer, applyKeepHand, applyMulligan, setPlayerLife, shuffleDeck } from './game/actions/start';
@@ -62,6 +63,9 @@ export function reducer(state: GameState, action: GameAction): GameState {
         case 'COMPLETE_BATTLE':
             state = applyCompleteBattle(state, action);
             break;
+        case 'ACTIVATE_TRIGGER':
+            state = applyTriggerActivation(state, action);
+            break;
         case 'ACTIVATE_EFFECT':
             state = applyActivateEffect(state, action);
             break;
@@ -85,7 +89,7 @@ function advance(state: GameState): GameState {
 
 function step(state: GameState): GameState {
     // check for currentEffect
-    // if no current effect, check the trigger zone
+    // if no current effect, check for trigger zone, set decision to activate trigger if there is
     // if no current effect and no trigger, check the effect queue
     // if a player has more than one effect in the effect frame, set decisionPoint to select resolution order and return
     // if there is currentEffect, execute effect steps
@@ -137,6 +141,7 @@ function step(state: GameState): GameState {
         }
         case "COUNTER": {
             const defender = getCardInstance(state, state.currentBattle!.defenderId);
+            // COMPLETE_BATTLE given as action if phase is counter, state is advanced by player selecting this action
             return setDecisionPoint(state, { type: "COUNTER_STEP", player: defender.controller, battle: state.currentBattle! })
         }
         case "BATTLE_RESOLUTION":

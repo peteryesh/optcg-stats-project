@@ -1,4 +1,6 @@
 // actionGen.ts
+import { CHARACTERS_MAX, STAGE_MAX } from './game/constants';
+import { getZoneArray } from './game/mechanics';
 import { DecisionPoint, GameState, GameAction, PlayerId } from './types';
 import { validate } from './validator';
 
@@ -55,10 +57,6 @@ const genAttachDon: ActionGenerator = (state, dp, out) => {
     }
 }
 
-const genActivateEffect: ActionGenerator = (state, dp, out) => {
-    return;
-}
-
 const genNextPhase: ActionGenerator = (state, dp, out) => {
     out.push({ type: "NEXT_PHASE", playerId: dp.player });
 }
@@ -79,7 +77,7 @@ const genDeclareAttack: ActionGenerator = (state, dp, out) => {
 }
 
 const genDeclareBlocker: ActionGenerator = (state, dp, out) => {
-    return;
+    // find all available blockers
 }
 
 const genPlayCounter: ActionGenerator = (state, dp, out) => {
@@ -93,12 +91,24 @@ const genCompleteBattle: ActionGenerator = (state, dp, out) => {
     out.push({ type: "COMPLETE_BATTLE", playerId: dp.player })
 }
 
+const genActivateEffect: ActionGenerator = (state, dp, out) => {
+    // check for effects that can be activated
+}
+
 const genChooseNextEffect: ActionGenerator = (state, dp, out) => {
-    return;
+    // find the player's next effects in the current or next frame
 }
 
 const genChooseTargets: ActionGenerator = (state, dp, out) => {
-    return;
+    // find valid targets
+}
+
+const genTriggerActivation: ActionGenerator = (state, dp, out) => {
+    // check for trigger, option activate trigger
+    // option no trigger
+    if (state.playerZones[dp.player].trigger.length === 0) return;
+    out.push({ type: "ACTIVATE_TRIGGER", playerId: dp.player, instanceId: state.playerZones[dp.player].trigger[0], activate: true });
+    out.push({ type: "ACTIVATE_TRIGGER", playerId: dp.player, instanceId: state.playerZones[dp.player].trigger[0], activate: false });
 }
 
 const actionGeneratorRouter: Record<DecisionPoint['type'], ActionGenerator[]> = {
@@ -108,8 +118,7 @@ const actionGeneratorRouter: Record<DecisionPoint['type'], ActionGenerator[]> = 
     MAIN_ACTION: [genPlayCard, genAttachDon, genActivateEffect, genDeclareAttack, genNextPhase],
     BLOCKER_SELECTION: [genDeclareBlocker, genNextPhase],
     COUNTER_STEP: [genPlayCounter, genCompleteBattle],
-    TRIGGER: [],
+    TRIGGER: [genTriggerActivation],
     RESOLVE_ORDER: [genChooseNextEffect],
     EFFECT_TARGET: [genChooseTargets],
 };
-

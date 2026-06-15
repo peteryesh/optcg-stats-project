@@ -1,4 +1,4 @@
-import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId, BattleRecord, MulliganChoice } from './primitives';
+import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId, BattleRecord, MulliganChoice, Zone } from './primitives';
 import type { GameSignal, SignalType, Listener } from './signal';
 import type { CardFilter } from './filter';
 import type { Card, CardDef, CardInstance } from './card';

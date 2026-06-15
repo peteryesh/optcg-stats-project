@@ -2,7 +2,7 @@ import type { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, Don
 import { moveCard, getZoneArray, attachDon, detachDon, getCardInstance } from "../../mechanics";
 import { emit } from "../../emitter";
 import { InvalidActionError } from "../../../errors";
-import { sendLifeToHand } from './hand';
+import { _cardsMoveToHand, sendLifeToHand } from './hand';
 import { _cardsMoveToTrash } from './trash';
 
 // TRIGGER Zone Operations
@@ -17,6 +17,12 @@ export function sendTopLifeToTrigger(state: GameState, playerId: PlayerId, insta
 
 export function sendTriggerToTrash(state: GameState, playerId: PlayerId, signalCause: SignalCause): GameState {
     const triggerZone = getZoneArray(state, playerId, "TRIGGER");
-    if (triggerZone.length !== 1) throw new InvalidActionError(`Look zone has an invalid amount of card ids: ${triggerZone.length}`);
+    if (triggerZone.length !== 1) throw new InvalidActionError(`Trigger zone has an invalid amount of card ids: ${triggerZone.length}`);
     return _cardsMoveToTrash(state, playerId, triggerZone, "TRIGGER", signalCause);
+}
+
+export function sendTriggerToHand(state: GameState, playerId: PlayerId, signalCause: SignalCause): GameState {
+    const triggerZone = getZoneArray(state, playerId, "TRIGGER");
+    if (triggerZone.length !== 1) throw new InvalidActionError(`Trigger zone has an invalid amount of card ids: ${triggerZone.length}`);
+    return _cardsMoveToHand(state, playerId, triggerZone, "TRIGGER", signalCause);
 }

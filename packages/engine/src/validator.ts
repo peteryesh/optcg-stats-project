@@ -11,7 +11,7 @@ const validActions: {[T in DecisionPoint['type']]: GameAction['type'][]} = {
     MAIN_ACTION: ["NEXT_PHASE", "PLAY_CARD", "ATTACH_DON", "DECLARE_ATTACK", "ACTIVATE_EFFECT"],
     BLOCKER_SELECTION: ["NEXT_PHASE", "DECLARE_BLOCKER"],
     COUNTER_STEP: ["PLAY_COUNTER", "COMPLETE_BATTLE"],
-    TRIGGER: [],
+    TRIGGER: ["ACTIVATE_TRIGGER"],
     RESOLVE_ORDER: ["CHOOSE_NEXT_EFFECT"],
     EFFECT_TARGET: ["CHOOSE_TARGETS"],
 }
@@ -144,6 +144,10 @@ export function validate(state: GameState, action: GameAction): string | null {
         case "COMPLETE_BATTLE":
             // A battle exists
             if (state.currentBattle === null) return `No active battle to resolve`;
+            break;
+        case "ACTIVATE_TRIGGER":
+            // if activation is true and the card does not have a trigger ability, return
+            if (action.activate /** && trigger effect does not exist */) return `${action.instanceId} does not have a trigger ability`;
             break;
         case "ACTIVATE_EFFECT":
             return "Not yet implemented";

@@ -71,6 +71,15 @@ Actions
 - If an effect step is marked as requiring a player decision, action should set pendingDecision and return the state at that point and it is the responsibility of the legal actions system to serve the user actions only related to the player's choice
 - The action that is made next should only be one that resolves the currently executing effect and should set pendingDecision to null. This action is then given the task of consuming and executing the effect queue
 - The effect context will be kept by the currently executing effect sequence because the effect step at the front of the queue is what caused the pending player decision
+- Defining an Action
+    - Create definition in types/action.ts
+    - Add to validActions in validator.ts
+    - Create a path to create action in validate in validator.ts
+    - Add a case in reducer.ts
+    - Create an apply function in one of the game/actions files
+    - Create an entry in actionGen.ts
+    - Coordinate with decisionPoint structure in state.ts
+    - Need to find the spot to set decisionPoint in reducer.ts
 
 Pending Decisions
 - Nullable field that is set when a user is required to make some kind of decision in order to advance the game state that is not a result of their main turn actions

@@ -1,7 +1,7 @@
 import type { GameState } from '../../types/state';
 import type { GameAction } from '../../types/action';
 import { InvalidActionError } from '../../errors';
-import { playCard, donAttach, declareAttack, declareBlocker, playCounter, enterWhenAttackingPhase, enterEndOfTurnPhase, enterOnOpponentAttackPhase, enterCounterPhase, enterBattleResolutionPhase, enterBlockerPhase, enterRefreshPhase, enterMainPhase, resolveBattle, enterStartOfTurnPhase } from '../operations';
+import { playCard, donAttach, declareAttack, declareBlocker, playCounter, sendTriggerToHand, sendTriggerToTrash, enterWhenAttackingPhase, enterEndOfTurnPhase, enterOnOpponentAttackPhase, enterCounterPhase, enterBattleResolutionPhase, enterBlockerPhase, enterRefreshPhase, enterMainPhase, resolveBattle, enterStartOfTurnPhase } from '../operations';
 import { getZoneArray } from '../mechanics';
 
 // Play card from hand
@@ -31,6 +31,18 @@ export function applyPlayCounter(state: GameState, action: Extract<GameAction, {
 export function applyCompleteBattle(state: GameState, action: Extract<GameAction, { type: "COMPLETE_BATTLE" }>): GameState {
     state = enterBattleResolutionPhase(state);
     return resolveBattle(state);
+}
+
+export function applyTriggerActivation(state: GameState, action: Extract<GameAction, { type: "ACTIVATE_TRIGGER" }>): GameState {
+    if (!action.activate) {
+        // decline trigger, move card from trigger zone to hand
+        return sendTriggerToHand(state, action.playerId, { kind: "RULE" });
+    }
+    // move card from trigger zone to trash
+    state = sendTriggerToTrash(state, action.playerId, { kind: "RULE" });
+    // queue trigger effect
+    // activateTrigger
+    return state;
 }
 
 // Activate effect - stubbed for now
