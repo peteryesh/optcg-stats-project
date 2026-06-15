@@ -1,6 +1,6 @@
-import type { GameState, PlayerZones } from "../../types/state";
-import type { CardInstance, CardDef } from "../../types/card";
-import type { CardInstanceId, PlayerId, Zone } from "../../types/primitives";
+import type { GameState, PlayerZones } from "../types/state";
+import type { CardInstance, CardDef } from "../types/card";
+import type { CardInstanceId, PlayerId, Zone } from "../types/primitives";
 
 function emptyZones(): PlayerZones {
     return {

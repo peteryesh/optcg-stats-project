@@ -22,8 +22,6 @@ import type { Phase } from './types';
 
 export { InvalidActionError } from './errors';
 
-// Decide where to set/clear decisionPoint
-
 export function reducer(state: GameState, action: GameAction): GameState {
     if (state.winner !== null) {
         throw new InvalidActionError('Game is already finished');
@@ -75,8 +73,8 @@ export function reducer(state: GameState, action: GameAction): GameState {
         case 'CHOOSE_TARGETS':
             throw new InvalidActionError(`${action.type} is not yet implemented`);
     }
-    state = removeDecisionPoint(state);
-    return advance(state); // add a function that will check for state based actions like deck out
+    state = removeDecisionPoint(state); // Action consumes decision point
+    return advance(state); // Advance state until next decision point
 }
 
 function advance(state: GameState): GameState {

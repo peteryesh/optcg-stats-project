@@ -99,8 +99,3 @@ export function resolveBattle(state: GameState): GameState {
     }
     return emit(state, { type: "BATTLE_RESOLVED", battle: battle, attackerPower: attackerPower, defenderPower: defenderPower + battle.counter, outcome: "FAIL" });
 }
-
-export function resolveWhenAttackingEffects(state: GameState): GameState {
-    // Check for currentBattle, the when attacking 
-    return state;
-}

@@ -10,7 +10,7 @@ import {
     donRefresh,
 } from "../../game/operations/zones/don";
 import { InvalidActionError } from "../../errors";
-import { createTestState, makeCharacterInstance, makeDonInstance, resetIds } from "./helpers";
+import { createTestState, makeCharacterInstance, makeDonInstance, resetIds } from "../helpers";
 import { assertValidGameState } from "../invariants";
 
 let state!: GameState;

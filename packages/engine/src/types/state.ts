@@ -4,7 +4,7 @@ import type { CardFilter } from './filter';
 import type { Card, CardDef, CardInstance } from './card';
 import type { GameAction } from './action';
 import type { Seed, Nonce } from '../rng/seeds';
-import { EffectId, EffectSequence, StatusEffect } from './effect';
+import { EffectId, EffectSequence, ListenerEffect, StatusEffect } from './effect';
 import { ActionRecord } from './record';
 
 export type DecisionPoint =
@@ -94,8 +94,8 @@ export interface GameState {
     pendingEffects: Record<PlayerId, EffectSequence[]>; // rework
 
     // Listener arrays that cards add their effects to in response to game signals and hooks
-    listeners: SequencedEffect[];
-    activatableEffects: SequencedEffect[]; // need to refactor this to accept Passive, Replacement, and Suppression effects
+    listeners: ListenerEffect[];
+    activatableEffects: ListenerEffect[]; // need to refactor this to accept Passive, Replacement, and Suppression effects
     statusEffects: StatusEffect[]; // temporary modifications to cards on the board, public and cleaned up on signal or phase change
 
     // Game Outcome

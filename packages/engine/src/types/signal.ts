@@ -39,6 +39,8 @@ export type GameSignal =
     | { type: "CARDS_SENT_TO_HAND"; instanceIds: CardInstanceId[]; fromZone: Zone; controller: PlayerId; cause: SignalCause }
     | { type: "CARDS_SENT_TO_DECK"; instanceIds: CardInstanceId[]; fromZone: Zone; position: StackPosition; controller: PlayerId; cause: SignalCause }
     | { type: "CARDS_SENT_TO_LIFE"; instanceIds: CardInstanceId[]; fromZone: Zone; position: StackPosition; controller: PlayerId; cause: SignalCause }
+    | { type: "CARDS_SENT_TO_LOOK"; instanceIds: CardInstanceId[]; fromZone: Zone; controller: PlayerId; cause: SignalCause }
+    | { type: "CARD_SENT_TO_TRIGGER"; instanceId: CardInstanceId; fromZone: Zone; controller: PlayerId; cause: SignalCause }
     // | { type: "DECK_SHUFFLED"; controller: PlayerId; cause: SignalCause }
 
     | { type: "CARDS_SET_ACTIVE"; instanceIds: CardInstanceId[]; controller: PlayerId; cause: SignalCause}

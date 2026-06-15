@@ -8,7 +8,7 @@ export function _cardsMoveToTrash(state: GameState, playerId: PlayerId, instance
     for (const id of instanceIds) {
         const zone = getZoneArray(state, playerId, fromZone);
         if (!zone.includes(id)) {
-            throw new InvalidActionError(`${id} not found in hand of player ${playerId}`);
+            throw new InvalidActionError(`${id} not found in zone of player ${playerId}`);
         }
         const card = getCardInstance(state, id);
         if (card.class === "DON" || card.class === "LEADER") throw new InvalidActionError(`${id} has a card class of ${card.class} cannot be added to trash`);
@@ -26,14 +26,7 @@ export function _cardsMoveToTrash(state: GameState, playerId: PlayerId, instance
  * @returns Game state with the cards specified discarded from the player's hand
  */
 export function sendHandToTrash(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], signalCause: SignalCause): GameState {
-    for (const instanceId of instanceIds) {
-        const playerHand = getZoneArray(state, playerId, "HAND");
-        if (!(playerHand.includes(instanceId))){
-            throw new InvalidActionError(`${instanceId} not found in hand of player ${playerId}`);
-        }
-        state = moveCard(state, instanceId, "TRASH", "TOP");
-    }
-    return emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: instanceIds, fromZone: "HAND", controller: playerId, cause: signalCause });
+    return _cardsMoveToTrash(state, playerId, instanceIds, "HAND", signalCause);
 }
 
 export function sendTopDeckToTrash(state: GameState, playerId: PlayerId, count: number, signalCause: SignalCause): GameState {
@@ -46,4 +39,15 @@ export function sendTopDeckToTrash(state: GameState, playerId: PlayerId, count: 
     }
     if (topDeck.length === 0) return state;
     return _cardsMoveToTrash(state, playerId, topDeck, "DECK", signalCause);
+}
+
+export function sendTopLifeToTrash(state: GameState, playerId: PlayerId, count: number, signalCause: SignalCause): GameState {
+    const topLife = [];
+    const lifeZone = getZoneArray(state, playerId, "LIFE");
+    for (let i = 0; i < count; i++) {
+        if(!lifeZone[i]) break;
+        topLife.push(lifeZone[i]);
+    }
+    if (topLife.length === 0) return state;
+    return _cardsMoveToTrash(state, playerId, topLife, "LIFE", signalCause);
 }

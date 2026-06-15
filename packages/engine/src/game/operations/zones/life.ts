@@ -1,4 +1,3 @@
-import { produce } from 'immer';
 import type { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone } from "../../../types";
 import { moveCard, getZoneArray, attachDon, detachDon, getCardInstance } from "../../mechanics";
 import { emit } from "../../emitter";
@@ -38,28 +37,6 @@ export function sendHandToLife(state: GameState, playerId: PlayerId, instanceIds
     return _cardsMoveToLife(state, playerId, instanceIds, "HAND", position, signalCause);
 }
 
-
-// move functions away
-export function lifeSentToDeck(state: GameState, playerId: PlayerId, lifePosition: StackPosition, toZonePosition: StackPosition, signalCause: SignalCause): GameState {
-    const lifeZone = getZoneArray(state, playerId, "LIFE");
-    const lifeCardId = lifePosition === "TOP" ? lifeZone[0] : lifeZone.at(-1);
-    if (!lifeCardId) return state;
-
-    state = moveCard(state, lifeCardId, "DECK", toZonePosition);
-
-    return emit(state, { type: "CARDS_SENT_TO_DECK", instanceIds: [lifeCardId], fromZone: "LIFE", position: toZonePosition, controller: playerId, cause: signalCause });
-}
-
-export function lifeSentToTrash(state: GameState, playerId: PlayerId, lifePosition: StackPosition, signalCause: SignalCause): GameState {
-    const lifeZone = getZoneArray(state, playerId, "LIFE");
-    const lifeCardId = lifePosition === "TOP" ? lifeZone[0] : lifeZone.at(-1);
-    if (!lifeCardId) return state;
-
-    state = moveCard(state, lifeCardId, "TRASH", "TOP");
-
-    return emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: [lifeCardId], fromZone: "LIFE", controller: playerId, cause: signalCause });
-}
-
 export function takeDamage(state: GameState, damagedPlayerId: PlayerId, cause: DamageCause, lifeDamaged: number = 1): GameState {
     const leaderId = getZoneArray(state, damagedPlayerId, "LEADER")[0];
     if (!leaderId) throw new InvalidActionError(`No leader id found`);
@@ -78,6 +55,7 @@ export function takeDamage(state: GameState, damagedPlayerId: PlayerId, cause: D
 
         const topLifeCard = lifeZone[0];
         state = emit(state, { type: "LIFE_DAMAGED", instanceId: topLifeCard, controller: damagedPlayerId, cause });
+        // change to send to trigger zone
         state = sendLifeToHand(state, damagedPlayerId, "TOP", { kind: "DAMAGE", sourceId: cause.sourceId });
     }
 
