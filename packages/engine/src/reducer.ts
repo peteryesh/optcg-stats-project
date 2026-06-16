@@ -12,7 +12,8 @@ import {
     applyPlayCounter,
     applyCompleteBattle,
     applyNextPhase,
-    applyTriggerActivation
+    applyTriggerActivation,
+    applyDisplaceCardOnField
 } from './game/actions/main';
 import { promoteChosenEffect } from './game/effects';
 import { applyChooseFirstPlayer, applyKeepHand, applyMulligan, setPlayerLife, shuffleDeck } from './game/actions/start';
@@ -47,6 +48,9 @@ export function reducer(state: GameState, action: GameAction): GameState {
             break;
         case 'PLAY_CARD':
             state = applyPlayCard(state, action);
+            break;
+        case 'DISPLACE_ON_FIELD':
+            state = applyDisplaceCardOnField(state, action);
             break;
         case 'ATTACH_DON':
             state = applyAttachDon(state, action);
@@ -83,7 +87,7 @@ export function reducer(state: GameState, action: GameAction): GameState {
 
 function advance(state: GameState): GameState {
     let s = state;
-    while (!s.decisionPoint && !state.winner) s = step(s);
+    while (!s.decisionPoint && !s.winner) s = step(s);
     return s;
 }
 

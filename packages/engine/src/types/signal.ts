@@ -63,8 +63,8 @@ export type GameSignal =
     // | { type: "LIFE_REVEALED_AS_TRIGGER"; instanceId: CardInstanceId; controller: PlayerId; position: StackPosition }
 
     // Card Plays
-    | { type: "CHARACTER_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause; replaced?: CardInstanceId }
-    | { type: "STAGE_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause; replaced?: CardInstanceId }
+    | { type: "CHARACTER_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause; }
+    | { type: "STAGE_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause; }
     | { type: "EVENT_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause; }
     // | { type: "CARD_PLAYED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; toZone: Zone; cause: PlayCause}
 

@@ -3,12 +3,14 @@ import { calculateCost, calculateCounter } from "./game/calculations";
 import { CardInstanceId, EffectId, EffectSequence } from "./types";
 import { getCardDef, getCardInstance, getZoneArray } from "./game/mechanics";
 import { InvalidActionError } from "./errors";
+import { CHARACTERS_MAX, STAGE_MAX } from "./game/constants";
 
 const validActions: {[T in DecisionPoint['type']]: GameAction['type'][]} = {
     SELECT_FIRST_PLAYER: ["CHOOSE_FIRST_PLAYER"],
     MULLIGAN: ["KEEP_HAND", "MULLIGAN"],
     START_TURN: ["NEXT_PHASE"],
     MAIN_ACTION: ["NEXT_PHASE", "PLAY_CARD", "ATTACH_DON", "DECLARE_ATTACK", "ACTIVATE_EFFECT"],
+    DISPLACE_CARD: ["DISPLACE_ON_FIELD"],
     BLOCKER_SELECTION: ["NEXT_PHASE", "DECLARE_BLOCKER"],
     COUNTER_STEP: ["PLAY_COUNTER", "COMPLETE_BATTLE"],
     TRIGGER: ["ACTIVATE_TRIGGER"],
@@ -58,6 +60,24 @@ export function validate(state: GameState, action: GameAction): string | null {
             if (card.class === "DON" || card.class === "LEADER") return `Player ${action.playerId} cannot play card of class ${card.class}`;
             // Card has enough DON to be played
             if (state.playerZones[action.playerId].donActive.length < calculateCost(state, action.instanceId)) return `Player ${action.playerId} does not have enough DON to play this card`;
+            break;
+        case "DISPLACE_ON_FIELD": {
+            // Decision point has played card id context
+            if (state.decisionPoint.type !== "DISPLACE_CARD") return `Decision point is not the right type: ${state.decisionPoint.type}`;            
+            // Action displaced card has the same type as played card id
+            const playedCard = getCardInstance(state, state.decisionPoint.playedCardId);
+            const displacedCard = getCardInstance(state, action.displacedId);
+            if (playedCard.controller !== action.playerId || displacedCard.controller !== action.playerId) return `Cards do not belong to the player performing displacement`;
+            if (playedCard.class !== displacedCard.class) return `Played card ${state.decisionPoint.playedCardId} with class ${playedCard.class} does not match ${displacedCard.class}`;
+            // If displaced card is in character zone, character zone is full
+            if (playedCard.class === "CHARACTER" && state.playerZones[action.playerId].characters.length < CHARACTERS_MAX) {
+                return `Attempting to replace at non-full character zone`;
+            }
+            // If displaced card is in stage zone, stage zone is full
+            if (playedCard.class === "STAGE" && state.playerZones[action.playerId].stage.length < STAGE_MAX) {
+                return `Attempting to replace at non-full stage zone`;
+            }
+        }
             break;
         case "ATTACH_DON":
             // Count is greater than 0

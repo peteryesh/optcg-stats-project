@@ -12,6 +12,7 @@ export type DecisionPoint =
     | { type: 'MULLIGAN'; player: PlayerId }
     | { type: 'START_TURN'; player: PlayerId }
     | { type: 'MAIN_ACTION'; player: PlayerId }
+    | { type: 'DISPLACE_CARD'; player: PlayerId; playedCardId: CardInstanceId }
     | { type: 'BLOCKER_SELECTION'; player: PlayerId; battle: BattleRecord }
     | { type: 'COUNTER_STEP'; player: PlayerId; battle: BattleRecord }
     | { type: 'TRIGGER'; player: PlayerId; }

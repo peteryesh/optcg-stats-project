@@ -111,11 +111,29 @@ const genTriggerActivation: ActionGenerator = (state, dp, out) => {
     out.push({ type: "ACTIVATE_TRIGGER", playerId: dp.player, instanceId: state.playerZones[dp.player].trigger[0], activate: false });
 }
 
+// We don't have the played card context, rely on the playCard operation to set the played card id in the decision point
+// All possible replacements are generated because of lack of card context
+// The displacement apply function should read the decision point context, then combine with the action to know which card to displace
+const genChooseDisplaceCard: ActionGenerator = (state, dp, out) => {
+    const charZone = getZoneArray(state, dp.player, "CHARACTERS");
+    const stageZone = getZoneArray(state, dp.player, "STAGE");
+    if (charZone.length >= CHARACTERS_MAX) {
+        // generate all characters as replacements
+        for (const charId of charZone) {
+            out.push({ type: "DISPLACE_ON_FIELD", playerId: dp.player, displacedId: charId });
+        }
+    }
+    if (stageZone.length >= STAGE_MAX) {
+        out.push({ type: "DISPLACE_ON_FIELD", playerId: dp.player, displacedId: stageZone[0] });
+    }
+}
+
 const actionGeneratorRouter: Record<DecisionPoint['type'], ActionGenerator[]> = {
     SELECT_FIRST_PLAYER: [genFirstPlayer],
     MULLIGAN: [genMulligan],
     START_TURN: [genNextPhase],
     MAIN_ACTION: [genPlayCard, genAttachDon, genActivateEffect, genDeclareAttack, genNextPhase],
+    DISPLACE_CARD: [genChooseDisplaceCard],
     BLOCKER_SELECTION: [genDeclareBlocker, genNextPhase],
     COUNTER_STEP: [genPlayCounter, genCompleteBattle],
     TRIGGER: [genTriggerActivation],

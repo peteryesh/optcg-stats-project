@@ -1,12 +1,18 @@
 import type { GameState } from '../../types/state';
 import type { GameAction } from '../../types/action';
 import { InvalidActionError } from '../../errors';
-import { playCard, donAttach, declareAttack, declareBlocker, playCounter, sendTriggerToHand, sendTriggerToTrash, enterWhenAttackingPhase, enterEndOfTurnPhase, enterOnOpponentAttackPhase, enterCounterPhase, enterBattleResolutionPhase, enterBlockerPhase, enterRefreshPhase, enterMainPhase, resolveBattle, enterStartOfTurnPhase } from '../operations';
-import { getZoneArray } from '../mechanics';
+import { playCard, donAttach, declareAttack, declareBlocker, playCounter, sendTriggerToHand, sendTriggerToTrash, enterWhenAttackingPhase, enterEndOfTurnPhase, enterOnOpponentAttackPhase, enterCounterPhase, enterBattleResolutionPhase, enterBlockerPhase, enterRefreshPhase, enterMainPhase, resolveBattle, enterStartOfTurnPhase, displaceCard } from '../operations';
+import { getCardInstance, getZoneArray } from '../mechanics';
 
 // Play card from hand
 export function applyPlayCard(state: GameState, action: Extract<GameAction, { type: "PLAY_CARD" }>): GameState {
     return playCard(state, action.playerId, action.instanceId, { kind: "PLAYER" });
+}
+
+export function applyDisplaceCardOnField(state: GameState, action: Extract<GameAction, { type: "DISPLACE_ON_FIELD"}>): GameState {
+    if (!state.decisionPoint) throw new InvalidActionError(`No decision point set for displacement`);
+    if (state.decisionPoint.type !== "DISPLACE_CARD") throw new InvalidActionError(`Cannot displace card for decsion type: ${state.decisionPoint.type}`);
+    return displaceCard(state, action.playerId, state.decisionPoint.playedCardId, action.displacedId);
 }
 
 // Attach DON
@@ -33,6 +39,7 @@ export function applyCompleteBattle(state: GameState, action: Extract<GameAction
     return resolveBattle(state);
 }
 
+// Complete later
 export function applyTriggerActivation(state: GameState, action: Extract<GameAction, { type: "ACTIVATE_TRIGGER" }>): GameState {
     if (!action.activate) {
         // decline trigger, move card from trigger zone to hand
