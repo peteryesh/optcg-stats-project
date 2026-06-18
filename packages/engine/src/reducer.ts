@@ -17,7 +17,7 @@ import {
 } from './game/actions/main';
 import { promoteChosenEffect } from './game/effects';
 import { applyChooseFirstPlayer, applyKeepHand, applyMulligan, setPlayerLife, shuffleDeck } from './game/actions/start';
-import { getCardInstance, removeDecisionPoint, setDecisionPoint } from './game/mechanics';
+import { getCardInstance, removeDecisionPoint, setDecisionPoint, setGameEnd } from './game/mechanics';
 import { enterStartGamePhase, cardsDraw, enterStartOfTurnPhase, setStartTurnState, enterRefreshPhase, enterDrawPhase, enterMainPhase, enterOnOpponentAttackPhase, enterBlockerPhase, enterCounterPhase, enterBattleResolutionPhase, enterWhenAttackingPhase } from './game/operations';
 import { OPENING_HAND_SIZE } from './game/constants';
 import type { Phase } from './types';
@@ -92,8 +92,18 @@ function advance(state: GameState): GameState {
 }
 
 function step(state: GameState): GameState {
+    // check for deckout (and any alternate rulings or hooks)
+    // I don't think there is any way that both players can deck out at the same time
+    // Expansion for 4 player mode: remove the player from turnOrder, when turn order is length === 1 then game ends
+    for (const player of Object.keys(state.playerZones)) {
+        if (state.playerZones[player].deck.length <= 0) {
+            const twoPlayerWinner = state.turnOrder.filter(playerId => playerId !== player);
+            return setGameEnd(state, twoPlayerWinner[0], "DECKOUT");
+        }
+    }
     // check for currentEffect
     // if no current effect, check for trigger zone, set decision to activate trigger if there is
+    
     // if no current effect and no trigger, check the effect queue
     // if a player has more than one effect in the effect frame, set decisionPoint to select resolution order and return
     // if there is currentEffect, execute effect steps

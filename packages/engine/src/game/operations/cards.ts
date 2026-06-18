@@ -1,5 +1,5 @@
 
-import type { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card, Phase, RemovalMethod } from "../../types";
+import type { GameState, PlayerId, SignalCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card, Phase, RemovalMethod } from "../../types";
 import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex, setCardPlayedThisTurn, getCardInstance, setDecisionPoint } from "../mechanics";
 import { setPhase } from "../mechanics/turn";
 import { emit } from "../emitter";
@@ -144,12 +144,17 @@ export function displaceCard(state: GameState, playerId: PlayerId, playedCardId:
     if (playZoneName === "CHARACTERS" && zone.length < CHARACTERS_MAX) throw new InvalidActionError(`Attempting to replace character ${replacedId} while the character zone is not full`);
     if (playZoneName === "STAGE" && zone.length < STAGE_MAX) throw new InvalidActionError(`Attempting to replace stage ${replacedId} while the stage zone is not full`);
     const replaceIndex = zone.indexOf(replacedId);
+    
+    // Detach any attached DON before removing the card from the field
+    if (replacedCard.attachedDon.length > 0) {
+        state = donDetach(state, playerId, replacedId, replacedCard.attachedDon, { kind: "RULE" });
+    }
+    
     state = moveCard(state, replacedId, "TRASH", "TOP");
     state = emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: [replacedId], fromZone: playZoneName, controller: playerId, cause: { kind: "RULE" } });
     
     const originZone = playedCard.currentZone;
     if (!originZone) throw new InvalidActionError(`${playedCardId} does not have a current zone`);
-    if (playedCard.class !== "CHARACTER") throw new InvalidActionError(`${playedCardId} is not a character instance`);
     state = removeFromZone(state, playedCardId);
     state = insertCardAtZoneIndex(state, playedCardId, playZoneName, replaceIndex);
 
@@ -174,19 +179,6 @@ export function playEvent(state: GameState, playerId: PlayerId, instanceId: Card
     state = emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: [instanceId], fromZone: originZone, controller: playerId, cause: signalCause });
     return emit(state, { type: "EVENT_PLAYED", instanceId: instanceId, controller: playerId, fromZone: originZone, toZone: "TRASH", cause: signalCause });
 }
-
-// Event play from trash emits event played but with no zone movement (change later if a ruling specifies that the card should be moved back to trash after play, but I doubt it would count as a completely separate re-entrance to trash)
-export function playEventFromTrash(state: GameState, playerId: PlayerId, instanceId: CardInstanceId, signalCause: PlayCause): GameState {
-    const event = getCardInstance(state, instanceId);
-    if (event.class !== "EVENT") throw new InvalidActionError(`${instanceId} is not an event card instance`);
-    
-    const originZone = event.currentZone;
-    if (originZone !== "TRASH") throw new InvalidActionError(`${instanceId} cannot be played from ${originZone}`);
-
-    return emit(state, { type: "EVENT_PLAYED", instanceId: instanceId, controller: playerId, fromZone: originZone, toZone: "TRASH", cause: signalCause });
-}
-
-
 
 
 // Removal Operations
@@ -222,9 +214,6 @@ function _removeCardFromField(state: GameState, playerId: PlayerId, instanceId: 
         case "SEND_TO_LIFE":
             state = moveCard(state, instanceId, "LIFE", position);
             return emit(state, { type: "CARDS_SENT_TO_LIFE", instanceIds: [instanceId], fromZone: fromZone, position: position, controller: playerId, cause: signalCause });
-        case "REPLACE":
-            state = moveCard(state, instanceId, "TRASH", "TOP");
-            return emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: [instanceId], fromZone: fromZone, controller: playerId, cause: { kind: "RULE" } });
         default:
             throw new InvalidActionError(`Invalid removal method ${method}`);
     }

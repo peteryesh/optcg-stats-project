@@ -1,9 +1,10 @@
-import type { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone } from "../../../types";
-import { moveCard, getZoneArray, attachDon, detachDon, getCardInstance } from "../../mechanics";
+import type { GameState, PlayerId, SignalCause, CardInstanceId, DonInstance, StackPosition, Zone } from "../../../types";
+import { moveCard, getZoneArray, attachDon, detachDon, getCardInstance, setDecisionPoint } from "../../mechanics";
 import { emit } from "../../emitter";
 import { InvalidActionError } from "../../../errors";
 import { sendLifeToHand } from './hand';
 import { setGameEnd } from '../../mechanics/gameEnd';
+import { sendTopLifeToTrigger } from "./trigger";
 
 
 export function _cardsMoveToLife(state: GameState, playerId: PlayerId, instanceIds: CardInstanceId[], fromZone: Zone, position: StackPosition, signalCause: SignalCause): GameState {
@@ -37,27 +38,17 @@ export function sendHandToLife(state: GameState, playerId: PlayerId, instanceIds
     return _cardsMoveToLife(state, playerId, instanceIds, "HAND", position, signalCause);
 }
 
-export function takeDamage(state: GameState, damagedPlayerId: PlayerId, cause: DamageCause, lifeDamaged: number = 1): GameState {
+export function takeDamage(state: GameState, damagedPlayerId: PlayerId, signalCause: SignalCause): GameState {
     const leaderId = getZoneArray(state, damagedPlayerId, "LEADER")[0];
     if (!leaderId) throw new InvalidActionError(`No leader id found`);
 
     if (getZoneArray(state, damagedPlayerId, "LIFE").length === 0) {
-        const winnerId = getCardInstance(state, cause.sourceId).controller;
-        state = emit(state, { type: "DAMAGE_TAKEN", instanceId: leaderId, controller: damagedPlayerId, cause });
-        return setGameEnd(state, winnerId, "KNOCKOUT");
+        // emit will handle game over check
+        return emit(state, { type: "LETHAL_DAMAGE_TAKEN", instanceId: leaderId, controller: damagedPlayerId, cause: signalCause });
     }
-
-    state = emit(state, { type: "DAMAGE_TAKEN", instanceId: leaderId, controller: damagedPlayerId, cause });
-
-    for (let i = 0; i < lifeDamaged; i++) {
-        const lifeZone = getZoneArray(state, damagedPlayerId, "LIFE");
-        if (lifeZone.length === 0) break;
-
-        const topLifeCard = lifeZone[0];
-        state = emit(state, { type: "LIFE_DAMAGED", instanceId: topLifeCard, controller: damagedPlayerId, cause });
-        // change to send to trigger zone
-        state = sendLifeToHand(state, damagedPlayerId, "TOP", { kind: "DAMAGE", sourceId: cause.sourceId });
-    }
-
-    return state;
+    state = emit(state, { type: "DAMAGE_TAKEN", instanceId: leaderId, controller: damagedPlayerId, cause: signalCause });
+    const lifeZone = getZoneArray(state, damagedPlayerId, "LIFE");
+    const topLifeCard = lifeZone[0];
+    state = emit(state, { type: "LIFE_DAMAGED", instanceId: topLifeCard, controller: damagedPlayerId, cause: signalCause });
+    return sendTopLifeToTrigger(state, damagedPlayerId, "TOP", signalCause);
 }

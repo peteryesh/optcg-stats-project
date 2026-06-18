@@ -109,17 +109,51 @@ export function makeCharacterInstance(
 }
 
 export function makeDonInstance(
-    overrides: Partial<{ instanceId: CardInstanceId; controller: PlayerId; }> = {}
+    overrides: Partial<{ instanceId: CardInstanceId; controller: PlayerId; currentZone: Zone; }> = {}
 ): CardInstance {
     const instanceId = overrides.instanceId ?? `don-${_nextId++}`;
+    const currentZone = overrides.currentZone ?? "DON_DECK";
     return {
         instanceId,
         class: "DON",
         controller: overrides.controller ?? "p1",
-        currentZone: "DON_DECK",
-        isRested: false,
+        currentZone,
+        isRested: currentZone === "DON_RESTED",
         attachedTo: null,
         donValue: 1,
+    };
+}
+
+export function makeStageInstance(
+    overrides: Partial<{ instanceId: CardInstanceId; controller: PlayerId; cardId: string; currentZone: Zone; }> = {}
+): CardInstance {
+    const instanceId = overrides.instanceId ?? `stage-${_nextId++}`;
+    return {
+        instanceId,
+        cardId: overrides.cardId ?? "test-stage",
+        controller: overrides.controller ?? "p1",
+        class: "STAGE",
+        currentZone: overrides.currentZone ?? "DECK",
+        isRested: false,
+        attachedDon: [],
+        playedOnTurns: [],
+        effectsUsedThisTurn: {},
+    };
+}
+
+export function makeEventInstance(
+    overrides: Partial<{ instanceId: CardInstanceId; controller: PlayerId; cardId: string; currentZone: Zone; }> = {}
+): CardInstance {
+    const instanceId = overrides.instanceId ?? `event-${_nextId++}`;
+    return {
+        instanceId,
+        cardId: overrides.cardId ?? "test-event",
+        controller: overrides.controller ?? "p1",
+        class: "EVENT",
+        currentZone: overrides.currentZone ?? "DECK",
+        isRested: false,
+        playedOnTurns: [],
+        effectsUsedThisTurn: {},
     };
 }
 

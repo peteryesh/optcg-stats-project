@@ -9,14 +9,9 @@ export type PlayCause =
     | { kind: "EFFECT"; sourceId: CardInstanceId }
     | { kind: "RULE" };
 
-export type DamageCause =
-    | { kind: "BATTLE"; sourceId: CardInstanceId }
-    | { kind: "EFFECT"; sourceId: CardInstanceId }
-
 export type SignalCause =
     | { kind: "PLAYER" }
     | { kind: "BATTLE"; sourceId: CardInstanceId }
-    | { kind: "DAMAGE"; sourceId: CardInstanceId }
     | { kind: "EFFECT"; sourceId: CardInstanceId }
     | { kind: "OVERFLOW" }
     | { kind: "RULE" };
@@ -55,8 +50,9 @@ export type GameSignal =
     | { type: "DON_DETACHED"; instanceIds: CardInstanceId[]; originId: CardInstanceId, controller: PlayerId; cause: SignalCause }
 
     // Life & Damage
-    | { type: "DAMAGE_TAKEN"; instanceId: CardInstanceId; controller: PlayerId; cause: DamageCause }
-    | { type: "LIFE_DAMAGED"; instanceId: CardInstanceId; controller: PlayerId; cause: DamageCause }
+    | { type: "DAMAGE_TAKEN"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    | { type: "LIFE_DAMAGED"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
+    | { type: "LETHAL_DAMAGE_TAKEN"; instanceId: CardInstanceId; controller: PlayerId; cause: SignalCause }
     // | { type: "LIFE_REVEALED"; instanceId: CardInstanceId; controller: PlayerId; position: StackPosition; revealedTo: RevealedTo; cause: SignalCause }
     // | { type: "LIFE_FLIPPED"; instanceId: CardInstanceId; controller: PlayerId; position: StackPosition; cause: SignalCause }
     // | { type: "LIFE_REORDERED"; controller: PlayerId; cause: SignalCause }

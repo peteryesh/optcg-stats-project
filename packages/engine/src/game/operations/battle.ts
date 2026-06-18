@@ -1,4 +1,4 @@
-import { GameState, PlayerId, SignalCause, DamageCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card, Phase } from "../../types";
+import { GameState, PlayerId, SignalCause, CardInstanceId, DonInstance, StackPosition, Zone, PlayCause, Card, Phase } from "../../types";
 import { moveCard, removeFromZone, getZoneArray, setActive, setRested, insertCardAtZoneIndex } from "../mechanics";
 import { emit } from "../emitter";
 import { InvalidActionError } from "../../errors";
@@ -42,7 +42,7 @@ export function declareBlocker(state: GameState, playerId: PlayerId, blockerId: 
     state = updateCurrentBattle(state, {...battle, defenderId: blockerId});
     if (blocker.controller !== playerId) throw new InvalidActionError(`Player ${playerId} does not control new target ${blockerId}`);
     // STATUS EFFECT: cannot block, cannot rest
-    if (blocker.currentZone !== "CHARACTERS") throw new InvalidActionError(`Blocker ${blockerId} is not in the CHARACTERS zone`);
+    if (blocker.currentZone !== "CHARACTERS" && blocker.currentZone !== "LEADER") throw new InvalidActionError(`Blocker ${blockerId} is not in the CHARACTERS zone`);
     if (blocker.isRested) throw new InvalidActionError(`${blockerId} is rested and cannot block`);
     state = cardsSetRested(state, playerId, [blockerId], { kind: "RULE" });
     state = emit(state, { type: "BLOCKER_DECLARED", blockerId, attackerId: battle.attackerId, prevDefenderId: prevDefenderId, controller: playerId, cause: { kind: "PLAYER" } });

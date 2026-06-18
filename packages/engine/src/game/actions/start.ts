@@ -6,7 +6,7 @@ import { shuffle } from '../../rng/rng';
 import { moveCard, getZoneArray, setMulliganChoice } from '../mechanics';
 import { InvalidActionError } from '../../errors';
 import { OPENING_HAND_SIZE } from '../constants';
-import { enterStartGamePhase, cardsDraw, cardsToDeckFromHand, enterStartOfTurnPhase, sendTopDeckToLife } from '../operations';
+import { enterStartGamePhase, cardsDraw, sendHandToDeck, enterStartOfTurnPhase, sendTopDeckToLife } from '../operations';
 import { getCardInstance, getCardDef } from '../mechanics';
 
 export function applyChooseFirstPlayer(state: GameState, action: Extract<GameAction, { type: "CHOOSE_FIRST_PLAYER" }>): GameState {
@@ -50,7 +50,7 @@ export function applyMulligan(state: GameState, action: Extract<GameAction, { ty
     state = setMulliganChoice(state, action.playerId, "MULLIGAN");
 
     // Reset hand and deck
-    state = cardsToDeckFromHand(state, playerId, state.playerZones[playerId].hand, "TOP", { kind: "RULE" });
+    state = sendHandToDeck(state, playerId, state.playerZones[playerId].hand, "TOP", { kind: "RULE" });
     
     // Reshuffle and draw new hand
     state = shuffleDeck(state, playerId);
