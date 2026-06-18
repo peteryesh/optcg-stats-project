@@ -50,5 +50,5 @@ export function takeDamage(state: GameState, damagedPlayerId: PlayerId, signalCa
     const lifeZone = getZoneArray(state, damagedPlayerId, "LIFE");
     const topLifeCard = lifeZone[0];
     state = emit(state, { type: "LIFE_DAMAGED", instanceId: topLifeCard, controller: damagedPlayerId, cause: signalCause });
-    return sendTopLifeToTrigger(state, damagedPlayerId, "TOP", signalCause);
+    return sendTopLifeToTrigger(state, damagedPlayerId, signalCause);
 }

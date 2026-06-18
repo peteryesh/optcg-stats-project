@@ -8,11 +8,12 @@ import { _cardsMoveToTrash } from './trash';
 // TRIGGER Zone Operations
 // Transient Effect Zone
 
-export function sendTopLifeToTrigger(state: GameState, playerId: PlayerId, instanceId: CardInstanceId, signalCause: SignalCause): GameState {
+export function sendTopLifeToTrigger(state: GameState, playerId: PlayerId, signalCause: SignalCause): GameState {
     const life = getZoneArray(state, playerId, "LIFE");
     if (life.length <= 0) throw new InvalidActionError(`${playerId} has no life to consider for trigger`);
-    state = moveCard(state, life[0], "TRIGGER", "TOP");
-    return emit(state, { type: "CARD_SENT_TO_TRIGGER", instanceId: instanceId, fromZone: "LIFE", controller: playerId, cause: signalCause });
+    const topLife = life[0];
+    state = moveCard(state, topLife, "TRIGGER", "TOP");
+    return emit(state, { type: "CARD_SENT_TO_TRIGGER", instanceId: topLife, fromZone: "LIFE", controller: playerId, cause: signalCause });
 }
 
 export function sendTriggerToTrash(state: GameState, playerId: PlayerId, signalCause: SignalCause): GameState {

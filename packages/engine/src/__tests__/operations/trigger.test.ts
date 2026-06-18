@@ -24,7 +24,7 @@ describe("sendTopLifeToTrigger", () => {
         });
 
         const topLifeId = state.playerZones["p1"].life[0];
-        const next = sendTopLifeToTrigger(state, "p1", topLifeId, { kind: "RULE" });
+        const next = sendTopLifeToTrigger(state, "p1", { kind: "RULE" });
 
         // id does not exist in life
         expect(next.playerZones["p1"].life).not.toContain(topLifeId);
@@ -33,7 +33,7 @@ describe("sendTopLifeToTrigger", () => {
         assertValidGameState(next);
     });
     it("attempt to call when no life available", () => {
-        expect(() => sendTopLifeToTrigger(state, "p1", "card-fake", { kind: "RULE" }))
+        expect(() => sendTopLifeToTrigger(state, "p1", { kind: "RULE" }))
             .toThrow(InvalidActionError);
     });
     it("attempt to call when trigger zone is occupied", () => {
@@ -45,7 +45,7 @@ describe("sendTopLifeToTrigger", () => {
         });
 
         const topLifeId = state.playerZones["p1"].life[0];
-        expect(() => sendTopLifeToTrigger(state, "p1", topLifeId, { kind: "RULE" }))
+        expect(() => sendTopLifeToTrigger(state, "p1", { kind: "RULE" }))
             .toThrow();
     });
 });

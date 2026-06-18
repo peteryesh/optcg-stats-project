@@ -145,14 +145,8 @@ export function displaceCard(state: GameState, playerId: PlayerId, playedCardId:
     if (playZoneName === "STAGE" && zone.length < STAGE_MAX) throw new InvalidActionError(`Attempting to replace stage ${replacedId} while the stage zone is not full`);
     const replaceIndex = zone.indexOf(replacedId);
     
-    // Detach any attached DON before removing the card from the field
-    if (replacedCard.attachedDon.length > 0) {
-        state = donDetach(state, playerId, replacedId, replacedCard.attachedDon, { kind: "RULE" });
-    }
-    
-    state = moveCard(state, replacedId, "TRASH", "TOP");
-    state = emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: [replacedId], fromZone: playZoneName, controller: playerId, cause: { kind: "RULE" } });
-    
+    state = _removeCardFromField(state, playerId, replacedId, "DISPLACE", "TOP", { kind: "RULE" });
+
     const originZone = playedCard.currentZone;
     if (!originZone) throw new InvalidActionError(`${playedCardId} does not have a current zone`);
     state = removeFromZone(state, playedCardId);
@@ -214,6 +208,9 @@ function _removeCardFromField(state: GameState, playerId: PlayerId, instanceId: 
         case "SEND_TO_LIFE":
             state = moveCard(state, instanceId, "LIFE", position);
             return emit(state, { type: "CARDS_SENT_TO_LIFE", instanceIds: [instanceId], fromZone: fromZone, position: position, controller: playerId, cause: signalCause });
+        case "DISPLACE":
+            state = moveCard(state, instanceId, "TRASH", "TOP");
+            return emit(state, { type: "CARDS_SENT_TO_TRASH", instanceIds: [instanceId], fromZone: fromZone, controller: playerId, cause: { kind: "RULE" } });
         default:
             throw new InvalidActionError(`Invalid removal method ${method}`);
     }

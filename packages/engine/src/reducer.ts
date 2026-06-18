@@ -101,8 +101,16 @@ function step(state: GameState): GameState {
             return setGameEnd(state, twoPlayerWinner[0], "DECKOUT");
         }
     }
+
     // check for currentEffect
+
     // if no current effect, check for trigger zone, set decision to activate trigger if there is
+    // I don't think there is a situation where 2 players could have a trigger at one time
+    for (const player of Object.keys(state.playerZones)) {
+        if (state.playerZones[player].trigger.length > 0) {
+            return setDecisionPoint(state, { type: "TRIGGER", player: player });
+        }
+    }
     
     // if no current effect and no trigger, check the effect queue
     // if a player has more than one effect in the effect frame, set decisionPoint to select resolution order and return
