@@ -1,5 +1,5 @@
 import type { CardId, CardInstanceId, Attribute, CardClass, Color, PlayerId, Zone } from './primitives';
-import { EffectDefinition, EffectId, EffectSequence, StatusEffectDefinition } from './effect';
+import { EffectDef, EffectId, StatusEffectDef } from './effect';
 
 export interface Card {
     id: CardId;
@@ -36,8 +36,8 @@ export interface CardDef {
     attributes: Attribute[];
     aliases: string[];
     restrictions: object[];
-    effectDefs?: Record<EffectId, EffectDefinition>;   // added later, not in database currently
-    statusEffectDefs?: StatusEffectDefinition[];
+    effectDefs?: Record<EffectId, EffectDef>;   // added later, not in database currently
+    statusEffectDefs?: StatusEffectDef[];
 }
 
 export type DeckList = {
@@ -69,6 +69,7 @@ export interface CharacterInstance extends BaseCardInstance {
     attachedDon: CardInstanceId[];
     playedOnTurns: number[];
     effectsUsedThisTurn: Record<EffectId, boolean>;
+    flipped: boolean;
 }
 
 // Stage — enters play, can be bounced, no DON!!
@@ -78,6 +79,7 @@ export interface StageInstance extends BaseCardInstance {
     attachedDon: CardInstanceId[];
     playedOnTurns: number[];
     effectsUsedThisTurn: Record<EffectId, boolean>;
+    flipped: boolean;
 }
 
 export interface EventInstance extends BaseCardInstance {
@@ -85,6 +87,7 @@ export interface EventInstance extends BaseCardInstance {
     class: "EVENT";
     playedOnTurns: number[];
     effectsUsedThisTurn: Record<EffectId, boolean>;
+    flipped: boolean;
 }
 
 // DON!! — attaches to characters/leader, tracks attachment

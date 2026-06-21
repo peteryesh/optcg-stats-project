@@ -1,217 +1,103 @@
-import type { CardInstanceId, PlayerId, Zone, Keyword, StackPosition } from './primitives';
+import type { CardInstanceId, PlayerId, Zone, Keyword, StackPosition, CardId } from './primitives';
 import type { GameSignal, SignalType } from './signal';
 import type { CardFilter } from './filter';
 
-export type ActiveEffect = null;
-export type ReactiveEffect = null;
-export type ReplacementEffect = null;
-
 export type EffectId = string;
-export type SequenceId = string;
 
-export type ListenerEffect = {
-    effectId: EffectId;
-    sequenceId: SequenceId;
-    sourceInstanceId: CardInstanceId;
-    activator: GameSignal; // Add hook here as well
-    condition: CardFilter | null;
-    
-}
-
-// StatusEffects are passive modifiers — they sit on the statusEffects array, are checked during
-// calculations, and are cleaned up on a signal or phase change. They do not produce sequences.
-export type StatusEffect = {
-    effectId: EffectId;
-    sourceInstanceId: CardInstanceId;
-    modification: Modification;
-    duration: EffectDuration;
-    condition: CardFilter | null;
-};
-
-export type EffectSequence = {
-    effectId: EffectId;
-    sequenceId: SequenceId;
-    sourceInstanceId: CardInstanceId;
-    activatingSignal: GameSignal | null;
-    controllerAtQueueTime: PlayerId;
-    steps: EffectStep[];
-    resolved: Record<string, CardInstanceId | CardInstanceId[] | boolean | number>;
-};
-
-export type EffectStep =
-    | StandardStep
-    | ConditionStep;
-
-// A step that performs an action or requests player input.
-type StandardStep = {
-    type: EffectStepType;
-    resolution: EffectResolution;
-    target: CardFilter | null;
-    effect: EffectOperation | null;
-    min: number;
-    max: number;
-    from: Zone | null;
-    to: Zone | null;
-    duration: EffectDuration | null;
-};
-
-// A branching step. The advance function splices onTrue into the queue if check passes,
-// or skips it entirely if check fails. Always resolves automatically.
-type ConditionStep = {
-    type: "CONDITION";
-    check: CardFilter;
-    onTrue: EffectStep[];
-};
-
-export type EffectResolution =
-    | { kind: "AUTO" }
-    | { kind: "PLAYER"; outputKey: string };
-
-export type EffectStepType =
-    | "CHOOSE_TARGET"
-    | "CHOOSE_FROM_ZONE"
-    | "MOVE_CARD"
-    | "KO_TARGET"
-    | "TRASH_TARGET"
-    | "BOUNCE_TARGET"
-    | "SEND_TO_DECK"
-    | "DRAW_CARDS"
-    | "DISCARD_CARDS"
-    | "ADD_TO_LOOK"
-    | "GAIN_DON"
-    | "ATTACH_DON"
-    | "RETURN_DON"
-    | "ADD_LIFE"
-    | "TRASH_LIFE"
-    | "APPLY_MODIFIER"
-    | "GRANT_KEYWORD";
-
-export type EffectActivationType =
-    | { kind: "ON_PLAY" }
-    | { kind: "ON_KO" }
-    | { kind: "WHEN_ATTACKING" }
-    | { kind: "ON_OPPONENT_ATTACK" }
-    | { kind: "LIFE_TRIGGER" }
-    | { kind: "ACTIVATED" }
-    | { kind: "CONTINUOUS" };
-
-export type EffectDefinition = {
-    effectId: string;
-    activation: EffectActivationType;
-    condition: CardFilter | null;
-    effectCost: EffectCost | null;
-    optional: boolean;
+// Effect as it is stored on the database
+// Effect is stored on the definition as Record<EffectId, EffectDef>
+export type EffectDef = {
+    activatingSignals: SignalType[];
+    condition?: BoardCondition;
+    cost?: EffectCost;
+    activeZone: Zone;
     oncePerTurn: boolean;
-    sequence: EffectStep[];
-};
-
-export type StatusEffectDefinition = {
-    effectId: string;
+    optional: boolean;
+    steps: (EffectStep | ConditionStep)[];
 }
 
-export type EffectOperation =
-    // Zone movement
-    | { kind: "MOVE_CARD"; toZone: Zone; position: StackPosition }
+export type Effect = {
+    playerId: PlayerId;
+    effectId: EffectId;
+    instanceId: CardInstanceId;
+    condition?: BoardCondition;
+    cost?: EffectCost;
+    optional: boolean;
+    steps: (EffectStep | ConditionStep)[];
+}
 
-    // Card removal
-    | { kind: "KO_TARGET" }
-    | { kind: "TRASH_TARGET" }
-    | { kind: "BOUNCE_TARGET" }
-    | { kind: "SEND_TO_DECK"; position: StackPosition }
+export type StatusEffectDef = {
+    effectId: EffectId;
+    type: StatusEffectType;
+    modification: Modification;
+    expiration: EffectDuration | null;
+    affects?: CardFilter;
+}
 
-    // Draw & hand
-    | { kind: "DRAW_CARDS"; count: number }
-    | { kind: "DISCARD_CARDS" }
+export type EffectFrame = Record<PlayerId, EffectRef[]>;
 
-    // DON!!
-    | { kind: "GAIN_DON"; count: number }
-    | { kind: "ATTACH_DON"; count: number }
-    | { kind: "RETURN_DON"; count: number }
+export type EffectRef = {
+    cardId: CardId; // Reference to the card id to get the effect from
+    effectId: EffectId; // Effect id to get from the card
+    instanceId: CardInstanceId; // instance that activated the effect
+}
 
-    // Modifier layer interactions
-    | { kind: "APPLY_CONTINUOUS"; modification: Modification; duration: EffectDuration }
-    // | { kind: "APPLY_SUPPRESSION"; scope: SuppressionScope; duration: EffectDuration }
-    // | { kind: "APPLY_REPLACEMENT"; replacedAction: ReplacedActionType; duration: EffectDuration }
+interface EffectStep {
+    condition?: BoardCondition;
+    effectOp: EffectOperation;
+    resolution: EffectResolution;
+}
 
-    // Life
-    | { kind: "ADD_LIFE"; count: number; position: StackPosition }
-    | { kind: "TRASH_LIFE"; count: number; position: StackPosition }
+// Think about what "play" means when the operation inevitably is called by the effect
+// Do we need a play op? Or can we just derive it from the context of a character moving to the character zone?
+type EffectOperation =
+| { op: "MOVE"; from: Zone; to: Zone; fromPos?: StackPosition; toPos?: StackPosition, revealed?: boolean }
+| { op: "ORIENT"; to: "RESTED" | "ACTIVE" | "FACEUP" | "FACEDOWN" }
+| { op: "MODIFY"; mod: Modification; duration: EffectDuration }
+| { op: "REORDER" }
 
-    // Look zone
-    | { kind: "ADD_TO_LOOK"; count: number; fromZone: Zone };
+// Auto may also require a target/card filter
+type EffectResolution =
+    | { mode: "SELECT"; min: number; max: number; zones: Zone[]; chooser: PlayerId; filter?: CardFilter; }
+    | { mode: "AUTO", count?: number }
+    | { mode: "REORDER", chooser: PlayerId }
 
+export type ConditionStep = {
+    condition?: BoardCondition;
+    filter?: CardFilter;
+    cost?: EffectCost;
+    effect: (EffectStep | ConditionStep)[];
+}
+
+// Add effect costs as we go
 export type EffectCost =
-    | { kind: "REST_CARD" }
-    | { kind: "RETURN_DON"; count: number }
-    | { kind: "DISCARD"; count: number; filter: CardFilter }
-    | { kind: "KO"; count: number; filter: CardFilter };
+    | { kind: "REST" }
+    | { kind: "TRASH" }
 
 export type EffectDuration =
-    | { kind: "PERMANENT" }
-    | { kind: "WHILE_SOURCE_IN_PLAY" }
-    | { kind: "UNTIL_SIGNAL"; signalType: SignalType };
-
-// Continuous Effects
-export type PowerModification =
-    | { kind: "BASE_POWER_OVERRIDE"; value: number }
-    | { kind: "POWER_CHANGE"; amount: number };
-
-export type CostModification =
-    | { kind: "BASE_COST_OVERRIDE"; value: number }
-    | { kind: "COST_CHANGE"; amount: number };
-
-export type KeywordModification =
-    | { kind: "GRANT_KEYWORD"; keyword: Keyword }
-    | { kind: "REMOVE_KEYWORD"; keyword: Keyword }
-    | { kind: "INNATE" }
-
-export type ActionRestriction =
-    | { kind: "CANNOT_ATTACK" }
-    | { kind: "CANNOT_BLOCK" }
+    | { expiration: "END_OF_BATTLE" }
+    | { expiration: "END_OF_REFRESH" }
+    | { expiration: "END_OF_MAIN" }
+    | { expiration: "END_OF_TURN" }
+    | { expiration: "START_OF_NEXT_TURN" }
+    | { expiration: "END_OF_NEXT_TURN" }
+    | { expiration: "END_OF_OPP_NEXT_MAIN" }
+    | { expiration: "END_OF_OPP_NEXT_TURN" }
 
 export type Modification =
-    | PowerModification
-    | CostModification
-    | KeywordModification
-    | ActionRestriction;
+    | { type: "KEYWORD"; keyword: Keyword }
+    | { type: "POWER"; amount: number }
+    | { type: "BASE_POWER"; value: number }
+    | { type: "COST"; amount: number }
+    | { type: "BASE_COST"; value: number }
+    | { type: "BASE_COUNTER"; value: number }
+    // add statuses here (cannot attack, cannot rest, cannot block, can attack active, etc.)
 
-// export type ContinuousEffect = {
-//     effectId: string;
-//     sourceInstanceId: CardInstanceId;
-//     affects: CardFilter;
-//     modification: Modification;
-//     duration: EffectDuration;
-//     appliedAt: number;
-//     condition: CardFilter | null;
-// };
+export type StatusEffectType =
+    | { type: "INNATE" } // Keywords
+    | { type: "PROJECTION" } // Sits on card definition, affects all other cards
+    | { type: "MARK" } // Lives in state, has an expiration and is resistant to suppression
 
-// Replacement Effects
-// type ReplacedActionType =
-//     | "KO"
-//     | "TRASH"
-//     | "BOUNCE"
-//     | "DISCARD"
-//     | "MILL"
-//     | "SEND_TO_DECK"
-//     | "LEAVE_FIELD";
-
-// export type ReplacementEffect = {
-//     replacementId: string;
-//     sourceInstanceId: CardInstanceId;
-//     targetFilter: CardFilter;
-//     replacedAction: ReplacedActionType;
-//     effectCost: EffectCost | null;
-//     duration: EffectDuration;
-//     appliedAt: number;
-//     condition: CardFilter | null;
-// };
-
-// export type AbilitySuppression = {
-//     suppressionId: string;
-//     sourceInstanceId: CardInstanceId;
-//     targetFilter: CardFilter;
-//     scope: SuppressionScope;
-//     duration: EffectDuration;
-//     appliedAt: number;
-//     condition: CardFilter | null;
-// };
+// Add board conditions as they come up
+export type BoardCondition =
+    | { }

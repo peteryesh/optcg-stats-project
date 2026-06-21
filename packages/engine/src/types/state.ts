@@ -1,10 +1,7 @@
 import type { CardInstanceId, PlayerId, Phase, BattlePhase, EndReason, FrameId, CardId, BattleRecord, MulliganChoice, Zone } from './primitives';
-import type { GameSignal, SignalType, Listener } from './signal';
-import type { CardFilter } from './filter';
 import type { Card, CardDef, CardInstance } from './card';
-import type { GameAction } from './action';
 import type { Seed, Nonce } from '../rng/seeds';
-import { EffectId, EffectSequence, ListenerEffect, StatusEffect } from './effect';
+import { EffectId, Effect, EffectFrame, EffectDef, StatusEffectDef } from './effect';
 import { ActionRecord } from './record';
 
 export type DecisionPoint =
@@ -16,7 +13,8 @@ export type DecisionPoint =
     | { type: 'BLOCKER_SELECTION'; player: PlayerId; battle: BattleRecord }
     | { type: 'COUNTER_STEP'; player: PlayerId; battle: BattleRecord }
     | { type: 'TRIGGER'; player: PlayerId; }
-    | { type: 'RESOLVE_ORDER'; player: PlayerId; sequenceId: null }
+    | { type: 'REORDER'; player: PlayerId }
+    | { type: 'RESOLVE_EFFECT_ORDER'; player: PlayerId; }
     | { type: 'EFFECT_TARGET'; player: PlayerId; effectId: EffectId; constraint: null };
 
 // RNG Cursors
@@ -91,13 +89,11 @@ export interface GameState {
     decisionPoint: DecisionPoint | null; // Set when player decision is required to advance game state
 
     // Effects
-    currentEffect: EffectSequence | null;  // the currently resolving effect, if any
-    pendingEffects: Record<PlayerId, EffectSequence[]>; // rework
+    currentEffect: Effect | null;  // the currently resolving effect, if any
+    effectQueue: EffectFrame[];
+    stagingFrame: EffectFrame;
 
-    // Listener arrays that cards add their effects to in response to game signals and hooks
-    listeners: ListenerEffect[];
-    activatableEffects: ListenerEffect[]; // need to refactor this to accept Passive, Replacement, and Suppression effects
-    statusEffects: StatusEffect[]; // temporary modifications to cards on the board, public and cleaned up on signal or phase change
+    statusEffects: StatusEffectDef[];
 
     // Game Outcome
     winner: PlayerId | null;

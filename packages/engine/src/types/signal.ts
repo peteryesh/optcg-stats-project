@@ -77,13 +77,3 @@ export type GameSignal =
     | { type: "CARD_REVEALED"; instanceId: CardInstanceId; controller: PlayerId; fromZone: Zone; revealedTo: RevealedTo; cause: SignalCause }
 
 export type SignalType = GameSignal["type"];
-
-// DELETE WHEN LISTENERS AND EFFECTS ARE DEFINED
-export type Listener = {
-    listenerId: string;
-    instanceId: CardInstanceId;
-    activeZones: Zone[];
-    condition: CardFilter | null;
-    effectDefinitionId: string;
-    signalType: SignalType;          // exactly one signal type per listener
-};

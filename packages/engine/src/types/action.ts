@@ -1,5 +1,5 @@
 import { DeckList } from "./card";
-import { EffectId, SequenceId } from "./effect";
+import { EffectId } from "./effect";
 import { CardId, CardInstanceId, PlayerId, FrameId, Zone } from "./primitives";
 
 export type GameAction =
@@ -24,5 +24,6 @@ export type GameAction =
 
     // Effect Resolutions
     | { type: "ACTIVATE_TRIGGER"; playerId: PlayerId; instanceId: CardInstanceId; activate: boolean }
-    | { type: "CHOOSE_NEXT_EFFECT"; playerId: PlayerId; sequenceId: SequenceId }
+    | { type: "SUBMIT_REORDER"; playerId: PlayerId; orderedInstanceIds: CardInstanceId[] }
+    | { type: "CHOOSE_NEXT_EFFECT"; playerId: PlayerId; effectId: EffectId }
     | { type: "CHOOSE_TARGETS"; playerId: PlayerId; instanceIds: CardInstanceId[] }

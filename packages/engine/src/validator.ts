@@ -1,6 +1,6 @@
 import { GameState, GameAction, PlayerId, DecisionPoint } from "./types";
 import { calculateCost, calculateCounter } from "./game/calculations";
-import { CardInstanceId, EffectId, EffectSequence } from "./types";
+import { CardInstanceId, EffectId } from "./types";
 import { getCardDef, getCardInstance, getZoneArray } from "./game/mechanics";
 import { InvalidActionError } from "./errors";
 import { CHARACTERS_MAX, STAGE_MAX } from "./game/constants";
@@ -14,7 +14,8 @@ const validActions: {[T in DecisionPoint['type']]: GameAction['type'][]} = {
     BLOCKER_SELECTION: ["NEXT_PHASE", "DECLARE_BLOCKER"],
     COUNTER_STEP: ["PLAY_COUNTER", "COMPLETE_BATTLE"],
     TRIGGER: ["ACTIVATE_TRIGGER"],
-    RESOLVE_ORDER: ["CHOOSE_NEXT_EFFECT"],
+    REORDER: ["SUBMIT_REORDER"],
+    RESOLVE_EFFECT_ORDER: ["CHOOSE_NEXT_EFFECT"],
     EFFECT_TARGET: ["CHOOSE_TARGETS"],
 }
 
@@ -169,6 +170,23 @@ export function validate(state: GameState, action: GameAction): string | null {
             // if activation is true and the card does not have a trigger ability, return
             if (action.activate /** && trigger effect does not exist */) return `${action.instanceId} does not have a trigger ability`;
             break;
+        case "SUBMIT_REORDER": {
+            const idCounts = new Map<CardInstanceId, number>();
+            for (const id of state.playerZones[action.playerId].look) {
+                idCounts.set(id, (idCounts.get(id) || 0) + 1);
+            }
+            for (const id of action.orderedInstanceIds) {
+                const count = idCounts.get(id);
+                if (count === 1) {
+                    idCounts.delete(id);
+                }
+                else {
+                    idCounts.set(id, count! - 1);
+                }
+            }
+            if (idCounts.size !== 0) return `Reordered list of ids was not a valid permutation`;
+            break;
+        }
         case "ACTIVATE_EFFECT":
             return "Not yet implemented";
         case "CHOOSE_NEXT_EFFECT":
@@ -177,18 +195,4 @@ export function validate(state: GameState, action: GameAction): string | null {
             return "Not yet implemented";
     }
     return null;
-}
-
-export function effectSequenceIsOptional(state: GameState, effectSequence: EffectSequence): boolean {
-    const sourceCardDef = getCardDef(state, effectSequence.sourceInstanceId);
-    if(sourceCardDef.effectDefs === null || sourceCardDef.effectDefs === undefined) throw new Error(`There is no effect on the source card ${sourceCardDef.id}`);
-    if(!Object.keys(sourceCardDef.effectDefs).includes(effectSequence.effectId)) throw new Error(`Sequence does not exist on its source card definition`);
-    return sourceCardDef.effectDefs[effectSequence.effectId].optional;
-}
-
-export function effectSequenceIsOncePerTurn(state: GameState, effectSequence: EffectSequence): boolean {
-    const sourceCardDef = getCardDef(state, effectSequence.sourceInstanceId);
-    if(sourceCardDef.effectDefs === null || sourceCardDef.effectDefs === undefined) throw new Error(`There is no effect on the source card ${sourceCardDef.id}`);
-    if(!Object.keys(sourceCardDef.effectDefs).includes(effectSequence.effectId)) throw new Error(`Sequence does not exist on its source card definition`);
-    return sourceCardDef.effectDefs[effectSequence.effectId].oncePerTurn;
 }

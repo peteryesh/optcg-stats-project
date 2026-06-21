@@ -3,7 +3,7 @@ import type { CardInstanceId, CardClass, Color, Attribute } from './primitives';
 export type CardFilter =
   | { kind: "ANY" }
   | { kind: "SPECIFIC";    instanceId: CardInstanceId }
-  | { kind: "CONTROLLER";  controller: "SELF" | "OPPONENT" | "ANY" | "TEAMMATE" }
+  | { kind: "CONTROLLER";  controller: "SELF" | "OPPONENT" | "ANY" }
   | { kind: "NAME";        name: string }              // checks name and aliases
   | { kind: "CLASS";       cardClass: CardClass }
   | { kind: "COST";        op: ">=" | "<=" | "==" | ">" | "<"; value: number, base: boolean }

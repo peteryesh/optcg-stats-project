@@ -128,6 +128,14 @@ const genChooseDisplaceCard: ActionGenerator = (state, dp, out) => {
     }
 }
 
+const genChooseReorder: ActionGenerator = (state, dp, out) => {
+    out.push({
+        type: "SUBMIT_REORDER",
+        playerId: dp.player,
+        orderedInstanceIds: [...state.playerZones[dp.player].look]
+    });
+}
+
 const actionGeneratorRouter: Record<DecisionPoint['type'], ActionGenerator[]> = {
     SELECT_FIRST_PLAYER: [genFirstPlayer],
     MULLIGAN: [genMulligan],
@@ -137,6 +145,7 @@ const actionGeneratorRouter: Record<DecisionPoint['type'], ActionGenerator[]> = 
     BLOCKER_SELECTION: [genDeclareBlocker, genNextPhase],
     COUNTER_STEP: [genPlayCounter, genCompleteBattle],
     TRIGGER: [genTriggerActivation],
-    RESOLVE_ORDER: [genChooseNextEffect],
+    REORDER: [genChooseReorder],
+    RESOLVE_EFFECT_ORDER: [genChooseNextEffect],
     EFFECT_TARGET: [genChooseTargets],
 };
