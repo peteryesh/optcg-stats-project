@@ -45,7 +45,8 @@ export type EndReason = 'KNOCKOUT' | 'DECKOUT' | 'CONCEDE' | 'TIMEOUT' | 'DISCON
 
 export type MulliganChoice = "PENDING" | "KEEP" | "MULLIGAN";
 
-export type StackPosition = "TOP" | "BOTTOM"
+export type StackPosition = "TOP" | "BOTTOM";
+export type LifeOrientation = "FACEUP" | "FACEDOWN";
 
 export type RevealedTo = "BOTH" | "SELF" | "OPPONENT";
 export type CompareOp = ">=" | "<=" | "==" | ">" | "<";

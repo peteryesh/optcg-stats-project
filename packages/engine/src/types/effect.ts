@@ -1,6 +1,6 @@
-import type { CardInstanceId, PlayerId, Zone, Keyword, StackPosition, CardId } from './primitives';
-import type { GameSignal, SignalType } from './signal';
-import type { CardFilter } from './filter';
+import type { CardInstanceId, PlayerId, Zone, Keyword, StackPosition, CardId, LifeOrientation } from './primitives';
+import type { SignalType } from './signal';
+import type { CardFilter, BoardCondition, AmountExpression, TargetExpression } from './filter';
 
 export type EffectId = string;
 
@@ -13,25 +13,18 @@ export type EffectDef = {
     activeZone: Zone;
     oncePerTurn: boolean;
     optional: boolean;
-    steps: (EffectStep | ConditionStep)[];
+    steps: EffectStep[];
 }
 
-export type Effect = {
+export type EffectContext = {
     playerId: PlayerId;
     effectId: EffectId;
     instanceId: CardInstanceId;
     condition?: BoardCondition;
     cost?: EffectCost;
     optional: boolean;
+    cursor: number;
     steps: (EffectStep | ConditionStep)[];
-}
-
-export type StatusEffectDef = {
-    effectId: EffectId;
-    type: StatusEffectType;
-    modification: Modification;
-    expiration: EffectDuration | null;
-    affects?: CardFilter;
 }
 
 export type EffectFrame = Record<PlayerId, EffectRef[]>;
@@ -44,35 +37,49 @@ export type EffectRef = {
 
 interface EffectStep {
     condition?: BoardCondition;
-    effectOp: EffectOperation;
-    resolution: EffectResolution;
+    operation: EffectOperation;
 }
 
-// Think about what "play" means when the operation inevitably is called by the effect
-// Do we need a play op? Or can we just derive it from the context of a character moving to the character zone?
-type EffectOperation =
-| { op: "MOVE"; from: Zone; to: Zone; fromPos?: StackPosition; toPos?: StackPosition, revealed?: boolean }
-| { op: "ORIENT"; to: "RESTED" | "ACTIVE" | "FACEUP" | "FACEDOWN" }
-| { op: "MODIFY"; mod: Modification; duration: EffectDuration }
-| { op: "REORDER" }
-
-// Auto may also require a target/card filter
-type EffectResolution =
-    | { mode: "SELECT"; min: number; max: number; zones: Zone[]; chooser: PlayerId; filter?: CardFilter; }
-    | { mode: "AUTO", count?: number }
-    | { mode: "REORDER", chooser: PlayerId }
-
-export type ConditionStep = {
-    condition?: BoardCondition;
-    filter?: CardFilter;
+interface ConditionStep {
+    condition: BoardCondition;
     cost?: EffectCost;
-    effect: (EffectStep | ConditionStep)[];
+    goto?: number;
 }
+
+type EffectOperation =
+    | { type: "REORDER"; from: "LOOK"; to: Zone; toPos: StackPosition }
+    | { type: "LOOK"; from: Zone; fromPos?: StackPosition; amount: AmountExpression }
+    | { type: "ADD_TO_HAND"; target?: TargetExpression; reveal?: boolean }
+    | { type: "DRAW"; amount: AmountExpression }
 
 // Add effect costs as we go
 export type EffectCost =
-    | { kind: "REST" }
-    | { kind: "TRASH" }
+    | { kind: "REST"; target?: TargetExpression }
+    | { kind: "TRASH"; target?: TargetExpression }
+    | { kind: "RETURN_TO_HAND"; target?: TargetExpression }
+    | { kind: "RETURN_DON"; target?: TargetExpression }
+    | { kind: "LIFE_TO_HAND"; amount: AmountExpression; lifePos: StackPosition }
+    | { kind: "LIFE_TRASH"; amount: AmountExpression; lifePos: StackPosition }
+    | { kind: "LIFE_FLIP"; amount: AmountExpression; lifePos: StackPosition; orientation: LifeOrientation }
+
+// Status Effects
+export type StatusEffectDef = {
+    effectId: EffectId;
+    type: StatusEffectType;
+    modification: Modification;
+    expiration: EffectDuration | null;
+    affects?: CardFilter;
+}
+
+export type StatusEffect = {
+    playerId: PlayerId;
+    effectId: EffectId;
+    instanceId: CardInstanceId;
+    type: StatusEffectType;
+    modification: Modification;
+    expiration: EffectDuration | null;
+    affects?: CardFilter;
+}
 
 export type EffectDuration =
     | { expiration: "END_OF_BATTLE" }
@@ -86,18 +93,14 @@ export type EffectDuration =
 
 export type Modification =
     | { type: "KEYWORD"; keyword: Keyword }
-    | { type: "POWER"; amount: number }
-    | { type: "BASE_POWER"; value: number }
-    | { type: "COST"; amount: number }
-    | { type: "BASE_COST"; value: number }
-    | { type: "BASE_COUNTER"; value: number }
+    | { type: "POWER"; amount: AmountExpression }
+    | { type: "BASE_POWER"; value: AmountExpression }
+    | { type: "COST"; amount: AmountExpression }
+    | { type: "BASE_COST"; value: AmountExpression }
+    | { type: "BASE_COUNTER"; value: AmountExpression }
     // add statuses here (cannot attack, cannot rest, cannot block, can attack active, etc.)
 
 export type StatusEffectType =
     | { type: "INNATE" } // Keywords
     | { type: "PROJECTION" } // Sits on card definition, affects all other cards
     | { type: "MARK" } // Lives in state, has an expiration and is resistant to suppression
-
-// Add board conditions as they come up
-export type BoardCondition =
-    | { }

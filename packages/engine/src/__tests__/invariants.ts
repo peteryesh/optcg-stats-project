@@ -15,7 +15,6 @@ export function assertValidGameState(state: GameState): void {
     assertCurrentZoneConsistency(state);
     assertDonAttachmentConsistency(state);
     assertControllerZoneConsistency(state);
-    assertDecisionContext(state);
 }
 
 // Every card instance on the state has a matching card definition (except for DON)
@@ -137,12 +136,6 @@ export function assertControllerZoneConsistency(state: GameState): void {
     }
 }
 
-// Pending Decision Invariants
+// Effect system invariants
 
-// If decisionPoint is not null, either currentEffect is not null or there is a player with a non-empty pendingEffects array
-export function assertDecisionContext(state: GameState): void {
-    if (state.decisionPoint === null) return;
-    if (state.currentEffect !== null) return;
-    if (state.config.playerIds.some(id => state.pendingEffects[id]?.length > 0)) return;
-    throw new Error(`State has a decisionPoint but no currentEffect and no pending effects for any player`);
-}
+// Assert that if there is no current effect, the look zone is empty
